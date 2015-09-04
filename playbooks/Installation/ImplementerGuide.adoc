@@ -1,1 +1,34 @@
-# Implementor Guide
+= OpenShift Enterprise 3 Installation - Implementer Guide
+Eric Sauer <esauer@redhat.com>
+v1.0, 2015-09-04
+
+:toc:
+
+== Prereqs
+
+Official Documentation: https://docs.openshift.com/enterprise/3.0/admin_guide/install/prerequisites.html
+
+=== VM Sizing
+
+The Offcial Documentation lists some link:https://docs.openshift.com/enterprise/3.0/admin_guide/install/prerequisites.html#system-requirements[minimal system requirements] for OpenShift masters and nodes. Beyond that, there are several things to consider when deciding on the sizing for your nodes.
+
+==== Number of Nodes & Overall Environment Size
+
+When deciding how to size nodes, it's helpful to have an idea of the final size of your environment. This is important because knowing the total amount of resources your workloads will consume will help to dictate the amount of capacity loss your environment can handle. This is especially relevant in smaller environments, where the loss of one node could have significant impact on the performance and capacity of your overall environment. It's a good rule of thumb for environment sizing is to take the max expected total workload size and add 30% to that. This leaves about 10% for overhead on your nodes, plus 20% extra to account for node failure.
+
+NOTE: This applies to _real_ environments (i.e. _Dev_, _QA_, _Prod_) where we care about handling failure. Lab or sandbox environments will work just fine using the minimal recommendations.
+
+==== Type of Workload
+
+
+
+=== Configuring Storage
+
+== Host Preparation
+
+== Ansible Installer
+
+== Parking Lot Items
+* Hostname issue
+* HA Masters need High Availability Add-On
+* Adding Nodes
