@@ -1,0 +1,31 @@
+= Solution Playbook Development Guide
+
+== Playbook Parts
+
+=== Presenter Guide
+
+_As a Presenter, I want to have Documentation available to me which allows me to present a Demo of a particular solution in a canned environment._
+
+A good Presenter Guide should…
+
+* List prerequisite knowledge needed to understand the demo material, including resource links to help a presenter ramp up.
+* Contain all execution steps needed to step through a successful demo
+* Include some presenter notes that call out things to highlight, subject matter to cover
+
+=== Implementer Guide
+_As an Implementer, I want to have Documentation available to me which enables me to go and implement a particular solution in my own environment._
+
+A good Implementer Guide should…
+
+* Document Assumptions and Prerequisites
+* Be Flexible - Call out options for alternate or customized approaches
+* Be Specific - Include steps and code examples
+* Be Opinionated - Don’t want to shy away from giving recommendations just because the approach may change later
+* Should not overwrite docs - Complement and reference official documentation whenever possible
+* Include diagrams where relevant
+* Make it appropriate for Public eye
+
+== Notes
+
+* Playbooks may in the future be turned into Enablement material.. think about how this could be turned into exercises
+* Playbooks may also be turned into pre-sales material

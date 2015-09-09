@@ -1,0 +1,19 @@
+= Playbook Style Guide
+
+== Requesting Feedback
+
+If there are specific places where you'd like to request feedback or expansion from the community, we encourage you to call that out in your playbooks. Please use the following format:
+
+----
+.Feedback or Contribution Needed
+****
+This is a block where we would put a request for feedback or additional detail.
+****
+----
+
+This will render as...
+
+.Feedback or Contribution Needed
+****
+This is a block where we would put a request for feedback or additional detail.
+****
