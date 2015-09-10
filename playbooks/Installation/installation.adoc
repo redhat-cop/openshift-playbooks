@@ -1,7 +1,7 @@
-= OpenShift Enterprise 3 Installation - Implementer Guide
+= OpenShift Enterprise 3 Installation
 Eric Sauer <esauer@redhat.com>
 v1.0, 2015-09-04
-:scripts_repo: http://github.com/redhat-consulting/ose-utils/
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
 :toc: macro
 :toc-title:
 
