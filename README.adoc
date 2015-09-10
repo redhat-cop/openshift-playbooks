@@ -2,9 +2,11 @@
 
 == Playbook Directory
 
-=== Installation
-* link:playbooks/Installation/PresenterGuide.adoc[Presenter Guide]
-* link:playbooks/Installation/ImplementerGuide.adoc[Implementer Guide]
+* link:playbooks/Installation[OSE 3 Production-Ready Installation and Configuration]
+* OSE 3 Application Development Workflow
+* DevOps (Continuous Delivery) with Containers
+* DevOps (Continuous Delivery) with Traditional Application Platforms
+* OSE 3 RHCI Integration
 
 == How to Contribute
 
