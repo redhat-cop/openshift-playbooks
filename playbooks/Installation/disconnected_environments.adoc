@@ -6,3 +6,30 @@ v1.0, 2015-09-10
 :toc-title:
 
 toc::[]
+
+There are at least three considerations for disconnected environments:
+
+== Yum Repositories
+
+If the environment does not use Red Hat Satellite, you will need to set up a server to host yum repositories locally. That one server alone needs to be registered with Red Hat Subscription Manager.
+
+== OpenShift Docker Images
+
+You need to install a Docker registry on the internal network to avoid reaching out to Red Hat and DockerHub Docker registries. A script can be used to pull images from public registries like registry.access.redhat.com and dockerhub.io and push them to the internal repository. An example script is available at: https://github.com/redhat-consulting/ose-utils/blob/openshift-enterprise-3/docker-registry-sync. A minimal scripts is as follows:
+
+    #!/bin/bash
+    yum install -y docker docker-registry firewalld
+    systemctl enable docker-registry
+    systemctl start docker-registry
+    systemctl enable firewalld
+    systemctl start firewalld
+    zone=$(firewall-cmd --get-default-zone)
+    firewall-cmd --zone=$zone --add-port=5000/tcp --permanent
+
+If the registry is not secured, the following annotation needs to be added to each imagestream for it to load correctly (i.e., under metadata/annotations for each imagestream definition):
+
+    "openshift.io/image.insecureRepository": "true"
+
+== Optional: Quickstart Examples.
+
+To use any of the out of the box quickstart examples with OpenShift, you will need to clone the source code for them out of GitHub into an internal Git repository readable by all system users. *Quickstart templates will need to be updated to reflect the newly created internal Docker image and internal Git source locations.*
