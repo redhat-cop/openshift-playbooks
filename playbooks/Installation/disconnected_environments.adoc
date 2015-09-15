@@ -13,6 +13,8 @@ There are at least three considerations for disconnected environments:
 
 If the environment does not use Red Hat Satellite, you will need to set up a server to host yum repositories locally. That one server alone needs to be registered with Red Hat Subscription Manager.
 
+https://access.redhat.com/solutions/23016
+
 == OpenShift Docker Images
 
 You need to install a Docker registry on the internal network to avoid reaching out to Red Hat and DockerHub Docker registries. A script can be used to pull images from public registries like registry.access.redhat.com and dockerhub.io and push them to the internal repository. An example script is available at: https://github.com/redhat-consulting/ose-utils/blob/openshift-enterprise-3/docker-registry-sync. A minimal scripts is as follows:

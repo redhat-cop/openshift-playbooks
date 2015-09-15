@@ -3,7 +3,7 @@
 == Playbook Directory
 
 * link:playbooks/Installation[OSE 3 Production-Ready Installation and Configuration]
-* OSE 3 Application Development Workflow
+* OSE 3 Application Development
 * DevOps (Continuous Delivery) with Containers
 * DevOps (Continuous Delivery) with Traditional Application Platforms
 * OSE 3 RHCI Integration
