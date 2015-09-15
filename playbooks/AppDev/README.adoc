@@ -1,4 +1,4 @@
-= OSE 3 Application Development Workflow
+= OSE 3 Application Development
 
 * link:doc1.adoc[Doc1]
 * link:doc2.adoc[Doc2]
