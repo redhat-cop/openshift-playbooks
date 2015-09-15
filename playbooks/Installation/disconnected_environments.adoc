@@ -17,7 +17,7 @@ https://access.redhat.com/solutions/23016
 
 == OpenShift Docker Images
 
-You need to install a Docker registry on the internal network to avoid reaching out to Red Hat and DockerHub Docker registries. A script can be used to pull images from public registries like registry.access.redhat.com and dockerhub.io and push them to the internal repository. An example script is available at: https://github.com/redhat-consulting/ose-utils/blob/openshift-enterprise-3/docker-registry-sync. A minimal scripts is as follows:
+You need to install a Docker registry on the internal network to avoid reaching out to Red Hat and DockerHub Docker registries. A script can be used to pull images from public registries like registry.access.redhat.com and dockerhub.io and push them to the internal repository. An example script is available at: An example script is available at: {scripts_repo}/blob/openshift-enterprise-3/docker-registry-sync. A minimal scripts is as follows:
 
     #!/bin/bash
     yum install -y docker docker-registry firewalld
