@@ -27,5 +27,4 @@ A good Implementer Guide should…
 
 == Notes
 
-* Playbooks may in the future be turned into Enablement material.. think about how this could be turned into exercises
-* Playbooks may also be turned into pre-sales material
+* Playbooks may in the future be turned into Enablement material... think about how this could be turned into exercises
