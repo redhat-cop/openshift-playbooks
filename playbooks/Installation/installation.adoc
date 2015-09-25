@@ -29,9 +29,7 @@ If you expect to support a healthy mix of different workload types and sizes, th
 
 ==== Node Limit
 
-Kubernetes, and therefore OpenShift has a logical limit to the number of Nodes that can be provisioned in a single Cluster (single OpenShift installation). The current limit is *100*.
-
-NOTE: This limit increases with each release. OpenShift 3.1 is expected to have a Node limit of 250, while future releases have planned cluster sizes into the thousands.
+Kubernetes, and therefore OpenShift has a logical limit to the number of Nodes that can be provisioned in a single Cluster (single OpenShift installation). The current limit is *100*.[Source needed]
 
 The logical limit for Nodes in a cluster might sway administrators of large clusters to increase node size in order to increase the total capacity a Cluster can support
 
