@@ -3,4 +3,5 @@
 * link:./installation.adoc[Installation]
 * link:./disconnected_environments.adoc[Disconnected Environments]
 * link:./integration.adoc[API Integration Guide]
+* link:./logging.adoc[Log Management]
 * link:./presenter_guide.adoc[Presenter Guide]
