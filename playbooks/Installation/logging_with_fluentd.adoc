@@ -18,6 +18,7 @@ Additionally, there are some installation methods offered from the fluentd websi
 
 As this RPM is not currently offered in Red Hat subscription channels, you'll need to pull down the RPM from http://packages.treasuredata.com.s3.amazonaws.com/2/redhat/7/x86_64/td-agent-2.2.1-0.el7.x86_64.rpm
 
+[source,bash]
 ----
 RPM=td-agent-2.2.1-0.el7.x86_64.rpm
 curl -O http://packages.treasuredata.com.s3.amazonaws.com/2/redhat/7/x86_64/$RPM
@@ -26,12 +27,14 @@ yum localinstall -y $RPM
 
 Once the fluentd (td-agent) RPM is installed, it is expected that you install an additional RubyGem plugin for Kubernetes.
 
+[source,bash]
 ----
 /opt/td-agent/embedded/bin/gem install fluent-plugin-kubernetes
 ----
 
 For a disconnected installation, you can download this, and all dependency gems from link:https://rubygems.org/[RubyGems.org]. Here's a list of what's required.
 
+[source,bash]
 ----
 docker-api (latest)
 excon (latest)
@@ -44,11 +47,15 @@ done
 ----
 
 Once the proper gems are downloaded, place them all in the `/root/` (or current directory) directory of your nodes and install them.
+
+[source,bash]
 ----
 /opt/td-agent/embedded/bin/gem install -l fluent-plugin-kubernetes
 ----
 
 Finally, we need to create a new config directory and set ownership
+
+[source,bash]
 ----
 mkdir -p /etc/td-agent/config.d
 chown td-agent:td-agent /etc/td-agent/config.d
@@ -58,6 +65,7 @@ chown td-agent:td-agent /etc/td-agent/config.d
 
 The configuration steps can be taken directly from link:https://docs.openshift.com/enterprise/3.0/admin_guide/aggregate_logging.html#installing-fluentd-td-agent-on-nodes[Installing Fluentd Agent on Nodes] steps 2 thru 4. Here's a breif version.
 
+[source,bash]
 ----
 echo 'DAEMON_ARGS=
 TD_AGENT_ARGS="/usr/sbin/td-agent --log /var/log/td-agent/td-agent.log --use-v1-config"' > /etc/sysconfig/td-agent
@@ -121,8 +129,8 @@ Finally, we need to enable and start the fluentd service
 
 [source,bash]
 ----
-# chkconfig td-agent on # Systemd support for 'enable' this is currently broken
-# systemctl start td-agent
+chkconfig td-agent on # Systemd support for 'enable' this is currently broken
+systemctl start td-agent
 ----
 
 Soon after the service starts, you'll see container logs written to `/var/log/td-agent/containers*.log`.
