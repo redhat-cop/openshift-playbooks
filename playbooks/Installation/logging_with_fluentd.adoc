@@ -1,18 +1,12 @@
 = Using Fluentd to Centralize Container Logs
 
-In this guide, we will provide some updated instructions, as well as guidelines for getting this installation done in a disconnected environment.
-
-OpenShift Docs provide installation instructions link:https://docs.openshift.com/enterprise/3.0/admin_guide/aggregate_logging.html#installing-fluentd-td-agent-on-nodes[here], however, the RPM version has updated as has the location of the RPMs since this doc was published.
-
-Additionally, there are some installation methods offered from the fluentd website, http://docs.fluentd.org/articles/install-by-rpm
-
-In this guide, we will provide some updated instructions, as well as guidelines for getting this installation done in a disconnected environment.
+In this guide, we will provide some updated installation instructions for Fluentd in OSE, as well as guidelines for getting this installation done in a disconnected environment.
 
 == Configuring Nodes
 
 === Installation
 
-OpenShift Docs provide installation instructions link:https://docs.openshift.com/enterprise/3.0/admin_guide/aggregate_logging.html#installing-fluentd-td-agent-on-nodes[here], however, the RPM version has updated as has the location of the RPMs since this doc was published.
+OpenShift Docs provide installation instructions link:https://docs.openshift.com/enterprise/3.0/admin_guide/aggregate_logging.html#installing-fluentd-td-agent-on-nodes[here], however, the RPM version has been updated as has the location of the RPMs since this doc was published.
 
 Additionally, there are some installation methods offered from the fluentd website, http://docs.fluentd.org/articles/install-by-rpm
 
@@ -32,7 +26,7 @@ Once the fluentd (td-agent) RPM is installed, it is expected that you install an
 /opt/td-agent/embedded/bin/gem install fluent-plugin-kubernetes
 ----
 
-For a disconnected installation, you can download this, and all dependency gems from link:https://rubygems.org/[RubyGems.org]. Here's a list of what's required.
+For a disconnected installation, you can download this, and all dependency gems from link:https://rubygems.org/[RubyGems.org]. Here's a list of what's required:
 
 [source,bash]
 ----
@@ -63,7 +57,7 @@ chown td-agent:td-agent /etc/td-agent/config.d
 
 === Configuration
 
-The configuration steps can be taken directly from link:https://docs.openshift.com/enterprise/3.0/admin_guide/aggregate_logging.html#installing-fluentd-td-agent-on-nodes[Installing Fluentd Agent on Nodes] steps 2 thru 4. Here's a breif version.
+The configuration steps can be taken directly from link:https://docs.openshift.com/enterprise/3.0/admin_guide/aggregate_logging.html#installing-fluentd-td-agent-on-nodes[Installing Fluentd Agent on Nodes] steps 2 thru 4. Here's a brief version:
 
 [source,bash]
 ----
