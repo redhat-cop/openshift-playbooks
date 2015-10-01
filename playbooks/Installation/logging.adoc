@@ -33,7 +33,7 @@ The OpenShift 3.0 Documentation provides a way to link:https://docs.openshift.co
 
 ==== Full Metadata Supported Log Aggregation with Fluentd
 
-If we want to collect application metadata so that we can do things like filter logging views based on the application or project, we need to install some additional Fluentd plugins to make our aggregation agent more Kubernetes and Docker aware. Unfortunately this is more complicated at the moment because Red Hat does not ship fluentd or any of its plugins, so there are no RPMs or installation channels to facilitate installation in an Enterprise Environment.
+If we want to collect application metadata so that we can do things like filter logging views based on the application or project, we need to install some additional Fluentd plugins to make our aggregation agent more Kubernetes and Docker aware. Unfortunately this is more complicated at the moment (with OSE 3.0) because Red Hat does not ship fluentd or any of its plugins, so there are no RPMs or installation channels to facilitate installation in an Enterprise Environment.
 
 Here is a guide that walks through installation of fluentd and required plugins using as RubyGems.
 
