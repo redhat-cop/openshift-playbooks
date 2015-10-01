@@ -1,0 +1,136 @@
+= Using Fluentd to Centralize Container Logs
+
+In this guide, we will provide some updated installation instructions for Fluentd in OSE, as well as guidelines for getting this installation done in a disconnected environment.
+
+== Configuring Nodes
+
+=== Installation
+
+OpenShift Docs provide installation instructions link:https://docs.openshift.com/enterprise/3.0/admin_guide/aggregate_logging.html#installing-fluentd-td-agent-on-nodes[here], however, the RPM version has been updated as has the location of the RPMs since this doc was published.
+
+Additionally, there are some installation methods offered from the fluentd website, http://docs.fluentd.org/articles/install-by-rpm
+
+As this RPM is not currently offered in Red Hat subscription channels, you'll need to pull down the RPM from http://packages.treasuredata.com.s3.amazonaws.com/2/redhat/7/x86_64/td-agent-2.2.1-0.el7.x86_64.rpm
+
+[source,bash]
+----
+RPM=td-agent-2.2.1-0.el7.x86_64.rpm
+curl -O http://packages.treasuredata.com.s3.amazonaws.com/2/redhat/7/x86_64/$RPM
+yum localinstall -y $RPM
+----
+
+Once the fluentd (td-agent) RPM is installed, it is expected that you install an additional RubyGem plugin for Kubernetes.
+
+[source,bash]
+----
+/opt/td-agent/embedded/bin/gem install fluent-plugin-kubernetes
+----
+
+For a disconnected installation, you can download this, and all dependency gems from link:https://rubygems.org/[RubyGems.org]. Here's a list of what's required:
+
+[source,bash]
+----
+docker-api (latest)
+excon (latest)
+fluent-plugin-kubernetes (latest)
+
+# Command to download all 3
+for gem in docker-api-1.22.4 excon-0.45.4 fluent-plugin-kubernetes-0.3.1; do \
+curl -O https://rubygems.org/downloads/$gem.gem
+done
+----
+
+Once the proper gems are downloaded, place them all in the `/root/` (or current directory) directory of your nodes and install them.
+
+[source,bash]
+----
+/opt/td-agent/embedded/bin/gem install -l fluent-plugin-kubernetes
+----
+
+Finally, we need to create a new config directory and set ownership
+
+[source,bash]
+----
+mkdir -p /etc/td-agent/config.d
+chown td-agent:td-agent /etc/td-agent/config.d
+----
+
+=== Configuration
+
+The configuration steps can be taken directly from link:https://docs.openshift.com/enterprise/3.0/admin_guide/aggregate_logging.html#installing-fluentd-td-agent-on-nodes[Installing Fluentd Agent on Nodes] steps 2 thru 4. Here's a brief version:
+
+[source,bash]
+----
+echo 'DAEMON_ARGS=
+TD_AGENT_ARGS="/usr/sbin/td-agent --log /var/log/td-agent/td-agent.log --use-v1-config"' > /etc/sysconfig/td-agent
+echo '@include config.d/*.conf' >> /etc/td-agent/td-agent.conf
+cat << EOF > /etc/td-agent/config.d/kubernetes.conf
+<source>
+  type tail
+  path /var/lib/docker/containers/*/*-json.log
+  pos_file /var/log/td-agent/tmp/fluentd-docker.pos
+  time_format %Y-%m-%dT%H:%M:%S
+  tag docker.*
+  format json
+  read_from_head true
+</source>
+
+<match docker.var.lib.docker.containers.*.*.log>
+  type kubernetes
+  container_id ${tag_parts[5]}
+  tag docker.${name}
+</match>
+
+<match kubernetes>
+  type copy
+  <store>
+    type forward
+    send_timeout 60s
+    recover_wait 10s
+    heartbeat_interval 1s
+    phi_threshold 16
+    hard_timeout 60s
+    log_level trace
+    require_ack_response true
+    heartbeat_type tcp
+    <server>
+      name $(hostname -f)
+      host $(hostname -f)
+      port 24224
+      weight 60
+    </server>
+
+    <secondary>
+      type file
+      path /var/log/td-agent/forward-failed
+    </secondary>
+  </store>
+
+  <store>
+    type file
+    path /var/log/td-agent/containers.log
+    time_slice_format %Y%m%d
+    time_slice_wait 10m
+    time_format %Y%m%dT%H%M%S%z
+    compress gzip
+    utc
+  </store>
+</match>
+EOF
+----
+
+Finally, we need to enable and start the fluentd service
+
+[source,bash]
+----
+chkconfig td-agent on # Systemd support for 'enable' this is currently broken
+systemctl start td-agent
+----
+
+Soon after the service starts, you'll see container logs written to `/var/log/td-agent/containers*.log`.
+
+NOTE: This is assuming you have containers running and generating logs. The log file will not get created until such a time that new log data is detected.
+
+== Configuring Central Log Server
+
+For Central Log server configuration, we can refer back to the OpenShift Docs for link:https://docs.openshift.com/enterprise/3.0/admin_guide/aggregate_logging.html#optional-method-to-verify-working-nodes[Configuring the Master as a Central Server]
