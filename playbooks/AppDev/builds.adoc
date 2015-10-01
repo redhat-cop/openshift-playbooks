@@ -152,11 +152,11 @@ _________________________________________________
 
 *Note:* Source to Image was initially abbreviated STI but was renamed S2I prior to the general availability release of OSE. 
 
-==== S2I process deep drive
+=== S2I process deep drive
 
 image::https://raw.githubusercontent.com/openshift/source-to-image/master/docs/sti-flow.png[S2I Flow]
 
-==== S2I Scripts
+=== S2I Scripts
 
 The following table provides an overview of the S2I builder image is required to implement the following scripts
 
@@ -188,13 +188,13 @@ The following table provides an overview of the S2I builder image is required to
 
 *Note:* In most cases, you will be interacting with the _assemble_ and _run_ scripts. 
 
-===== Specifying S2I Scripts Location
+==== Specifying S2I Scripts Location
 
 To maximize the flexibility and extensibility of the S2I process, an S2I script can be stored either in Docker images, application source code, or in a remote location. Given the various options for defining a location for S2I scripts, there is a precedence by which S2I an script is loaded. The following details the methods in which S2I scripts can be defined and their order of precedence:
 
 . Specifying the directory containing the script with the `scripts` option of the BuildConfig
 +
-[Source]
+[source]
 ----
 {
   "strategy": {
@@ -220,14 +220,14 @@ Both the [Red]#io.openshift.s2i.scripts-url# label specified in the image and th
 
 * [Red]#http(s)://path_to_scripts_dir# - URL to a directory where the S2I scripts are located
 
-===== Injecting Environment Variables
+==== Injecting Environment Variables
 
 Values can be injected into S2I scripts to enable dynamic configuration for a particular OpenShift environment using two methods: 
 
 * Environment File - File called `.sti/environment` within the application source code
 * BuildConfig definition - Environment variables can be specified within the strategy section of a BuildConfig definition. The following example illustrates the usage within a BuildConfig definition:
   
-[Source]
+[source]
 ----
 {
   "kind":"BuildConfig",
@@ -275,16 +275,8 @@ Values can be injected into S2I scripts to enable dynamic configuration for a pa
 Several of the builder images utilize environment variable to drive their execution. Examples include setting the location of a proxy server using the `HTTP_PROXY` variable or to set Maven arguments using the `MAVEN_ARGS` variable.
 
 
-===== Additional Resources 
+==== Additional Resources 
 * https://docs.openshift.com/enterprise/3.0/creating_images/s2i.html#s2i-scripts[S2I Scripts]
-
-==== S2I within Applications
-
-Applications that are built by an S2I image can override the default scripts provided in the builder image if desired 
-
-* Overriding scripts
-** BuildConfig definition
-** Environment variables
 
 
 ==== Existing builder images
@@ -301,7 +293,7 @@ The following S2I builder images are available in the OpenShift ecosystem
 
 ==== JBoss EAP Integration
 	
-The JBoss EAP image for OpenShift includes S2I scripts located in the 	`/usr/local/sti` directory. These are run by default if the application being built does not include any of the S2I scripts``
+The JBoss EAP image for OpenShift includes S2I scripts located in the 	`/usr/local/sti` directory. These are run by default if the application being built does not include any of the S2I scripts
 
 The best way to learn how the JBoss S2I builder works is to investigate the builder itself. Run the following command to start a container containing the builder image
 
@@ -331,6 +323,7 @@ There are a number of existing S2I builders that you can look to leverage for yo
 * https://github.com/openshift/source-to-image/blob/master/README.md#installation[Installation]
 * https://github.com/openshift/source-to-image/blob/master/docs/cli.md[CLI]	
 * https://docs.openshift.com/enterprise/3.0/creating_images/s2i_testing.html[Testing]
+* https://blog.openshift.com/create-s2i-builder-image/[Creating an S2I Builder Image]
 
 
 === Binary deployments
@@ -339,7 +332,7 @@ In certain cases, an application may be previously compiled outside of an OpenSh
 
 The following is an example of a deployment of a binary application for the OpenShift JBoss EAP image
 
-[Source, bash]
+[source, bash]
 ----
 #!/bin/bash
 
@@ -491,7 +484,7 @@ If a proxy server is required to access the source code from an application, the
 
 The following is an example of how to define a proxy server to mediate requests to a endpoint git repository
 
-[Source]
+[source]
 ----
 "source": {
   "type": "Git",
