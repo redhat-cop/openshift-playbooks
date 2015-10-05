@@ -1,7 +1,20 @@
-= OSE 3 Production-Ready Installation and Configuration
+= OSE 3 SmartStart (Production-Ready Installation and Configuration)
 
-* link:./installation.adoc[Installation]
-* link:./disconnected_environments.adoc[Disconnected Environments]
-* link:./integration.adoc[API Integration Guide]
+The SmartStart playbook provides guidance on deploying a production-ready pilot of OpenShift Enterprise 3. The resulting deployment goes beyond a simple OSE proof-of-concept and can be used to run a representative sample of enterprise workloads in PaaS. It may not address the full catalog of expected workloads and production use cases such as multi-data center approaches, application development workflows, and specialized network configuration.
+
+== Implementer Guide
+
+A guide for implementing the OSE 3 SmartStart described above.
+
+* link:./installation.adoc[Initial Installation]
+* link:./disconnected_environments.adoc[Enterprise Environments]
+* link:./routers.adoc[Routers]
+* link:./registry.adoc[Docker Registry Setup]
 * link:./logging.adoc[Log Management]
+* link:./validation.adoc[Validating the Install]
+
+== Presenter Guide
+
+A guide to producing a demo that showcases the concepts described in the Implementation Guide.
+
 * link:./presenter_guide.adoc[Presenter Guide]

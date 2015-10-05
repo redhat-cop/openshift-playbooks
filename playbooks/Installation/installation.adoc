@@ -11,6 +11,13 @@ toc::[]
 
 Official Documentation: https://docs.openshift.com/enterprise/3.0/admin_guide/install/prerequisites.html
 
+
+=== DNS
+
+If the organization has the ability to add an A record to the corporate DNS, supporting wildcard name resolution to the OpenShift environment, that DNS server should be utilized.
+
+If adding those entries is problematic, a quick DNS solution for OpenShift is to use dnsmasq.
+
 === VM Sizing
 
 The Offcial Documentation lists some link:https://docs.openshift.com/enterprise/3.0/admin_guide/install/prerequisites.html#system-requirements[minimal system requirements] for OpenShift masters and nodes. Beyond that, there are several things to consider when deciding on the sizing for your nodes.
@@ -147,8 +154,11 @@ Official Documenation for link:https://docs.openshift.com/enterprise/3.0/admin_g
 
 Overall requirements for Installing OpenShift are very simple:
 
-* Install Red Hat Enterprise Linux 7.1
-* Subscribe to the following channels
+* Install Red Hat provided Red Hat Enterprise Linux 7.1 image
+** If the environment uses a custom image, we recommend testing the OSE install with the Red Hat provided image first, then incrementally adding environment-specific image customizations with an eye toward the following:
+*** Assess whether the image customization is still appropriate and necessary (to avoid changes inherited from earlier circumstances that are no longer relevant)
+*** Test each customization to make sure it allows normal OSE operation and mitigate if necessary
+* Subscribe to the following channels on the Red Hat Customer Portal (if environment uses Satellite, custom yum repos, or other mechanisms, these channels may have different organization and/or labels)
 ** rhel-7-server-rpms
 ** rhel-7-server-extras-rpms
 ** rhel-7-server-optional-rpms
@@ -156,9 +166,15 @@ Overall requirements for Installing OpenShift are very simple:
 * If you plan to Install HA Masters, an additional channel is needed on Master Nodes
 ** rhel-7-for-ha-server-rpms
 * Remove all `NetworkManager*` packages
-* Install the following extra packages: `wget git net-tools bind-utils iptables-services bridge-utils`
-* Fully update all packages (`yum -y update`)
-* Configure Storage according to <<#_configuring_storage>>
+
+.Update Needed
+****
+Verify this step is still needed in the official documentation
+****
+* Install the following extra packages: `yum install wget git net-tools bind-utils iptables-services bridge-utils`
+* Optional: install the following diagnostic tools: `yum install lsof strace nc telnet`
+* Fully update all packages: `yum -y update`
+* Configure Storage according to <<_storage_considerations>>
 * Sync SSH keys from masters to all nodes (HINT: Here's a script to do this: TODO)
 
 NOTE: Installing High Availability Masters requires the _High Availability for RHEL 7 Add-on_. This is a separate subscription from RHEL 7 or OpenShift so make sure you have acquired the proper subscriptions ahead of time.
@@ -188,23 +204,37 @@ In many cloud environments, it's common for you to assign hostnames to your host
 master.ose.example.com openshift_hostname=master.ose.example.com openshift_public_ip=10.3.4.5
 ----
 
+.Feedback or Contribution Needed
+****
+Need to add DNS subdomain, node labeling, master schedulable flag
+****
+
 == Automating the Install
 
+.Feedback or Contribution Needed
+****
 Things to talk about
 
 * Scripting options
 ** Ansible
 ** Bash (show osc-install script)
+****
 
 == Troubleshooting
 
+.Feedback or Contribution Needed
+****
 Things to talk about
 
 * Hostname issue
+****
 
 == Parking Lot Items
 
+.Feedback or Contribution Needed
+****
 This is a list of items that we would like contributions on:
 
 * HA Masters need High Availability Add-On
 * Adding Nodes
+****
