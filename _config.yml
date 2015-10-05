@@ -1,0 +1,11 @@
+# Default Overrides
+page_dir: ./playbooks
+
+# Markup support
+asciidoc: asciidoctor
+asciidoc_ext: asciidoc,adoc,ad
+asciidoctor:
+  attributes:
+    - hardbreaks!
+    - source-highlighter=pygments
+    - pygments-css=style

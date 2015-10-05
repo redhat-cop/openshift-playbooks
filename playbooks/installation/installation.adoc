@@ -1,3 +1,5 @@
+---
+---
 = OpenShift Enterprise 3 Installation
 Eric Sauer <esauer@redhat.com>
 v1.0, 2015-09-04

@@ -1,0 +1,94 @@
+---
+---
+= Integrating with Third Parties
+Eric Sauer <esauer@redhat.com>
+v1.0, 2015-09-15
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+To Integrate Third Party application with OpenShift requires that you configure the application/service to make calls against the https://docs.openshift.com/enterprise/3.0/rest_api/openshift_v1.html[OpenShift] and https://docs.openshift.com/enterprise/3.0/rest_api/kubernetes_v1.html[Kubernetes] REST APIs. The following document provides resources and tips on how to accomplish this.
+
+toc::[]
+
+== Authentication
+
+There are two methods by which to Authenticate to the OpenShift API.
+
+* Oauth Access Tokens
+* X.509 Client Certificates
+
+Both concepts are explained further https://docs.openshift.com/enterprise/3.0/architecture/additional_concepts/authentication.html#api-authentication[here].
+
+=== Tokens
+
+OAuth Tokens can be generated in one of two ways:
+
+1. Through the *oc* client:
+----
+oc whoami -t
+----
+
+[start=2]
+2. Requesting a Token directly from the API:
+----
+curl -u username:password -k https://master.openshift.example.com:8443/oauth/authorize?response_type=token&client_id=openshift-challenging-client
+----
+
+=== Client Certificates
+
+.Feedback or Contribution Needed
+****
+Details on Using X.509 Certificates to Authenticate to the OpenShift API
+****
+
+== Basic API Request
+
+An API Request to OpenShift contains several components:
+
+* Authentication Header: `Authentication Bearer: <token>`
+* Content-type Header: `Content-Type: application/json`
+* HTTP Method: `{GET|POST|PUT|PATCH|DELETE}`
+* API URL: `master.ose.example.com:8443`
+* Path ``/<api>/<version>/`
+** The Kubernetes API path is `/api/v1/`
+** The OpenShift API path is `/oapi/v1/`
+
+All put together, a command line API request might look something like:
+----
+curl -kI -H "Authentication Bearer: <token>" -H "Content-Type: application/json" -X GET https://master.ose.example.com:8443/oapi/v1/projects
+----
+
+== Traversing the API
+
+The OpenShift and Kubernetes APIs use http://swagger.io/[Swagger] to provide Schemas and visualizations of the APIs.
+
+=== Schema
+
+The JSON schema doc for OpenShift can be pulled from any Master:
+----
+https://master.ose.example.com:8443/swaggerapi/oapi/v1/
+----
+
+=== Visualizing the API
+
+Swagger UI can also be used to visualize the API. Andy Block has a very useful http://blog.andyserver.com/2015/09/openshift-api-swagger/[blog post] on that.
+
+=== Testing in the Command Line
+
+Here is an {scripts_repo}/blob/openshift-enterprise-3/ose-api-toolset.md[OSE v3 Toolkit] to get people started on testing API Requests in the command line.
+
+== Reverse Engineering OpenShift Client API Calls
+
+OpenShift v3 runs completely through its APIs. As such, it's fairly simple to actually use the OpenShit CLI and Web UI tools to break down and build out API Request automation used for various action items in openshift.
+
+=== Using the CLI
+
+You can bump up the log levels in the `oc` CLI utility to show the API requests made by each command:
+----
+oc deploy myapp -n myproject --loglevel=8
+----
+
+==== Using the Console
+
+Both Firefox and Google chrome contain a "Network" debugger that will display requests made by the web client back to the server. You can use this tool to break down API requests made by the console.

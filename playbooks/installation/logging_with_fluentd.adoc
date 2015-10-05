@@ -1,3 +1,5 @@
+---
+---
 = Using Fluentd to Centralize Container Logs
 
 In this guide, we will provide some updated installation instructions for Fluentd in OSE, as well as guidelines for getting this installation done in a disconnected environment.

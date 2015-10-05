@@ -1,3 +1,5 @@
+---
+---
 = Log Management in OpenShift Enterprise
 
 == Application Logs
