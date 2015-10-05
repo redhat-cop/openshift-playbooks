@@ -8,10 +8,10 @@ A guide for implementing the OSE 3 SmartStart described above.
 
 * link:./installation.adoc[Initial Installation]
 * link:./disconnected_environments.adoc[Enterprise Environments]
-* link:./routers.adoc[Routers]
-* link:./registry.adoc[Docker Registry Setup]
+* Routers
+* Docker Registry Setup
 * link:./logging.adoc[Log Management]
-* link:./validation.adoc[Validating the Install]
+* Validating the Install
 
 == Presenter Guide
 
