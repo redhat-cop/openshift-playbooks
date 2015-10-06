@@ -47,6 +47,18 @@ Once the proper gems are downloaded, place them all in the `/root/` (or current 
 /opt/td-agent/embedded/bin/gem install -l fluent-plugin-kubernetes
 ----
 
+---
+FluentD needs to run as the root user to access the container logs. 
+
+Edit the '/etc/rc.d/init.d/td-agent' file with the following information:
+Replace:
+TD_AGENT_USER=td-agent
+TD_AGENT_GROUP=td-agent
+with:
+TD_AGENT_USER=root
+TD_AGENT_GROUP=root
+----
+
 Finally, we need to create a new config directory and set ownership
 
 [source,bash]
