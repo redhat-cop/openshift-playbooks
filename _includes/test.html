@@ -1,7 +1,0 @@
-{% assign url_parts = page.url | split:'/' %}
-<p>{{ page.url }} -> {{ url_parts }}</p>
-{% for part in url_parts %}
-  <p>{{ part | replace: url_parts | last, page.title }}</p>
-{% endfor %}
-{% assign filename = url_parts | last %}
-<p>Last: {{ filename }}</p>

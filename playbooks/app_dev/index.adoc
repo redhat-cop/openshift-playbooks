@@ -4,4 +4,4 @@ The OpenShift Enterprise 3 Application Development playbook provides guidance on
 
 Completed sections:
 
-* link:builds.adoc[Builds]
+* link:builds{outfilesuffix}[Builds]

@@ -1,0 +1,48 @@
+= Documentation Site for OpenShift Playbooks
+
+OpenShift Playbooks is a documentation site for OpenShift, maintained by the OpenShift community and moderated by the North America Emerging Technologies Practice in Red Hat Consulting.
+
+== Overview
+
+This site is written in asciidoc format and is built using the link:https://github.com/asciidoctor/jekyll-asciidoc[Asciidoctor plugin for Jekyll].
+
+== Contribution
+
+=== Quickstart Guide
+
+1. link:https://rvm.io/[Install RVM]
+2. Install and use Ruby 2.0
++
+----
+rvm install 2.0.0
+rvm use 2.0.0
+----
+3. Install and set up RubyGems
++
+----
+rvm rubygems latest
+----
+4. Install bundler
++
+----
+gem install bundler
+----
+5. Install project dependencies
++
+----
+bundle install
+----
+6. Build site source
++
+----
+bundle exec jekyll build
+----
+7. Run local Jekyll server to view site
++
+----
+bundle exec jekyll serve
+----
+
+=== Further Development
+
+See our full link:./development_guide.adoc[contribution guide] for more details

@@ -1,0 +1,19 @@
+aside ul {
+  margin: 0;
+}
+
+aside ul li {
+  display: block;
+  list-style: none;
+}
+
+aside ul li a {
+  background-color: #ddd;
+  display: block;
+  text-decoration: none;
+  padding: 5px 5px
+}
+
+aside ul li a:hover {
+  background-color: #eee;
+}
