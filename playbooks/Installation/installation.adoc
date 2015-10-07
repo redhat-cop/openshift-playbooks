@@ -18,7 +18,7 @@ If the organization has the ability to add an A record to the corporate DNS, sup
 
 If adding those entries is problematic, a quick DNS solution for OpenShift is to use dnsmasq.
 
-=== VM Sizing
+=== Node Sizing
 
 The Offcial Documentation lists some link:https://docs.openshift.com/enterprise/3.0/admin_guide/install/prerequisites.html#system-requirements[minimal system requirements] for OpenShift masters and nodes. Beyond that, there are several things to consider when deciding on the sizing for your nodes.
 
@@ -130,7 +130,7 @@ unit: sectors
 EOF
 ----
 
-We apply this map to our attached volume using fdisk.
+We apply this map to our attached volume using sfdisk.
 
 [source,bash]
 ----
