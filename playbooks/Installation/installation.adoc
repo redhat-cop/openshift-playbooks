@@ -108,6 +108,8 @@ For option B: Leave unallocated space (20 - 50 GB) on your local disk. From the 
 
 * `docker-vg`
 
+TIP: For more information and examples about docker-storage-setup options, see link:https://access.redhat.com/articles/1492923[Managing Storage with Docker Formatted Containers on Red Hat Enterprise Linux and Red Hat Enterprise Linux Atomic Host] in the Red Hat Knowledge Base
+
 ===== Example: Configuring Host Storage with Docker Storage Option A
 
 To account for the above DataStore & Container storage needs, we are going to attach a single 25 GB volume and partition it to accommodate our needs. Here is a sample vdb layout for the disk:
@@ -196,7 +198,6 @@ mount -a
 ****
 Example using Docker option B.
 ****
-
 
 == Host Preparation
 
