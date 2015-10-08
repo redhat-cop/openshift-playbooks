@@ -116,26 +116,47 @@ NOTE: The following must be done on ALL NODES, including the Master. However, if
 
 [source,bash]
 ----
-cat << EOF > /tmp/ose_vdb_layout.txt
-# partition table of /dev/vdb
-unit: sectors
+# NOTE: actual numeric values will be different for each running system, but the steps outlined should be the same for all
 
-# 20 GB for Docker
-/dev/vdb1 : start=     2048, size= 41943040, Id=8e
-# 2 GB for Etcd
-/dev/vdb2 : start= 41945088, size=  4194304, Id=8e
-# We will leave 3GB unclaimed in case we need to expand either partition
-/dev/vdb3 : start=        0, size=        0, Id= 0
-/dev/vdb4 : start=        0, size=        0, Id= 0
-EOF
-----
+>> fdisk /dev/vdb
 
-We apply this map to our attached volume using sfdisk.
+Command (m for help): n <enter>
+Partition type:
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended
+Select (default p): p <enter>
+Partition number (1-4, default 1):  <enter>
+First sector (2048-16777215, default 2048): <enter>
+Using default value 2048
+Last sector, +sectors or +size{K,M,G} (2048-16777215, default 16777215): +20G <enter>
+Partition 1 of type Linux and of size 20 GiB is set
 
-[source,bash]
-----
-sfdisk /dev/vdb < /tmp/ose_vdb_layout.txt
-rm -f /tmp/ose_vdb_layout.txt
+Command (m for help): n <enter>
+Partition type:
+   p   primary (1 primary, 0 extended, 3 free)
+   e   extended
+Select (default p): p <enter>
+Partition number (2-4, default 2): <enter>
+First sector (12584960-16777215, default 12584960): <enter>
+Using default value 12584960
+Last sector, +sectors or +size{K,M,G} (12584960-16777215, default 16777215): +2G <enter>
+Partition 2 of type Linux and of size 2 GiB is set
+
+Command (m for help): t <enter>
+Partition number (1,2, default 2): 1 <enter>
+Hex code (type L to list all codes): 8e <enter>
+Changed type of partition 'Linux' to 'Linux LVM'
+
+Command (m for help): t <enter>
+Partition number (1,2, default 2): 2 <enter>
+Hex code (type L to list all codes): 8e <enter>
+Changed type of partition 'Linux' to 'Linux LVM'
+
+Command (m for help): w <enter>
+The partition table has been altered!
+
+Calling ioctl() to re-read partition table.
+Syncing disks.
 ----
 
 We then create the volume group, install docker, and run `docker-storage-setup`.
