@@ -4,7 +4,7 @@
 
 === Accessing Container Logs
 
-Because we use Kubernetes as the container orchestrator for OpenShift, the collection of and access to container logs is actually much simpler than most would think. This is because Kubernetes captures all stdout and stderr from every container and writes it to files on the node as json data within the contianer's data directory (i.e. `/var/lib/docker/<container-id>/<container-id>-json.log`). Kubernetes then creates a symbolic link to that logfile in /var/log/containers/, the name of which contains metadata about the continer such as namespace, container and pod ids. For example:
+Because we use Kubernetes as the container orchestrator for OpenShift, the collection of and access to container logs is actually much simpler than most would think. This is because Kubernetes captures all stdout and stderr from every container and writes it to files on the node as json data within the container's data directory (i.e. `/var/lib/docker/<container-id>/<container-id>-json.log`). Kubernetes then creates a symbolic link to that logfile in /var/log/containers/, the name of which contains metadata about the continer such as namespace, container and pod ids. For example:
 
 ----
 synthetic-logger-0.25lps-pod_default_synth-lgr-997599971ee6366d4a5920d25b79286ad45ff37a74494f262e3bc98d909d0a7b.log
@@ -24,7 +24,7 @@ If we just need to collect the raw data, then the centralization process is very
 
 .Feedback or Contribution Needed
 ****
-Need some examples of forwarding openshift logs using rsyslog.
+Need some examples of forwarding OpenShift logs using rsyslog.
 ****
 
 ==== Centralizing Logs with Fluentd

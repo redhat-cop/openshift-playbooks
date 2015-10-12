@@ -11,7 +11,14 @@ toc::[]
 
 Official Documentation: https://docs.openshift.com/enterprise/3.0/admin_guide/install/prerequisites.html
 
-=== VM Sizing
+
+=== DNS
+
+If the organization has the ability to add an A record to the corporate DNS, supporting wildcard name resolution to the OpenShift environment, that DNS server should be utilized.
+
+If adding those entries is problematic, a quick DNS solution for OpenShift is to use dnsmasq.
+
+=== Node Sizing
 
 The Offcial Documentation lists some link:https://docs.openshift.com/enterprise/3.0/admin_guide/install/prerequisites.html#system-requirements[minimal system requirements] for OpenShift masters and nodes. Beyond that, there are several things to consider when deciding on the sizing for your nodes.
 
@@ -33,65 +40,127 @@ Kubernetes, and therefore OpenShift has a logical limit to the number of nodes t
 
 The logical limit for Nodes in a cluster might sway administrators of large clusters to increase node size in order to increase the total capacity a Cluster can support
 
-=== Configuring Storage
+==== Questions to Ask
 
-There are two main components of OpenShift that require specialized storage considerations to ensure environment stability.
+. What is the total workload landscape?
+. What is the CPU and memory footprint of to-be-migrated workloads?
+. What is the platform type (bare metal, virtualized, IaaS)? (Failure is more difficult to handle in bare metal circumstances and may require more nodes)
+. Can all workloads run on the same nodes or do you require segregation?
 
-==== DataStore
+=== Storage Considerations
 
-OpenShift uses a key-value pair datastore called etcd to manage environment state. Etcd writes this data to `/var/lib/openshift`. While the data needs of the datastore are by no means large, it is important that it be given a dedicated partition or volume in order to protect it from other items (especially logs) filling up the disk, which could cause corruption of the etcd data.
+Without the proper protections in place (through either Disk partitioning or volume groups), we leave ourselves at risk that a component or service running on the host OS could potentially fill the disk, preventing either of these from writing to disk and corrupting the OSE install.
+
+==== OpenShift Storage Requirements
+
+There are two main components of OpenShift that require specialized storage considerations to ensure environment stability. These components are the OpenShift DataStore (etcd) and the Container Platform (Docker).
+
+===== DataStore (etcd)
+
+OpenShift uses a key-value pair datastore called etcd to manage environment state. Etcd writes this data to `/var/lib/openshift`. While the data needs of the datastore are by no means large, it is important that it be given dedicated storage in order to protect it from other items (especially logs) filling up the disk, which could cause corruption of the etcd data.
+
+IMPORTANT: When running multiple instances of etcd in a cluster configuration, etcd runs as a standalone process, rather than being embedded in the `openshift-master` service. When this is the case, etcd writes to `/var/lib/etcd` rather than `/var/lib/openshift`, and therefore the configurations should be adjusted accordingly.
 
 The size of the partition can be relatively small. For a lab or sandbox environment, 2GB should be plenty of disk. For larger, more permanent environments which will support multiple teams/users, 5 - 10GB may be needed.
 
-===== Backups, Shared Storage & Replication
+====== Backups, Shared Storage & Replication
 
 Etcd datastores can be clustered in order to prevent loss of data in the event of a failure. In this case etcd handles its own data replication, so there is no need for shared storage or external data replication. Standard backup practices can and should be observed here, but nothing more is needed.
 
-==== Container Platform
+===== Container Platform (Docker)
 
 Docker is the current container platform used by OpenShift. Docker uses local storage on each node to store images and active containers. The amount of storage needed depends on the size of the node and the number and size of the containers expected to be supported by each node. It would not be uncommon for Nodes to support anywhere from 20 - 100 containers depending on the environment, and container images can be sizeable. We recommend planning for a reasonably large image size of 500mb. That means a partition or volume size of 20 - 50GB is required per node.
 
 Docker's data directories live in `/var/lib/docker`, so the disk space should be allocated to that mount point. As with the OpenShift DataStore, it is highly recommended to give Docker a dedicated partition or volume so as to protect it from over-crowding by logging or other administrative services.
 
-===== Backups, Shared Storage & Replication
+NOTE: This section is referring to local storage used by Docker to run containers on a host. This *DOES NOT* refer to running a Docker registry.
+
+====== Backups, Shared Storage & Replication
 
 Nodes are considered stateless in a Kubernetes architecture, meaning that in the event of a loss of a Node, the Scheduler will immediately replace lost containers elsewhere in the environment. Therefore, no specialized sharing or replication is required at the node level to account for loss.
 
-===== Configuration Considerations
+====== Configuration Considerations
 
 The `docker` package ships with a command for setting up docker storage, `docker-storage-setup`. This script expects us to create a volume group for it in order to point it to the storage we've allocated.
 
-==== Example Storage Configuration
+==== Storage Configuration Implementation
+
+===== Local Disk Config
+
+Create the following partitions (disk partitions or LVMs) on the system disk image:
+
+* Boot partition (`/boot`)
+* OS Root (`/`)
+* etcd storage (`/var/lib/openshift` or `/var/lib/etcd`)
+* Log storage (`/var/log`) - Optional, but recommended
+
+===== Docker Storage Config
+
+The OpenShift docs discuss link:https://docs.openshift.com/enterprise/3.0/install_config/install/prerequisites.html#configuring-docker-storage[three different options for configuring docker storage]. We consider options A and B to be "production ready".
+
+For option A: Attach an additional volume or block device to each node for Docker storage (20-50 GB)
+
+For option B: Leave unallocated space (20 - 50 GB) on your local disk. From the unallocated space, create the following volume group:
+
+* `docker-vg`
+
+TIP: For more information and examples about docker-storage-setup options, see link:https://access.redhat.com/articles/1492923[Managing Storage with Docker Formatted Containers on Red Hat Enterprise Linux and Red Hat Enterprise Linux Atomic Host] in the Red Hat Knowledge Base
+
+===== Example: Configuring Host Storage with Docker Storage Option A
 
 To account for the above DataStore & Container storage needs, we are going to attach a single 25 GB volume and partition it to accommodate our needs. Here is a sample vdb layout for the disk:
 
 NOTE: The following must be done on ALL NODES, including the Master. However, if you are not going to be using the master as a node, then a minimal volume size can be used, as no containers will be hosted. Also, for NODES that are NOT MASTERS, the second DataStore partition is not needed.
 
-```bash
-cat << EOF > /tmp/ose_vdb_layout.txt
-# partition table of /dev/vdb
-unit: sectors
+[source,bash]
+----
+# NOTE: actual numeric values will be different for each running system, but the steps outlined should be the same for all
 
-# 20 GB for Docker
-/dev/vdb1 : start=     2048, size= 41943040, Id=8e
-# 2 GB for Etcd
-/dev/vdb2 : start= 41945088, size=  4194304, Id=8e
-# We will leave 3GB unclaimed in case we need to expand either partition
-/dev/vdb3 : start=        0, size=        0, Id= 0
-/dev/vdb4 : start=        0, size=        0, Id= 0
-EOF
-```
+>> fdisk /dev/vdb
 
-We apply this map to our attached volume using fdisk.
+Command (m for help): n <enter>
+Partition type:
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended
+Select (default p): p <enter>
+Partition number (1-4, default 1):  <enter>
+First sector (2048-16777215, default 2048): <enter>
+Using default value 2048
+Last sector, +sectors or +size{K,M,G} (2048-16777215, default 16777215): +20G <enter>
+Partition 1 of type Linux and of size 20 GiB is set
 
-```bash
-sfdisk /dev/vdb < /tmp/ose_vdb_layout.txt
-rm -f /tmp/ose_vdb_layout.txt
-```
+Command (m for help): n <enter>
+Partition type:
+   p   primary (1 primary, 0 extended, 3 free)
+   e   extended
+Select (default p): p <enter>
+Partition number (2-4, default 2): <enter>
+First sector (12584960-16777215, default 12584960): <enter>
+Using default value 12584960
+Last sector, +sectors or +size{K,M,G} (12584960-16777215, default 16777215): +2G <enter>
+Partition 2 of type Linux and of size 2 GiB is set
+
+Command (m for help): t <enter>
+Partition number (1,2, default 2): 1 <enter>
+Hex code (type L to list all codes): 8e <enter>
+Changed type of partition 'Linux' to 'Linux LVM'
+
+Command (m for help): t <enter>
+Partition number (1,2, default 2): 2 <enter>
+Hex code (type L to list all codes): 8e <enter>
+Changed type of partition 'Linux' to 'Linux LVM'
+
+Command (m for help): w <enter>
+The partition table has been altered!
+
+Calling ioctl() to re-read partition table.
+Syncing disks.
+----
 
 We then create the volume group, install docker, and run `docker-storage-setup`.
 
-```bash
+[source,bash]
+----
 pvcreate /dev/vdb1
 vgcreate vg-docker /dev/vdb1
 
@@ -102,10 +171,11 @@ EOF
 
 # Let docker setup the storage based on the above config file
 docker-storage-setup
-```
+----
 
 Finally, the DataStore, we setup the volume group, create data directory, and mount it.
-```bash
+[source,bash]
+----
 pvcreate /dev/vdb2
 vgcreate vg-openshift /dev/vdb2
 lvcreate -l 100%FREE -n lv-ose vg-openshift
@@ -116,7 +186,14 @@ mkdir -p /var/lib/openshift
 echo "/dev/vg-openshift/lv-ose        /var/lib/openshift              xfs defaults 0 0" >> /etc/fstab
 
 mount -a
-```
+----
+
+===== Example: Configuring Host Storage with Docker Storage Option B
+
+.Feedback or Contribution Needed
+****
+Example using Docker option B.
+****
 
 == Host Preparation
 
@@ -124,8 +201,11 @@ Official Documenation for link:https://docs.openshift.com/enterprise/3.0/admin_g
 
 Overall requirements for Installing OpenShift are very simple:
 
-* Install Red Hat Enterprise Linux 7.1
-* Subscribe to the following channels
+* Install Red Hat provided Red Hat Enterprise Linux 7.1 image
+** If the environment uses a custom image, we recommend testing the OSE install with the Red Hat provided image first, then incrementally adding environment-specific image customizations with an eye toward the following:
+*** Assess whether the image customization is still appropriate and necessary (to avoid changes inherited from earlier circumstances that are no longer relevant)
+*** Test each customization to make sure it allows normal OSE operation and mitigate if necessary
+* Subscribe to the following channels on the Red Hat Customer Portal (if environment uses Satellite, custom yum repos, or other mechanisms, these channels may have different organization and/or labels)
 ** rhel-7-server-rpms
 ** rhel-7-server-extras-rpms
 ** rhel-7-server-optional-rpms
@@ -133,9 +213,15 @@ Overall requirements for Installing OpenShift are very simple:
 * If you plan to Install HA Masters, an additional channel is needed on Master Nodes
 ** rhel-7-for-ha-server-rpms
 * Remove all `NetworkManager*` packages
-* Install the following extra packages: `wget git net-tools bind-utils iptables-services bridge-utils`
-* Fully update all packages (`yum -y update`)
-* Configure Storage according to <<#_configuring_storage>>
+
+.Update Needed
+****
+Verify this step is still needed in the official documentation
+****
+* Install the following extra packages: `yum install wget git net-tools bind-utils iptables-services bridge-utils`
+* Optional: install the following diagnostic tools: `yum install lsof strace nc telnet`
+* Fully update all packages: `yum -y update`
+* Configure Storage according to <<_storage_considerations>>
 * Sync SSH keys from masters to all nodes (HINT: Here's a script to do this: TODO)
 
 NOTE: Installing High Availability Masters requires the _High Availability for RHEL 7 Add-on_. This is a separate subscription from RHEL 7 or OpenShift so make sure you have acquired the proper subscriptions ahead of time.
@@ -165,23 +251,37 @@ In many cloud environments, it's common for you to assign hostnames to your host
 master.ose.example.com openshift_hostname=master.ose.example.com openshift_public_ip=10.3.4.5
 ----
 
+.Feedback or Contribution Needed
+****
+Need to add DNS subdomain, node labeling, master schedulable flag
+****
+
 == Automating the Install
 
+.Feedback or Contribution Needed
+****
 Things to talk about
 
 * Scripting options
 ** Ansible
 ** Bash (show osc-install script)
+****
 
 == Troubleshooting
 
+.Feedback or Contribution Needed
+****
 Things to talk about
 
 * Hostname issue
+****
 
 == Parking Lot Items
 
+.Feedback or Contribution Needed
+****
 This is a list of items that we would like contributions on:
 
 * HA Masters need High Availability Add-On
 * Adding Nodes
+****

@@ -1,4 +1,4 @@
-= Disconnected Environments
+= Enterprise Environments
 Trevor Quinn <tquinn@redhat.com>
 v1.0, 2015-09-10
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
@@ -7,17 +7,19 @@ v1.0, 2015-09-10
 
 toc::[]
 
-There are at least three considerations for disconnected environments:
+There are at least three considerations for enterprise environments:
 
-== Yum Repositories
+== Disconnected Environments
 
-If the environment does not use Red Hat Satellite, you will need to set up a server to host yum repositories locally. That one server alone needs to be registered with Red Hat Subscription Manager.
+=== Yum Repositories
+
+If the environment does not use Red Hat Satellite 6, you will need to set up a server to host yum repositories locally. That one server alone needs to be registered with Red Hat Subscription Manager.
 
 https://access.redhat.com/solutions/23016
 
-== OpenShift Docker Images
+=== OpenShift Docker Images
 
-You need to install a Docker registry on the internal network to avoid reaching out to Red Hat and DockerHub Docker registries. A script can be used to pull images from public registries like registry.access.redhat.com and dockerhub.io and push them to the internal repository. An example script is available at: An example script is available at: {scripts_repo}/blob/openshift-enterprise-3/docker-registry-sync. A minimal scripts is as follows:
+You need to install a Docker registry on the internal network to avoid reaching out to Red Hat and DockerHub Docker registries. A script can be used to pull images from public registries like registry.access.redhat.com and dockerhub.io and push them to the internal registry. An example script is available at: An example script is available at: {scripts_repo}/blob/openshift-enterprise-3/docker-registry-sync. A minimal scripts is as follows:
 
     #!/bin/bash
     yum install -y docker docker-registry firewalld
@@ -32,6 +34,13 @@ If the registry is not secured, the following annotation needs to be added to ea
 
     "openshift.io/image.insecureRepository": "true"
 
-== Optional: Quickstart Examples.
+=== Optional: Quickstart Examples
 
 To use any of the out of the box quickstart examples with OpenShift, you will need to clone the source code for them out of GitHub into an internal Git repository readable by all system users. *Quickstart templates will need to be updated to reflect the newly created internal Docker image and internal Git source locations.*
+
+== Dealing with Corporate Web Proxies
+
+.Feedback or Contribution Needed
+****
+Need to add a discussion of approach for handling corporate proxies.
+****

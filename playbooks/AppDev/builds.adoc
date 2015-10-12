@@ -1,5 +1,5 @@
 Builds
-=====	
+=====
 Andrew Block <ablock@redhat.com>
 v1.0, 2015-09-15
 :toc: macro
@@ -29,7 +29,7 @@ The following build strategies are available in OpenShift V3:
 * Custom Build
 
 
-=== Docker Build 
+=== Docker Build
 
 One of most popular methods of creating a Docker image is to utilize a Dockerfile. This allows for a new image to be built on top of an existing base image with additional layers created from directives within the Dockerfile
 
@@ -48,7 +48,7 @@ RUN yum update -y; yum clean all <3>
 # Install Apache Web Server
 RUN yum install -y httpd; yum clean all
 
-# Add the tar file of the web site 
+# Add the tar file of the web site
 ADD mysite.tar /tmp/ <4>
 
 # Docker automatically extracted. So move files to web directory
@@ -72,10 +72,10 @@ CMD [ "-D", "FOREGROUND" ] <7>
 A Docker build in OpenShift is similar to a Docker build in a standalone environment.
 
 * An ImageStream containing a reference to a Docker image and/or a location containing a Dockerfile must be specified
-* New Docker images are created by reading instructions from a Dockerfile. 
+* New Docker images are created by reading instructions from a Dockerfile.
 
 
-==== Additional Resources 
+==== Additional Resources
 * https://docs.docker.com/reference/builder/[Dockerfile]
 ** https://docs.docker.com/articles/dockerfile_best-practices/[Dockerfile Best Practices]
 
@@ -99,7 +99,7 @@ The following is a snippet of code demonstrating the use of a Docker build in a 
       "type": "Git",
       "git": {
         "uri": "git://github.com/openshift/origin.git", <1>
-        "ref": "master" <2> 
+        "ref": "master" <2>
       },
       "contextDir": "images/openldap" <3>
     },
@@ -129,7 +129,7 @@ The following is a snippet of code demonstrating the use of a Docker build in a 
 <2> Branch of repository to utilize
 <3> Directory in repository containing Dockerfile
 <4> Specifies the base image the build is utilizing. Can be use to track against changes to trigger a rebuild of the application if configured
-<5> After the Docker image is successfully built, it will be pushed into the repository described 
+<5> After the Docker image is successfully built, it will be pushed into the repository described
 
 
 ==== Benefits
@@ -150,7 +150,7 @@ Source-to-Image (S2I) is a framework that makes it easy to write images that tak
 _________________________________________________
 
 
-*Note:* Source to Image was initially abbreviated STI but was renamed S2I prior to the general availability release of OSE. 
+*Note:* Source to Image was initially abbreviated STI but was renamed S2I prior to the general availability release of OSE.
 
 === S2I process deep drive
 
@@ -163,7 +163,7 @@ The following table provides an overview of the S2I builder image is required to
 
 .S2I Scripts
 |===
-| Name | Description | Notes 
+| Name | Description | Notes
 
 |*assemble*
 |Builds the application artifact from source and places them into the directory within the image
@@ -186,7 +186,7 @@ The following table provides an overview of the S2I builder image is required to
 |optional
 |===
 
-*Note:* In most cases, you will be interacting with the _assemble_ and _run_ scripts. 
+*Note:* In most cases, you will be interacting with the _assemble_ and _run_ scripts.
 
 ==== Specifying S2I Scripts Location
 
@@ -204,7 +204,7 @@ To maximize the flexibility and extensibility of the S2I process, an S2I script 
         "kind": "ImageStreamTag",
         "name": "builder-image:latest"
       },
-      "scripts": "http://somehost.com/scripts_directory" 
+      "scripts": "http://somehost.com/scripts_directory"
     }
   }
 }
@@ -222,11 +222,11 @@ Both the [Red]#io.openshift.s2i.scripts-url# label specified in the image and th
 
 ==== Injecting Environment Variables
 
-Values can be injected into S2I scripts to enable dynamic configuration for a particular OpenShift environment using two methods: 
+Values can be injected into S2I scripts to enable dynamic configuration for a particular OpenShift environment using two methods:
 
 * Environment File - File called `.sti/environment` within the application source code
 * BuildConfig definition - Environment variables can be specified within the strategy section of a BuildConfig definition. The following example illustrates the usage within a BuildConfig definition:
-  
+
 [source]
 ----
 {
@@ -275,7 +275,7 @@ Values can be injected into S2I scripts to enable dynamic configuration for a pa
 Several of the builder images utilize environment variable to drive their execution. Examples include setting the location of a proxy server using the `HTTP_PROXY` variable or to set Maven arguments using the `MAVEN_ARGS` variable.
 
 
-==== Additional Resources 
+==== Additional Resources
 * https://docs.openshift.com/enterprise/3.0/creating_images/s2i.html#s2i-scripts[S2I Scripts]
 
 
@@ -292,13 +292,13 @@ The following S2I builder images are available in the OpenShift ecosystem
 
 
 ==== JBoss EAP Integration
-	
+
 The JBoss EAP image for OpenShift includes S2I scripts located in the 	`/usr/local/sti` directory. These are run by default if the application being built does not include any of the S2I scripts
 
 The best way to learn how the JBoss S2I builder works is to investigate the builder itself. Run the following command to start a container containing the builder image
 
    docker run -it --rm --entrypoint=/bin/bash registry.access.redhat.com/jboss-eap-6/eap-openshift
-   
+
 *Note:* the `--entrypoint` option is used to override the default functionality to start the JBoss server
 
 Areas to explore:
@@ -310,9 +310,9 @@ Areas to explore:
 
 ===== Custom configurations
 
-Custom JBoss configurations and modules can be added to your application which will be automatically configured in the resulting image. 
+Custom JBoss configurations and modules can be added to your application which will be automatically configured in the resulting image.
 
-*Configurations* - Configuration files, such as the JBoss _standalone.xml_, can be placed in a folder called _configuration_ in the application source 
+*Configurations* - Configuration files, such as the JBoss _standalone.xml_, can be placed in a folder called _configuration_ in the application source
 
 *Modules* - Modules can be placed in a _modules_ folder within the application source. They are recursively copied to the JBoss modules folder
 
@@ -321,13 +321,13 @@ Custom JBoss configurations and modules can be added to your application which w
 There are a number of existing S2I builders that you can look to leverage for your application. You can also choose to create your own S2I builder to be able to leverage the benefits of S2I, but to also customize the process for your particular implementation
 
 * https://github.com/openshift/source-to-image/blob/master/README.md#installation[Installation]
-* https://github.com/openshift/source-to-image/blob/master/docs/cli.md[CLI]	
+* https://github.com/openshift/source-to-image/blob/master/docs/cli.md[CLI]
 * https://docs.openshift.com/enterprise/3.0/creating_images/s2i_testing.html[Testing]
 * https://blog.openshift.com/create-s2i-builder-image/[Creating an S2I Builder Image]
 
 
 === Binary deployments
-		
+
 In certain cases, an application may be previously compiled outside of an OpenShift build. You can use the _assemble_ phase of an S2I build process to retrieve the previously packaged artifact and insert it into the typical build process of the builder being leveraged.
 
 The following is an example of a deployment of a binary application for the OpenShift JBoss EAP image
@@ -336,7 +336,7 @@ The following is an example of a deployment of a binary application for the Open
 ----
 #!/bin/bash
 
-# Download and place binary in JBoss. WAR_FILE_URL variable is specified as an environment variable in the BuildConfig 
+# Download and place binary in JBoss. WAR_FILE_URL variable is specified as an environment variable in the BuildConfig
 curl -o $JBOSS_HOME/standalone/deployments/ROOT.war -O ${WAR_FILE_URL}
 
 # Call default assemble script
@@ -347,7 +347,7 @@ curl -o $JBOSS_HOME/standalone/deployments/ROOT.war -O ${WAR_FILE_URL}
 The location where this script is found can be included in the _BuildConfig_ in one of two methods:
 
 * In a `.sti/bin` folder within separate git repository
-* A directory containing S2I scripts defined by the `scripts` attribute 
+* A directory containing S2I scripts defined by the `scripts` attribute
 
 == Custom Build
 
@@ -406,7 +406,7 @@ The following is a snippet of code demonstrating the use of a BuildConfig
 
 == Triggers
 
-Triggers are a methods you can define that controls the circumstances in which a BuildConfig should be run. The following options are available: 
+Triggers are a methods you can define that controls the circumstances in which a BuildConfig should be run. The following options are available:
 
 * GitHub Webhooks
 ** Handles a call made from a GitHub repository
@@ -453,7 +453,7 @@ While OpenShift provides several methods for producing a resulting image, it may
 
 [cols="1,2a"]
 |===
-| Strategy | Usage 
+| Strategy | Usage
 
 |Docker
 |
@@ -461,14 +461,14 @@ While OpenShift provides several methods for producing a resulting image, it may
 * Static images (ones that change infrequently)
 
 |S2I
-| 
+|
 * Layer application code on existing images
 * Reuse artifacts from previous builds
 * Use existing S2I builders
 * Ability to test builder executions
 
 |Custom
-| 
+|
 * Existing builders do not provide the functionality to produce the appropriate resulting image.
 * Custom testing logic associated within a CI process
 |===
@@ -489,20 +489,20 @@ The following is an example of how to define a proxy server to mediate requests 
 "source": {
   "type": "Git",
   "git": {
-    "uri": "https://github.com/openshift/ruby-hello-world.git", 
-    "httpProxy"  : "http://someproxy.com", 
-    "httpsProxy" : "https://someproxy.com" 
+    "uri": "https://github.com/openshift/ruby-hello-world.git",
+    "httpProxy"  : "http://someproxy.com",
+    "httpsProxy" : "https://someproxy.com"
   }
 }
 ----
 
 == Build Management
 
-Builds can be managed from both the OpenShift web console and the CLI 
+Builds can be managed from both the OpenShift web console and the CLI
 
 === CLI Commands
 
-* Get all Builds 
+* Get all Builds
 
 `oc get builds`
 
@@ -522,12 +522,12 @@ Builds can be managed from both the OpenShift web console and the CLI
 Consult the help option of each subcommand for additional information and usage
 
 ==== Comparisons with OpenShift 2 Build process
-	
+
 The build process in OpenShift V3 is slightly different than in OpenShift V2. The following table defines some of the differences between the two versions:
 
 
 |===
-| Name | OpenShift V2 | OpenShift V3 
+| Name | OpenShift V2 | OpenShift V3
 
 |*Source Code*
 |Resides in the gear and utilized at build time
