@@ -59,7 +59,7 @@ There are two main components of OpenShift that require specialized storage cons
 
 OpenShift uses a key-value pair datastore called etcd to manage environment state. Etcd writes this data to `/var/lib/openshift`. While the data needs of the datastore are by no means large, it is important that it be given dedicated storage in order to protect it from other items (especially logs) filling up the disk, which could cause corruption of the etcd data.
 
-IMPORTANT: When running multiple instances of etcd in a cluster configuration, etcd runs as a standalone process, rather than being embedded in the `openshift-master` service. When this is the case, etcd writes to `/var/lib/etcd` rather than `/var/lib/openshift`, and therefore the configurations should adjust accordingly.
+IMPORTANT: When running multiple instances of etcd in a cluster configuration, etcd runs as a standalone process, rather than being embedded in the `openshift-master` service. When this is the case, etcd writes to `/var/lib/etcd` rather than `/var/lib/openshift`, and therefore the configurations should be adjusted accordingly.
 
 The size of the partition can be relatively small. For a lab or sandbox environment, 2GB should be plenty of disk. For larger, more permanent environments which will support multiple teams/users, 5 - 10GB may be needed.
 
@@ -73,7 +73,7 @@ Docker is the current container platform used by OpenShift. Docker uses local st
 
 Docker's data directories live in `/var/lib/docker`, so the disk space should be allocated to that mount point. As with the OpenShift DataStore, it is highly recommended to give Docker a dedicated partition or volume so as to protect it from over-crowding by logging or other administrative services.
 
-NOTE: This section is referring to local storage used be docker to run containers on a host. This *DOES NOT* refer to running a docker registry.
+NOTE: This section is referring to local storage used by Docker to run containers on a host. This *DOES NOT* refer to running a Docker registry.
 
 ====== Backups, Shared Storage & Replication
 
@@ -82,10 +82,6 @@ Nodes are considered stateless in a Kubernetes architecture, meaning that in the
 ====== Configuration Considerations
 
 The `docker` package ships with a command for setting up docker storage, `docker-storage-setup`. This script expects us to create a volume group for it in order to point it to the storage we've allocated.
-
-===== Logs
-
-Blah.
 
 ==== Storage Configuration Implementation
 
