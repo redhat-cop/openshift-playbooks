@@ -9,8 +9,10 @@ oc delete user <user name>
 oc delete identity <identity name>
 oadm policy remove-user <user name>
 oadm policy remove-cluster-role-from-user <user name>
-------------
+-----------
+
 If the user is a member of a group:
+
 -----------
 oadm groups remove-users <group name> <user name>
 -----------
