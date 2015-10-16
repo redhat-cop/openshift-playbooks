@@ -1,0 +1,16 @@
+= [Bug 1256869] Deleting Users and Identity does not remove Authorization Settings
+
+Issue: When you delete a user and their corresponding identity the policy and role bindings still remain. 
+Related to this, a user's group membership is also maintained.
+
+To properly delete all user information:
+-----------
+oc delete user <user name>
+oc delete identity <identity name>
+oadm policy remove-user <user name>
+oadm policy remove-cluster-role-from-user <user name>
+------------
+If the user is a member of a group:
+-----------
+oadm groups remove-users <group name> <user name>
+-----------
