@@ -8,7 +8,7 @@
 * link:playbooks/Installation[OSE 3 SmartStart (Production-Ready Installation and Configuration)]
 * link:playbooks/AppDev[OSE 3 Application Development]
 * link:playbooks/Operationalizing[Operationalizing OSE 3]
-* link:playbooks/Troubleshooting[TroubleShooting]
+* link:playbooks/Troubleshooting[Troubleshooting]
 * Container Migration Factory
 
 == How to Contribute
