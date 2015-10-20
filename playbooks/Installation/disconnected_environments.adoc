@@ -13,7 +13,7 @@ There are at least three considerations for enterprise environments:
 
 === Assumptions
 
-This document assumes that you understand the overall architecture of OpenShift 3 and that you have already planned out what the topology of your environment will look like. If you do not have a thorough understanding of the architecture of OpenShift 3, the service layer, projects, and how topologies are configured via the scheduler, there are steps in this document that may not make sense. This document also assumes that you have some understanding of Docker, registries, and Docker’s command line tools.
+This document assumes that you understand the overall architecture of OpenShift 3 and that you have already planned out what the topology of your environment will look like. If you do not have a thorough understanding of the architecture of OpenShift 3, the service layer, projects, and how topologies are configured via the scheduler, there are steps in this document that may not make sense. For more information, see https://docs.openshift.com/enterprise/3.0/architecture/overview.html[OSE 3 Architecture Overview]. This document also assumes that you have some understanding of Docker, registries, and Docker’s command line tools.
 
 === Required Software and Components
 
@@ -32,7 +32,9 @@ This document additionally details manually downloading the Docker images and ho
 Once installed, in order to use OpenShift, you will need source code in a source control repository (current Git). We assume that an internal git repository is available that can host source code and this repository is accessible from the OpenShift nodes. Installing the source control repository is out of scope of this document.
 
 Also when you try to build applications in OpenShift, your build may have some external dependencies such as a Maven Repository or Gem files (for Ruby). By default, the docker images provided by RedHat try to reach out to external repositories on internet. You can configure to use your own internal repositories. For the purposes of this document, we assume that such internal repositories already exist and are accessible from the OpenShift nodes. Installing such repositories is outside the scope of this document.
-Software and Docker Image Preparation
+
+=== Software and Docker Image Preparation
+
 In order to pull down the required software repositories and Docker images, you will need a RHEL7 server with access to the internet and at least 100GB of additional free space. All steps in this section should be performed on the internet-connected server. It is assumed that all steps will be performed as the root system user.
 
 ==== Syncing Repositories
@@ -106,8 +108,9 @@ The next commands will pull all of the required OpenShift dockerized components:
     docker pull registry.access.redhat.com/openshift3/ose-pod
     docker pull registry.access.redhat.com/openshift3/ose-docker-registry
 
-The next commands will pull Red Hat’s certified Source-to-Image (S2I) builder images. Source-to-Image (S2I) is the process that OpenShift uses to take application code and build it into a Docker image to run on the platform. More information about S2I can be found in the documentation, here:
-LINKTODOCS
+The next commands will pull Red Hat’s certified Source-to-Image (S2I) builder images. Source-to-Image (S2I) is the process that OpenShift uses to take application code and build it into a Docker image to run on the platform. More information about S2I can be found here:
+
+link:../AppDev/builds.adoc[OpenShift Playbooks: Builds]
 
 If there are any languages, runtimes or databases that you do not wish to use, you can skip them.
 
@@ -209,9 +212,7 @@ Now start and enable Apache:
 
 At this point you can perform the initial build of the hosts that will be part of the OpenShift environment. It is recommended to use the latest version of Red Hat Enterprise Linux and to perform a minimal installation. You will also want to pay attention to the other OpenShift-specific prerequisites, documented here:
 
-https://access.redhat.com/documentation/en/openshift-enterprise/version-3.0/openshift-enterprise-30-installation-and-configuration/chapter-2-installing#prerequisites-1
-
-(Sections 2.2.1, 2.2.2, 2.2.3, 2.2.4)
+link:./installation.adoc[OpenShift Playbooks: OpenShift Enterprise 3 Installation]
 
 Once the hosts are initially built, the repositories can be set up.
 
