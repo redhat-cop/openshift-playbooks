@@ -136,7 +136,7 @@ cat << EOF > /etc/td-agent/config.d/kubernetes.conf
 EOF
 ----
 
-OSE does not have logs of it's own, however if you are using an HA OSE environment there are some services that are useful to provide centralized logging.
+If you are using an HA OSE environment there are some services that are useful to provide centralized logging.
 
 Create a Pacemaker config file:
 
@@ -190,6 +190,8 @@ Create a Corosync config file:
   </match>
 
 ----
+
+TODO: Add EXEC logging and parsing for Openshift logging in /var/log/messages.
 
 Finally, we need to enable and start the fluentd service
 
