@@ -1,15 +1,15 @@
-= Using Persistent Storage in OSEv3
+= Using Persistent Storage in OpenShift Enterprise v3
 Øystein Bedin <bedin@redhat.com>
 v1.0, 2015-10-27
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
 :toc: macro
 :toc-title:
 
-Persistent Storage can be used for multiple aspects of OSEv3, including for applications to keep state, for databases, etc. In OSEv3, setting up a persistent storage consists of 2 steps - setting up a volume and a claim. The configuration of the persistent storage volume is a task handled by the system administrator, while the claim is tied to the deployment of a pod. 
+Persistent Storage can be used for multiple aspects of OpenShift Enterprise v3, including for applications to keep state, for databases, etc. In OpenShift Enterprise v3, setting up a persistent storage consists of 2 steps - setting up a volume and a claim. The configuration of the persistent storage volume is a task handled by the system administrator, while the claim is tied to the deployment of a pod. 
 
 The steps taken to set up a persistent volume, and a corresponding volume claim, are not directly tied to each other. However, as the below examples shows, labels can be used to correlate a claim with a volume. 
 
-More information about the persistent storage architecture in OSEv3 can be found https://docs.openshift.com/enterprise/3.0/architecture/additional_concepts/storage.html[here].
+More information about the persistent storage architecture in OpenShift Enterprise v3 can be found https://docs.openshift.com/enterprise/3.0/architecture/additional_concepts/storage.html[here].
 
 toc::[]
 
@@ -48,7 +48,7 @@ More information can be found https://docs.openshift.com/enterprise/3.0/admin_gu
 
 == Setting up a Persistent Volume Claim
 
-In order for a project to use as volume, a claim needs to be created. This is how OSEv3 knows to assign a volume, with matching properties, to a project. The project can then assign the claim to a pod. 
+In order for a project to use a storage volume, a claim needs to be created. This is how OpenShift Enterprise v3 knows to assign a volume, with matching properties, to a project. The project can then assign the claim to a pod. 
 
 Below is an example of a PersistentVolumeClaim definition - in this case to be used for the registry. 
 
