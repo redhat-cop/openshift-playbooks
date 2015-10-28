@@ -1,4 +1,4 @@
-= Using Persistant Storage in OSEv3
+= Using Persistent Storage in OSEv3
 Øystein Bedin <bedin@redhat.com>
 v1.0, 2015-10-27
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
