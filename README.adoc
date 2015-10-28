@@ -3,8 +3,8 @@
 == Playbook Directory
 
 * Continuous Integration
-* Container-Driven Continuous Delivery
-* link:playbooks/ContinuousDelivery[Continuous Delivery with Traditional Platforms]
+* link:playbooks/ContinuousDelivery[Container-Driven Continuous Delivery]
+* Continuous Delivery with Traditional Platforms
 * link:playbooks/Installation[OSE 3 SmartStart (Production-Ready Installation and Configuration)]
 * link:playbooks/AppDev[OSE 3 Application Development]
 * link:playbooks/Operationalizing[Operationalizing OSE 3]
