@@ -1,3 +1,4 @@
 = Operationalizing OSE 3
 
 * link:./integration.adoc[API Integration Guide]
+* link:./persistent_storage.adoc[Persistent Storage Guide]

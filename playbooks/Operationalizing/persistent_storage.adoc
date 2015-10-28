@@ -1,0 +1,111 @@
+= Using Persistant Storage in OSEv3
+Øystein Bedin <bedin@redhat.com>
+v1.0, 2015-10-27
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+Persistent Storage can be used for multiple aspects of OSEv3, including for applications to keep state, for databases, etc. In OSEv3, setting up a persistent storage consists of 2 steps - setting up a volume and a claim. The configuration of the persistent storage volume is a task handled by the system administrator, while the claim is tied to the deployment of a pod. 
+
+The steps taken to set up a persistent volume, and a corresponding volume claim, are not directly tied to each other. However, as the below examples shows, labels can be used to correlate a claim with a volume. 
+
+More information about the persistent storage architecture in OSEv3 can be found https://docs.openshift.com/enterprise/3.0/architecture/additional_concepts/storage.html[here].
+
+toc::[]
+
+== Setting up a Persistent Volume
+
+With version 3.0.x of OpenShift Enterprise, the supported storage solution is based on NFS. 
+
+Below is an example of a Persistent Volume tied to the nfs share 192.168.25.55:/mnt/nfs1
+
+----
+[root@master1 ~]# cat pv_nfs1.json  
+{ 
+  "apiVersion": "v1", 
+  "kind": "PersistentVolume", 
+  "metadata": { 
+    "name": "registry", 
+    "labels": { 
+      "purpose": "registry" 
+    } 
+  }, 
+  "spec": { 
+    "capacity": { 
+        "storage": "20Gi" 
+    }, 
+    "accessModes": [ "ReadWriteOnce" ], 
+    "nfs": { 
+        "path": "/mnt/nfs1", 
+        "server": "192.168.25.55" 
+    }, 
+    "persistentVolumeReclaimPolicy": "Retain" 
+  } 
+} 
+----
+
+More information can be found https://docs.openshift.com/enterprise/3.0/admin_guide/persistent_storage_nfs.html[here].
+
+== Setting up a Persistent Volume Claim
+
+In order for a project to use as volume, a claim needs to be created. This is how OSEv3 knows to assign a volume, with matching properties, to a project. The project can then assign the claim to a pod. 
+
+Below is an example of a PersistentVolumeClaim definition - in this case to be used for the registry. 
+
+----
+[root@master1 ~]# cat pvc_nfs1.json  
+{ 
+    "apiVersion": "v1", 
+    "kind": "PersistentVolumeClaim", 
+    "metadata": { 
+        "name": "nfs1", 
+        "labels": { 
+          "purpose": "registry" 
+        } 
+    }, 
+    "spec": { 
+        "accessModes": [ "ReadWriteOnce" ], 
+        "selector": { 
+            "purpose": "registry" 
+        }, 
+        "resources": { 
+            "requests": { 
+                "storage": "20Gi" 
+            } 
+        } 
+    } 
+} 
+----
+
+More information can be found https://docs.openshift.com/enterprise/3.0/dev_guide/persistent_volumes.html[here].
+
+== Associating a specific Volume with a Claim
+
+In some cases, it is desirable to associate a specific volume with a claim, and hence a project and pod. For example, in the event that storage paritions are used to enforce disk quotas, it may be useful to know that a particular project gets the correct partition assigned for its use. Or, maybe different projects have different SLAs and hence the storage needs to be assigned appropriately. This can be accomplished by using labels. 
+
+As the examples above show for PersistentVolume and PersistentVolumeClaims, the claim has a selector set to assign the correct volume.
+----
+{ 
+    :
+    "spec": {
+        "selector": {
+            "purpose": "registry"
+        },
+    }
+}
+----
+
+Below is the full example using the above example configuration. This shows that the "app1" volume is still available while the "registry" volume has been claimed by the "nfs1" claim.
+
+----
+[root@master1 ~]# oc create -f pv_nfs1.json 
+[root@master1 ~]# oc create -f pvc_nfs1.json 
+[root@master1 ~]# oc get pv 
+NAME       LABELS             CAPACITY      ACCESSMODES   STATUS      CLAIM          REASON 
+app1       purpose=app1       5368709120    RWO           Available                   
+registry   purpose=registry   21474836480   RWO           Bound       default/nfs1    
+[root@master1 ~]# oc get pvc 
+NAME      LABELS                  STATUS    VOLUME 
+nfs1      map[purpose:registry]   Bound     registry 
+----
+
