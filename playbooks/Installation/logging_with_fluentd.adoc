@@ -191,8 +191,6 @@ Create a Corosync config file:
 
 ----
 
-TODO: Add EXEC logging and parsing for Openshift logging in /var/log/messages.
-
 Finally, we need to enable and start the fluentd service
 
 [source,bash]
@@ -208,3 +206,8 @@ NOTE: This is assuming you have containers running and generating logs. The log 
 == Configuring Central Log Server
 
 For Central Log server configuration, we can refer back to the OpenShift Docs for link:https://docs.openshift.com/enterprise/3.0/admin_guide/aggregate_logging.html#optional-method-to-verify-working-nodes[Configuring the Master as a Central Server]
+
+.Feedback or Contribution Needed
+****
+*Add EXEC logging and parsing for Openshift logging in /var/log/messages.
+****
