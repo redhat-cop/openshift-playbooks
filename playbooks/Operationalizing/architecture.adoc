@@ -1,0 +1,28 @@
+= Environment Architectures and Network Topologies
+Trevor Quinn <tquinn@redhat.com>
+v1.0, 2015-10-19
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+This section begins to discuss considerations for OSE 3 architecture design, as part of operationalizing OpenShift at enterprise scale.
+
+== Environments
+
+- *It is possible to include all SDLC environments (e.g., Dev, Test, Staging, Prod) inside the same OSE 3 installation and use scheduler and router behavior to keep environments isolated.* This architecture is typical in public cloud deployment scenarios, in which a common regional data center may host all SDLC environments for an application, including both production and pre-production environments. We encourage enterprises to consider this architecture for OSE as well, as it minimizes control processes and other overhead associated with synchronizing multiple OSE installations.
+
+- *Some organizations may wish to retain more traditional SDLC environment separation.* Such concerns would be warranted if, for example, complete network isolation is required between environments for regulatory or other reasons. Here we encourage enterprises to consider one segregated OSE installation for Dev, Test, and QA and one OSE installation for Staging and Production.
+
+== Multi Data Center Approaches
+
+.Feedback or Contribution Needed
+****
+Section TBD
+****
+
+== Deploying Across Segregated Networks
+
+.Feedback or Contribution Needed
+****
+Section TBD
+****

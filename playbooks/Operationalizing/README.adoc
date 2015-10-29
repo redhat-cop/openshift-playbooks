@@ -1,3 +1,6 @@
-= Operationalizing OSE 3
+= Operationalizing OpenShift Enterprise 3
 
+The Operationalizing OpenShift Enterprise 3 playbook provides guidance on environment architecture concerns such as component placement and network topology and discusses related system integration issues.
+
+* link:./architecture.adoc[Architecture]
 * link:./integration.adoc[API Integration Guide]
