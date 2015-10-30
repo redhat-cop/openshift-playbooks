@@ -2,6 +2,18 @@
 ---
 = Playbook Style Guide
 
+== Starting a New Document
+
+All playbook guides should begin with a top-level heading and, at minimum, the following metadata:
+----
+---
+---
+= Top Level Heading
+Author Name <author.email@mail.com>
+:toc: macro
+:toc-title:
+----
+
 == Requesting Feedback
 
 If there are specific places where you'd like to request feedback or expansion from the community, we encourage you to call that out in your playbooks. Please use the following format:

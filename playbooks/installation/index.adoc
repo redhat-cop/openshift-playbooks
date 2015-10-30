@@ -1,3 +1,5 @@
+---
+---
 = OSE 3 SmartStart (Production-Ready Installation and Configuration)
 
 The SmartStart playbook provides guidance on deploying a production-ready pilot of OpenShift Enterprise 3. The resulting deployment goes beyond a simple OSE proof-of-concept and can be used to run a representative sample of enterprise workloads in PaaS. It may not address the full catalog of expected workloads and production use cases such as multi-data center approaches, application development workflows, and specialized network configuration.

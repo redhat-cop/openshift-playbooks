@@ -1,3 +1,5 @@
+---
+---
 = OpenShift Enterprise 3 Exposing Internal Docker Registry
 Andrew Block <ablock@redhat.com>
 v1.0, 2015-10-02
@@ -28,21 +30,21 @@ Expose the integrated OpenShift docker registry and make it accessible from _reg
 
 During the installation of the integrated Docker registry, the osadm tool creates a service called _docker-registry_ in the default project. OpenShift provides the ability to expose a service to be consumed by external entities through the _oc expose_ command. We will use this command to make the Docker service available externally from OpenShift. Run the following command to expose the integrated docker registry to the hostname _registry.ose.example.com_.
 
-   oc expose service docker-registry –-hostname=registry.ose.example.com  
-   
+   oc expose service docker-registry –-hostname=registry.ose.example.com
+
 This command will create a route with the same name as the service (docker-registry) by default. Unfortunately, the routes are created as unsecured by default. Since docker expects to communication to occur on a secured channel, we need to configure TLS security on the route. There are three types of TLS termination that can be applied to a route: edge, passthrough and re-encryption. Since the Docker registry is already secured, we will used passthrough termination where the router will not terminate the TLS connection and instead pass the encrypted traffic to the endpoint destination.
 
 Add the following to docker-registry route spec section by adding the following in the editor that is presented when editing the route after invoking `oc edit route docker-registry` command
 
 [source]
 ----
-spec:  
-  host: registry.ose.example.com  
-  tls:  
+spec:
+  host: registry.ose.example.com
+  tls:
     termination: passthrough
-  to:  
-    kind: Service  
-  name: docker-registry  
+  to:
+    kind: Service
+  name: docker-registry
 ----
 
 It's worth noting that when a router is created using the *oadm router* command, you have the option of specifying a default certificate to use for all TLS enabled routes. For our environment, we created a wildcard certificate, valid for all hostnames that match \*.apps.ose.example.com as the default cert. You also have the option of creating unique certificates for specific routes you create. You would do this by inserting the certificate contents in the yaml shown above during the *oc edit router* step.
@@ -51,23 +53,23 @@ Now that we have our route configured, we will turn our attention to how we will
 
 [source]
 ----
-{  
-  "apiVersion": "v1",  
-  "kind": "ServiceAccount",  
-  "metadata": {  
+{
+  "apiVersion": "v1",
+  "kind": "ServiceAccount",
+  "metadata": {
     "name": "dockersvc"
-  }  
-}  
+  }
+}
 
 ----
 
 Service accounts can be applied at the project level to access images within the scope of a project. Execute the following command while in the desired proejct to add to service account from the _sa.json_ file:
 
    oc create –f sa.json
-   
+
 When a new service account is created, a token is created as a secret for service accounts to access the integrated registry. The name of this token can be obtained by running the following commnad:
 
-   oc get serviceaccount dockersvc –o yaml  
+   oc get serviceaccount dockersvc –o yaml
 
 The following is the relevant output from this command:
 
@@ -83,7 +85,7 @@ secrets:
 To extract the token value, run the following command:
 
     oc describe secret dockersvc-token-8pofm
-    
+
 The token will be shown in the data section as shown below:
 
 [source]
@@ -102,26 +104,26 @@ Docker provides secure communication with TLS encryption support and the Docker 
 Before we can pull images from the registry, we need to first login to the remote repository. Using the name of the service account and the token value retrieved earlier, execute the following command to log into the registry.
 
     docker login –u dockersvc –e <any_email> -p <token> registry.ose.example.com
-    
+
 Docker should now be authenticated to the OpenShift registry.
 The credentials are now cached in the the _~/.docker/config.json_ file for future invocations.
 
 Images are stored in the integrated registry in the format <project>/<app>. For example, to pull an image for an app called _eap-test_ in the project eap, the following command would be used:
 
     docker pull registry.ose.example.com/eap/eap-test
-    
+
 The image should now be available on the local system
- 
+
 Since we would want to allow our service account to push and pull images from the OpenShift registry, we want to make sure they are a member of the appropriate roles. For this example application, we will add the service account to the cluster edit role.
- 
+
 Execute the following command to add the cluster edit role to the Jenkins service account:
 
     oadm policy add-cluster-role-to-user edit system:serviceaccount:<project>:dockersvc
-    
+
 The application if this policy can be confirmed with the following command:
 
     oc describe clusterPolicyBindings :default
-    
+
 The following is returned from the command
 
 [source]
@@ -131,107 +133,107 @@ Created:					3 days ago
 Labels:						<none>
 Last Modified:					2015-10-25 11:22:45 -0400 EDT
 Policy:						<none>
-RoleBinding[basic-users]:			 
+RoleBinding[basic-users]:
 						Role:			basic-user
 						Users:			<none>
 						Groups:			system:authenticated
 						ServiceAccounts:	<none>
 						Subjects:		<none>
-RoleBinding[cluster-admins]:			 
+RoleBinding[cluster-admins]:
 						Role:			cluster-admin
 						Users:			<none>
 						Groups:			system:cluster-admins
 						ServiceAccounts:	<none>
 						Subjects:		<none>
-RoleBinding[cluster-readers]:			 
+RoleBinding[cluster-readers]:
 						Role:			cluster-reader
 						Users:			<none>
 						Groups:			system:cluster-readers
 						ServiceAccounts:	<none>
 						Subjects:		<none>
-RoleBinding[cluster-status-binding]:		 
+RoleBinding[cluster-status-binding]:
 						Role:			cluster-status
 						Users:			<none>
 						Groups:			system:authenticated, system:unauthenticated
 						ServiceAccounts:	<none>
 						Subjects:		<none>
-RoleBinding[edit]:				 
+RoleBinding[edit]:
 						Role:			edit
 						Users:			<none>
 						Groups:			<none>
 						ServiceAccounts:	default/dockersvc <1>
 						Subjects:		<none>
-RoleBinding[self-provisioners]:			 
+RoleBinding[self-provisioners]:
 						Role:			self-provisioner
 						Users:			<none>
 						Groups:			system:authenticated
 						ServiceAccounts:	<none>
 						Subjects:		<none>
-RoleBinding[system:build-controller]:		 
+RoleBinding[system:build-controller]:
 						Role:			system:build-controller
 						Users:			<none>
 						Groups:			<none>
 						ServiceAccounts:	openshift-infra/build-controller
 						Subjects:		<none>
-RoleBinding[system:deployment-controller]:	 
+RoleBinding[system:deployment-controller]:
 						Role:			system:deployment-controller
 						Users:			<none>
 						Groups:			<none>
 						ServiceAccounts:	openshift-infra/deployment-controller
 						Subjects:		<none>
-RoleBinding[system:masters]:			 
+RoleBinding[system:masters]:
 						Role:			system:master
 						Users:			<none>
 						Groups:			system:masters
 						ServiceAccounts:	<none>
 						Subjects:		<none>
-RoleBinding[system:node-proxiers]:		 
+RoleBinding[system:node-proxiers]:
 						Role:			system:node-proxier
 						Users:			<none>
 						Groups:			system:nodes
 						ServiceAccounts:	<none>
 						Subjects:		<none>
-RoleBinding[system:nodes]:			 
+RoleBinding[system:nodes]:
 						Role:			system:node
 						Users:			<none>
 						Groups:			system:nodes
 						ServiceAccounts:	<none>
 						Subjects:		<none>
-RoleBinding[system:oauth-token-deleters]:	 
+RoleBinding[system:oauth-token-deleters]:
 						Role:			system:oauth-token-deleter
 						Users:			<none>
 						Groups:			system:authenticated, system:unauthenticated
 						ServiceAccounts:	<none>
 						Subjects:		<none>
-RoleBinding[system:registrys]:			 
+RoleBinding[system:registrys]:
 						Role:			system:registry
 						Users:			<none>
 						Groups:			system:registries
 						ServiceAccounts:	<none>
 						Subjects:		<none>
-RoleBinding[system:replication-controller]:	 
+RoleBinding[system:replication-controller]:
 						Role:			system:replication-controller
 						Users:			<none>
 						Groups:			<none>
 						ServiceAccounts:	openshift-infra/replication-controller
 						Subjects:		<none>
-RoleBinding[system:routers]:			 
+RoleBinding[system:routers]:
 						Role:			system:router
 						Users:			<none>
 						Groups:			system:routers
 						ServiceAccounts:	<none>
 						Subjects:		<none>
-RoleBinding[system:sdn-readers]:		 
+RoleBinding[system:sdn-readers]:
 						Role:			system:sdn-reader
 						Users:			<none>
 						Groups:			system:nodes
 						ServiceAccounts:	<none>
 						Subjects:		<none>
-RoleBinding[system:webhooks]:			 
+RoleBinding[system:webhooks]:
 						Role:			system:webhook
 						Users:			<none>
 						Groups:			system:authenticated, system:unauthenticated
 						ServiceAccounts:	<none>
 						Subjects:		<none>
-----  
+----
 <1> Service account associated with the cluster edit role

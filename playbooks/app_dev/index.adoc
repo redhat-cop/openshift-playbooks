@@ -1,3 +1,5 @@
+---
+---
 = OpenShift Enterprise 3 Application Development
 
 The OpenShift Enterprise 3 Application Development playbook provides guidance on application development concerns in OSE 3, including containerized build and deployment processes.

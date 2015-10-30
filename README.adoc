@@ -10,7 +10,19 @@ This site is written in asciidoc format and is built using the link:https://gith
 
 === Quickstart Guide
 
+1. Install necessary packages.
++
+----
+sudo yum install -y libyaml-devel autoconf gcc-c++ readline-devel zlib-devel libffi-devel openssl-devel automake libtool bison sqlite-devel
+----
+1. Install Node.js Version Manager (nvm -- see )
++
+----
+curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.29.0/install.sh | bash
+----
 1. link:https://rvm.io/[Install RVM]
++
+NOTE: For `gnome-terminal` users, you'll need to do this link:https://rvm.io/integration/gnome-terminal[additional step]
 2. Install and use Ruby 2.0
 +
 ----

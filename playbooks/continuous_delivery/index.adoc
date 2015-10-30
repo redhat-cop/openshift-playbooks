@@ -1,0 +1,13 @@
+---
+---
+= DevOps (Continuous Delivery) with Containers
+
+== Application Builds
+
+== Application Deployments
+
+== Application Promotion
+
+Applications participating in Continuous Delivery will package an application once and only once and reuse assembled product in multiple environments. The concept of moving Applications packaged into containers follows the same paradigm where an image is built once and then run in separate environments. In OpenShift, the concept of promotion is facilitated by moving images between different projects either in the same OpenShift or different OpenShift environments.
+
+* link:image_promotion.adoc[Image Promotion Strategies]

@@ -1,6 +1,8 @@
+---
+---
 = [Bug 1256869] Deleting Users and Identity does not remove Authorization Settings
 
-Issue: When you delete a user and their corresponding identity the policy and role bindings still remain. 
+Issue: When you delete a user and their corresponding identity the policy and role bindings still remain.
 Related to this, a user's group membership is also maintained.
 
 To properly delete all user information:

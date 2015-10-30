@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'jekyll'
+gem 'jekyll', '<3.0.0'
 gem 'asciidoctor'
 
 group :jekyll_plugins do
