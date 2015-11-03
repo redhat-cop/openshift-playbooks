@@ -1,21 +1,21 @@
 = Common Issues
 Below is a list of common issues that are experienced with OpenShift Enterprise v3. 
 
-== namespaces <name> cannot be updated: the object has been modified
+==== namespaces <name> cannot be updated: the object has been modified
 
 *Version:* 3.0.1
 
-== Issue:
+==== Issue:
 When attempting to delete a project, the deletion gets stuck in "Terminating" state. Further more, if another "oc delete project <name>" is attempted, the command fails with an error stating something like "... an update is currently in progress - after it is done, the project will be terminated..." 
 
-== Symptoms:
+==== Symptoms:
 Checking the logs, a log entry similar to the following repeats very frequently:
 
 ----
 Nov  3 10:50:28 master openshift-master: E1103 10:50:28.240238  114350 namespace_controller.go:67] namespaces "project1" cannot be updated: the object has been modified; please apply your changes to the latest version and try again
 ----
 
-== Solution: 
+==== Solution: 
 Restarting the "openshift-master" process seems to re-init/re-read the data from etcd and allow for the deletion to complete. Note: It has been observed that if multiple delete tasks are stuck in the "Terminating" state, more than one restart may be needed. 
 
 ----
