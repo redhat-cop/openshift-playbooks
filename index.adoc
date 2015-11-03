@@ -11,11 +11,11 @@ Current in-development playbooks include the following:
 * Continuous Integration
 * Continuous Delivery with Traditional Platforms
 ////
-* link:playbooks/ContinuousDelivery[Container-Driven Continuous Delivery]
-* link:playbooks/Installation[OpenShift Enterprise 3 SmartStart (Production-Ready Installation and Configuration)]
-* link:playbooks/AppDev[OpenShift Enterprise 3 Application Development]
-* link:playbooks/Operationalizing[Operationalizing OpenShift Enterprise 3]
-* link:playbooks/Troubleshooting[Troubleshooting]
+* link:playbooks/continuous_delivery[Container-Driven Continuous Delivery]
+* link:playbooks/installation[OpenShift Enterprise 3 SmartStart (Production-Ready Installation and Configuration)]
+* link:playbooks/app_dev[OpenShift Enterprise 3 Application Development]
+* link:playbooks/operationalizing[Operationalizing OpenShift Enterprise 3]
+* link:playbooks/troubleshooting[Troubleshooting]
 ////
 * Container Migration Factory
 ////
@@ -36,8 +36,12 @@ The playbooks are intended to be working documents. We are constantly updating t
 
 *We welcome contributions from the community.* If you find errors or have a different approach or opinion about how to best solve a problem discussed here, please open an issue and/or submit a pull request. To help you understand how to contribute, please take a look at the following resources:
 
-* link:development_guide.adoc[Playbook Development Guide]
-* link:style_guide.adoc[Style Guide for Playbooks]
+* link:development_guide{outfilesuffix}[Playbook Development Guide]
+////
+Once we have asciidoctor 1.5.3, we can change to this format
+* <</development_guide.adoc#,Playbook Development Guide>>
+////
+* link:style_guide{outfilesuffix}[Style Guide for Playbooks]
 
 == License
 

@@ -39,7 +39,7 @@ If we want to collect application metadata so that we can do things like filter 
 
 Here is a guide that walks through installation of fluentd and required plugins using as RubyGems.
 
-link:./logging_with_fluentd.adoc[Using Fluentd to Centralize Container Logs]
+link:./logging_with_fluentd{outfilesuffix}[Using Fluentd to Centralize Container Logs]
 
 == System Logs
 

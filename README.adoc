@@ -15,7 +15,7 @@ This site is written in asciidoc format and is built using the link:https://gith
 ----
 sudo yum install -y libyaml-devel autoconf gcc-c++ readline-devel zlib-devel libffi-devel openssl-devel automake libtool bison sqlite-devel
 ----
-1. Install Node.js Version Manager (nvm -- see )
+1. Install Node.js Version Manager (nvm -- see https://github.com/creationix/nvm)
 +
 ----
 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.29.0/install.sh | bash

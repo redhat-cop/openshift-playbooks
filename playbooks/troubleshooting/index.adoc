@@ -2,6 +2,6 @@
 ---
 = OSE 3 TroubleShooting
 
-* link:STI-JWS.adoc[STI JWS]
-* link:Known-Bugs.adoc[Known Bugs]
-* link:Common-Issues.adoc[Common Issues]
+
+* link:STI-JWS{outfilesuffix}[STI JWS]
+* link:Known-Bugs{outfilesuffix}[Known Bugs]

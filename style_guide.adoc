@@ -1,6 +1,11 @@
 ---
 ---
 = Playbook Style Guide
+Eric Sauer <esauer@redhat.com>
+:toc: macro
+:toc-title:
+
+toc::[]
 
 == Starting a New Document
 
@@ -12,7 +17,20 @@ All playbook guides should begin with a top-level heading and, at minimum, the f
 Author Name <author.email@mail.com>
 :toc: macro
 :toc-title:
+
+toc::[]
 ----
+
+== Content Best Practices
+
+=== Links
+
+Links between documents should follow the following format:
+----
+link:/path/to/file{outfilesuffix}[Link Name]
+----
+The `{outfilesuffix}` parameter should replace the file type and is there to handle the translation from '.adoc' to '.html' when we publish this content to our web front end.
+
 
 == Requesting Feedback
 

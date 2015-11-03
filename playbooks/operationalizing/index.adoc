@@ -4,5 +4,5 @@
 
 The Operationalizing OpenShift Enterprise 3 playbook provides guidance on environment architecture concerns such as component placement and network topology and discusses related system integration issues.
 
-* link:./architecture.adoc[Architecture]
-* link:./integration.adoc[API Integration Guide]
+* link:./architecture{outfilesuffix}[Architecture]
+* link:./integration{outfilesuffix}[API Integration Guide]

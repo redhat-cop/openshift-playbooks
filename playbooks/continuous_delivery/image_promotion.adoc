@@ -24,7 +24,7 @@ NOTE: The user executing the scripts must be a member of the docker group in ord
 
 == Prerequisites
 
-The majority of the work involves an integration environment and then ability to access and communicate with both OpenShift Environments. To accomplish this, the integrated docker registry must be externally exposed for invocations by external parties. The process of externally exposing the integrated docker registry and configuring clients is described in External Access of link:../Installation/expose_docker_registry.adoc[Integrated Docker Registry].Ensure the necessary software and docker client configurations are completed before proceeding.
+The majority of the work involves an integration environment and then ability to access and communicate with both OpenShift Environments. To accomplish this, the integrated docker registry must be externally exposed for invocations by external parties. The process of externally exposing the integrated docker registry and configuring clients is described in External Access of link:../operationalizing/expose_docker_registry{outfilesuffix}[Integrated Docker Registry].Ensure the necessary software and docker client configurations are completed before proceeding.
 
 == Promoting an Application Between Two Projects in the Same OpenShift Environment
 

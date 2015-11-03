@@ -8,15 +8,15 @@ The SmartStart playbook provides guidance on deploying a production-ready pilot 
 
 A guide for implementing the OSE 3 SmartStart described above.
 
-* link:./installation.adoc[Initial Installation]
-* link:./disconnected_environments.adoc[Enterprise Environments]
+* link:./installation{outfilesuffix}[Initial Installation]
+* link:./disconnected_environments{outfilesuffix}[Enterprise Environments]
 * Routers
 * Docker Registry Setup
-* link:./logging.adoc[Log Management]
+* link:./logging{outfilesuffix}[Log Management]
 * Validating the Install
 
 == Presenter Guide
 
 A guide to producing a demo that showcases the concepts described in the Implementation Guide.
 
-* link:./presenter_guide.adoc[Presenter Guide]
+* link:./presenter_guide{outfilesuffix}[Presenter Guide]

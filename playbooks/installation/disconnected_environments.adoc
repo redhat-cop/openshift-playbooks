@@ -112,7 +112,7 @@ The next commands will pull all of the required OpenShift dockerized components:
 
 The next commands will pull Red Hat’s certified Source-to-Image (S2I) builder images. Source-to-Image (S2I) is the process that OpenShift uses to take application code and build it into a Docker image to run on the platform. More information about S2I can be found here:
 
-link:../AppDev/builds.adoc[OpenShift Playbooks: Builds]
+link:../AppDev/builds{outfilesuffix}[OpenShift Playbooks: Builds]
 
 If there are any languages, runtimes or databases that you do not wish to use, you can skip them.
 
@@ -214,7 +214,7 @@ Now start and enable Apache:
 
 At this point you can perform the initial build of the hosts that will be part of the OpenShift environment. It is recommended to use the latest version of Red Hat Enterprise Linux and to perform a minimal installation. You will also want to pay attention to the other OpenShift-specific prerequisites, documented here:
 
-link:./installation.adoc[OpenShift Playbooks: OpenShift Enterprise 3 Installation]
+link:./installation{outfilesuffix}[OpenShift Playbooks: OpenShift Enterprise 3 Installation]
 
 Once the hosts are initially built, the repositories can be set up.
 
