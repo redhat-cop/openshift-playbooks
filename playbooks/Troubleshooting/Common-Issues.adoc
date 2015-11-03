@@ -1,6 +1,8 @@
 = Common Issues
 Below is a list of common issues that are experienced with OpenShift Enterprise v3. 
 
+'''
+
 ==== namespaces <name> cannot be updated: the object has been modified
 
 *Version:* 3.0.1
@@ -21,3 +23,5 @@ Restarting the "openshift-master" process seems to re-init/re-read the data from
 ----
 systemctl restart openshift-master
 ----
+
+'''
