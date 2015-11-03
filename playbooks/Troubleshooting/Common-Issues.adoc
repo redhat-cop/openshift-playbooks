@@ -18,7 +18,7 @@ Nov  3 10:50:28 master openshift-master: E1103 10:50:28.240238  114350 namespace
 ----
 
 ==== Solution: 
-Restarting the "openshift-master" process seems to re-init/re-read the data from etcd and allow for the deletion to complete. Note: It has been observed that if multiple delete tasks are stuck in the "Terminating" state, more than one restart may be needed. 
+Restarting the "openshift-master" process seems to re-init/re-read the data from etcd and allow for the deletion to complete. _Note: It has been observed that if multiple delete tasks are stuck in the "Terminating" state, more than one restart may be needed._
 
 ----
 systemctl restart openshift-master
