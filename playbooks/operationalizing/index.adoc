@@ -6,3 +6,4 @@ The Operationalizing OpenShift Enterprise 3 playbook provides guidance on enviro
 
 * link:./architecture{outfilesuffix}[Architecture]
 * link:./integration{outfilesuffix}[API Integration Guide]
+* link:./expose_docker_registry{outfilesuffix}[Exposing & Securing the OpenShift Docker Registry]

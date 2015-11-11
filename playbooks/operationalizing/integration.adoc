@@ -1,3 +1,5 @@
+---
+---
 = Integrating with Third Parties
 Eric Sauer <esauer@redhat.com>
 v1.0, 2015-09-15
