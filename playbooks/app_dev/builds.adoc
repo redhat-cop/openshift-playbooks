@@ -1,7 +1,4 @@
----
----
-Builds
-=====
+= Builds
 Andrew Block <ablock@redhat.com>
 v1.0, 2015-09-15
 :toc: macro
@@ -276,12 +273,6 @@ Values can be injected into S2I scripts to enable dynamic configuration for a pa
 
 Several of the builder images utilize environment variable to drive their execution. Examples include setting the location of a proxy server using the `HTTP_PROXY` variable or to set Maven arguments using the `MAVEN_ARGS` variable.
 
-
-<<<<<<< HEAD
-==== Additional Resources
-* https://docs.openshift.com/enterprise/3.0/creating_images/s2i.html#s2i-scripts[S2I Scripts]
-
-=======
 ===== Additional Resources
 * https://docs.openshift.com/enterprise/3.0/creating_images/s2i.html#s2i-scripts[S2I Scripts]
 
@@ -292,8 +283,6 @@ Applications that are built by an S2I image can override the default scripts pro
 * Overriding scripts
 ** BuildConfig definition
 ** Environment variables
-
->>>>>>> Various improvements, including doc for local building
 
 ==== Existing builder images
 
@@ -309,11 +298,7 @@ The following S2I builder images are available in the OpenShift ecosystem
 
 ==== JBoss EAP Integration
 
-<<<<<<< HEAD
-The JBoss EAP image for OpenShift includes S2I scripts located in the 	`/usr/local/sti` directory. These are run by default if the application being built does not include any of the S2I scripts
-=======
-The JBoss EAP image for OpenShift includes S2I scripts located in the 	`/usr/local/sti` directory. These are run by default if the application being built does not include any of the S2I scripts``
->>>>>>> Various improvements, including doc for local building
+The JBoss EAP image for OpenShift includes S2I scripts located in the `/usr/local/sti` directory. These are run by default if the application being built does not include any of the S2I scripts.
 
 The best way to learn how the JBoss S2I builder works is to investigate the builder itself. Run the following command to start a container containing the builder image
 
