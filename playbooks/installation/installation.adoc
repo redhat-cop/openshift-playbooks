@@ -42,6 +42,25 @@ Kubernetes, and therefore OpenShift has a logical limit to the number of nodes t
 
 The logical limit for Nodes in a cluster might sway administrators of large clusters to increase node size in order to increase the total capacity a Cluster can support
 
+=== Firewall Considerations
+Ansible playbook will manage the host-based firewall configuration.  If you have a segregated network topology (or if your environment has host-to-host external firewall rules), you should consider the following: 
+
+[width="40%",frame="topbot",options="header"]
+|========================================================
+| Port | Protocol | Source-to-Dest | Description 
+| 4789 | UDP      | Node-to-Node          | required between nodes for SDN communication between pods on separate hosts  
+| 53   | TCP/UDP  | Nodes-to-Master       | On openshift master server. Which provides DNS services within the environment  
+| 4789 | UDP      | Nodes-to-Master       | required between nodes for SDN communication between pods on separate hosts  
+| 53   | TCP/UDP  | Master-to-Master      | On openshift master server. Which provides DNS services within the environment  
+| 4789 | UDP      | Master-to-Master      | required between nodes for SDN communication between pods on separate hosts  
+| 4001 | TCP/UDP  | Master-to-Master      | Master: ETCD. accepts changes in state  
+| 7001 | TCP      | Master-to-Master      | Etcd requires 7001 between masters as well, which is used for leader election and peering connections.  
+| 10025 | TCP      | Master-to-Nodes      | on the minons(Kublet), master proxies to nodes via kubelet for things like `oc logs` or `oc exec`
+| 8443 | TCP      | External-to-Master(s) | To allow API updates via cli, GUI or REST  
+|========================================================
+
+You should also review the following KB https://access.redhat.com/solutions/1520653
+
 ==== Questions to Ask
 
 . What is the total workload landscape?
