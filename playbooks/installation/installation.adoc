@@ -211,10 +211,62 @@ mount -a
 
 ===== Example: Configuring Host Storage with Docker Storage Option B
 
-.Feedback or Contribution Needed
-****
-Example using Docker option B.
-****
+In this example, we have a device (vdc) with available space that we will dedicate to vg-docker which will be used by docker-storage-setup (identified in /etc/
+sysconfig/docker-storage-setup)
+
+First, review the current configuration of the device
+[source,bash]
+----
+parted /dev/vdc print
+Model: Virtio Block Device (virtblk)
+Disk /dev/vdc: 21.5GB
+Sector size (logical/physical): 512B/512B
+Partition Table: gpt
+Disk Flags:
+
+Number  Start   End     Size    File system  Name     Flags
+ 1      1049kB  10.0GB  9999MB               primary  lvm
+----
+
+Add a partition, using the remainder of the device.
+[source,bash]
+----
+
+parted /dev/vdc mkpart primary ext3 10g 100% set 2 lvm on
+Information: You may need to update /etc/fstab.
+
+parted /dev/vdc print
+Model: Virtio Block Device (virtblk)
+Disk /dev/vdc: 21.5GB
+Sector size (logical/physical): 512B/512B
+Partition Table: gpt
+Disk Flags:
+
+Number  Start   End     Size    File system  Name     Flags
+ 1      1049kB  10.0GB  9999MB               primary  lvm
+ 2      10.0GB  21.5GB  11.5GB               primary  lvm
+----
+
+Create the PV and a VG using that PV.
+[source,bash]
+----
+pvcreate /dev/vdc2
+  Physical volume "/dev/vdc2" successfully created
+vgcreate vg-docker /dev/vdc2
+  Volume group "vg-docker" successfully created
+----
+
+Update the docker-storage-setup file that is used as a guideline and run the docker-storage-setup command.
+[source,bash]
+----
+cat << EOF > /etc/sysconfig/docker-storage-setup
+VG=vg-docker
+SETUP_LVM_THIN_POOL=yes
+EOF
+
+# Let docker setup the storage based on the above config file
+docker-storage-setup
+----
 
 == Host Preparation
 
