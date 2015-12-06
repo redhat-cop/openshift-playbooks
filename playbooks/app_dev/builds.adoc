@@ -335,9 +335,13 @@ There are a number of existing S2I builders that you can look to leverage for yo
 
 === Binary deployments
 
-In certain cases, an application may be previously compiled outside of an OpenShift build. You can use the _assemble_ phase of an S2I build process to retrieve the previously packaged artifact and insert it into the typical build process of the builder being leveraged.
 
-The following is an example of a deployment of a binary application for the OpenShift JBoss EAP image
+In certain cases, an application may be previously compiled outside of an OpenShift build. There are two methods to include an existing binary artifact(s) in the resulting image:
+
+1. Customize the _assemble_ script as part of the S2I build process to retrieve a previously packaged artifact from a remote source (such as an artifact repository) and place in the JBoss deployments folder.
+2. Place prepackaged jar, war, or ear in a folder called *deployments* at the root of repository. These files will be automatically copied to the JBoss deployments folder. 
+
+The following is an example of a deployment of a binary application for the OpenShift JBoss EAP image using a customized _assemble_ script
 
 [source, bash]
 ----
