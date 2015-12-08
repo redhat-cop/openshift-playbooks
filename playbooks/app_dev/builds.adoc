@@ -159,7 +159,7 @@ image::https://raw.githubusercontent.com/openshift/source-to-image/master/docs/s
 
 === S2I Scripts
 
-The following table provides an overview of the S2I builder image is required to implement the following scripts
+The following table provides an overview of the S2I scripts that are executed within the builder image:
 
 
 .S2I Scripts
@@ -294,7 +294,8 @@ The following S2I builder images are available in the OpenShift ecosystem
 * Python
 * Node
 * PHP
-* Python
+* Perl
+* Ruby
 * ...
 
 
