@@ -1,16 +1,23 @@
 ---
 ---
 = Solution Playbook Development Guide
+Eric Sauer <esauer@redhat.com>
+:toc: macro
+:toc-title:
+
+toc::[]
 
 == What is a playbook?
 
-Overview.
+A _playbook_ is a guide for implementing DevOps technical practices and container automation approaches using Red Hat commercial open source products, including OpenShift Enterprise 3. Playbooks are intended to reflect real-world experience delivering solutions through these processes and technologies.
 
 == Playbook Components
 
-==== Presenter Guide
+=== Presenter Guide
 
 _As a Presenter, I want to have Documentation available to me which allows me to present a Demo of a particular solution in a canned environment._
+
+==== Guidelines for Presenter Guides
 
 A good Presenter Guide should…
 
@@ -18,8 +25,31 @@ A good Presenter Guide should…
 * Contain all execution steps needed to step through a successful demo
 * Include some presenter notes that call out things to highlight, subject matter to cover
 
-==== Implementer Guide
+==== Presenter Guide Structure
+
+* Overview
+  ** Abstract discussing what this demo does
+* Bill Of Materials
+  ** Environment Specs -- describe the environment required to run this demo
+  ** Template files
+  ** Config files
+  ** External Source Code repos
+  ** etc. (any other technical collateral needed to run your demo)
+* Setup Instructions
+  ** Describe the steps required to setup your Demo
+  ** Scripts to run
+  ** Terminal commands
+  ** etc.
+* Presenter Notes
+  ** Guidelines for "what to {type|click|do}" to walk through the demo
+  ** Guidelines for "what to say" while giving the demo (level of detail will vary depending on the audience and intended presenter)
+  ** Interesting concepts, anecdotes to point out along the way
+
+=== Implementer Guide
+
 _As an Implementer, I want to have Documentation available to me which enables me to go and implement a particular solution in my own environment._
+
+==== Guidelines for an Implementor Guide
 
 A good Implementer Guide should…
 
