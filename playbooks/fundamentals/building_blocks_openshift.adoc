@@ -1,0 +1,99 @@
+---
+---
+= Building Blocks of OpenShift
+Author Name <author.email@mail.com>
+:toc: macro
+:toc-title:
+
+A reference guide for Docker knowledge.
+
+toc::[]
+
+== Concepts & Terminology
+
+* Containers
+  ** A _container_ is an operating system level construct that allows for the running of isolated software systems within a single OS
+* Images
+  ** An _image_ is a portable package containing all content, binaries, and configuration data that define a container instance
+* Pods
+  ** A _pod_ is a wrapper around one or more containers which adds a networking & configuration layer for managing containers across hosts
+* Replication
+  ** _Replication_ is the act of instantiating multiple copies of a pod definition in order to provide multiple instances of a runtime environment
+  ** Managed by a _replication controler_
+  ** Accomplished by re-instantiating a container image
+* Services
+  ** A _service_ is a set of replicated pods.
+* Routes
+  ** A _route_ is a load balancing mechanism used to expose services externally
+* Projects
+  ** A _project_ is an isolation mechanism used to provide users ability to create resources while keeping them separate and secure from other OpenShift users
+  ** Wraps around Kubernetes _namespace_
+* Labels and Selectors
+  ** A _label_ is a key-pair value tag that can be applied to most resources in OpenShift to give extra meaning or context to that resource for later filtering for selecting.
+  ** A _selector_ is a parameter used by many resources in OpenShift to associate a resource with another resource by specifying a label.
+  ** _Labels_ and _Selectors_ can be used to:
+    *** Assign certain projects, services, pods to run on a certain set of nodes
+    *** Create regions, zones and other network topology constructs
+    *** Assign pods to services
+    *** Assign a router to a certain set of projects (perhaps internal/external apps)
+    *** Much more...
+* Builds and Deployments
+  ** A _build_ in OpenShift is the process by which application content, code, or packages are build into a container image (we call this an application image)
+  ** A _deployment_ in OpenShift is the process of instantiating an application image to create running containers/pods running the application
+
+== Implementation: Components of OpenShift
+
+* Master
+  ** Components:
+    *** API/authentication
+    *** Scheduler
+    *** Management/replication
+    *** Data store (etcd)
+    *** Web console
+  ** Responsible for:
+    *** Manage authentication and authorization
+    *** Manage the state of the cluster
+* Nodes
+  ** Hosting workloads
+  ** Achieved through:
+    *** Pods
+    *** Containers
+    *** Kubeproxy
+    *** Kubelet
+    *** iptables
+* OpenShift Image Registry
+  ** Containerized docker registry + namespace isolation & security context constraints built in
+  ** Pretty much required for OSE
+* OpenShift SDN
+  ** Internal private network (IPs not visible outside OpenShift)
+  ** Currently OpenVSwitch implementation
+    *** UDP-based physical
+    *** Extra header added to packet
+  ** Used for pod to pod communication
+  ** Multi-tenant (project based VXLAN network isolation)
+* Service Layer
+  ** Provides *internal* communication between application components in OpenShift
+  ** Service
+    *** A _service_ is a set of replicated pods.
+    *** Generally used to define a consumable application function (e.g. a database or microservice)
+    *** Pods are grouped into a service
+    *** A service has a dedicated IP address
+  ** Service Layer Example:
++
+image::/images/ose3_service_layer_1.jpg[Service Layer]
+
+* Routing Layer
+  ** Provides *external* access to OpenShift Services
+  ** Routers
+    *** A _router_ is a special service within OpenShift that Load Balances to external traffic to internal services
+    *** Listens on port 80/443 on the node host
+    *** HAProxy based
+    *** Supports scale up for HA
+    *** Can have multiple routers for "regional" routing
+  ** Routes
+    *** A _route_ is the mapping of an individual service to an external address (hostname)
+    *** Requires a hostname and a service name at minimum
+    *** Optional support for TLS termincation, including unique certificates
+  ** Routing Layer Example:
++
+image::/images/ose3_routing_layer_1.jpg[Routing Layer]
