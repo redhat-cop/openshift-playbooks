@@ -1,0 +1,10 @@
+---
+---
+= OpenShift & Container Fundamentals
+
+The Fundamentals playbook is designed to provide you with resources to begin educating on Container & PaaS technologies.
+
+== Guides
+
+* link:./docker_reference{outfilesuffix}[Docker Reference Guide]
+* link:./building_blocks_openshift{outfilesuffix}[Building Blocks of OpenShift]
