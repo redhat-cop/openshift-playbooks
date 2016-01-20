@@ -1,11 +1,11 @@
 ---
 ---
 = Building Blocks of OpenShift
-Author Name <author.email@mail.com>
+Eric Sauer <esauer@redhat.com>
 :toc: macro
 :toc-title:
 
-A reference guide for Docker knowledge.
+A guide to the pieces that make up Kubernetes and OpenShift
 
 toc::[]
 

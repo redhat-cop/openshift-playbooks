@@ -1,7 +1,7 @@
 ---
 ---
 = Docker Reference Guide
-Author Name <author.email@mail.com>
+Eric Sauer <esauer@redhat.com>
 :toc: macro
 :toc-title:
 
@@ -13,7 +13,6 @@ toc::[]
 
  * link:https://docs.docker.com/mac/[Getting started with Docker] (Docker.io)
  * link:https://access.redhat.com/documentation/en/red-hat-enterprise-linux-atomic-host/version-7/getting-started-with-containers/[Getting Started with Containers] (Red Hat)
- * link:
 
 == Building Images
 
