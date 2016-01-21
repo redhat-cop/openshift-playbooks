@@ -294,7 +294,7 @@ Verify this step is still needed in the official documentation
 * Install the following extra packages: `yum install wget git net-tools bind-utils iptables-services bridge-utils`
 * Optional: install the following diagnostic tools: `yum install lsof strace nc telnet`
 * Fully update all packages: `yum -y update`
-* Configure Storage according to <<_storage_considerations>>
+* Configure Storage according to <<storage-considerations>>
 * Sync SSH keys from masters to all nodes (HINT: Here's a script to do this: TODO)
 
 NOTE: Installing High Availability Masters requires the _High Availability for RHEL 7 Add-on_. This is a separate subscription from RHEL 7 or OpenShift so make sure you have acquired the proper subscriptions ahead of time.
