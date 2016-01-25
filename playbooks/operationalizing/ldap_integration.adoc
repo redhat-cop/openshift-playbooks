@@ -76,7 +76,7 @@ More than likely the logins to Openshift will be limited by a group.  This may i
 
 We will assume we are connection to a standard ldap.  The first step is to create a query to limit the user to a group, so from above we have:
 
-{source,conf}
+[source,conf]
 (&(objectClass=posixAccount)(uid=jamie)(memberof=CN=openshift,OU=groups,DC=example,DC=com))
 
 so in english this looks like:
