@@ -77,11 +77,32 @@ More than likely the logins to Openshift will be limited by a group.  This may i
 We will assume we are connection to a standard ldap.  The first step is to create a query to limit the user to a group, so from above we have:
 
 [source,conf]
-(&(objectClass=posixAccount)(uid=jamie)(memberof=CN=openshift,OU=groups,DC=example,DC=com))
+(&(objectClass=posixAccount)(memberof=CN=openshift,OU=groups,DC=example,DC=com))
 
 so in english this looks like:
 
-Where object class equals posixAccount And the common
+Where object class equals posixAccount and the user is a member of the openshift group.
+
+==== Testing your LDAP queries
+
+* You need to install the ldapsearch utils
+
+{source,bash}
+yum install openldap-clients -y
+
+* Search for a user
+
+
+* Search for groups
+[source,bash]
+ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -s sub -b "dc=opentlc07a7,dc=com" "objectclass=groupOfNames"
+
+
+* Get members of a group
+
+[source,bash]
+ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -s sub -b "dc=opentlc07a7,dc=com" "objectclass=groupOfNames"
+
 
 
 
