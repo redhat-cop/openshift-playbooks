@@ -70,7 +70,7 @@ LDAP
       url: "ldap://ldap.example.com/ou=Users,dc=example,dc=com?uid" # by default this is the ldap URI, it contains the ip address, search base (ou=Users,example,dc=com) and the user field you are using.  in this case uid
       
 
-====Adding a filter to a specific group
+==== Adding a filter to a specific group
 
 More than likely the logins to Openshift will be limited by a group.  This may include limiting the capabilities to certain groups.  We will discuss Group Syncing Later.
 
