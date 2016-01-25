@@ -43,24 +43,24 @@ This is where it can get a bit confusing.  Should you add Docker registries?  Do
 6.  Selecting the type will create more options.  Use "https://registry.access.redhat.com" for the URL and "openshift3/ose-deployer" as the Upstream Repository Name.
 7.  Click "Save".
 8.  Repeat steps 4 through 7 for each of the following repositories:
- openshift3/ose-deployer
- openshift3/ose-docker-registry
- openshift3/ose-pod
- openshift3/ose-docker-builder
- openshift3/ose-sti-builder
- openshift3/ose-haproxy-router
- openshift3/mongodb-24-rhel7
- openshift3/mysql-55-rhel7
- openshift3/nodejs-010-rhel7
- openshift3/perl-516-rhel7
- openshift3/php-55-rhel7
- openshift3/postgresql-92-rhel7
- openshift3/python-33-rhel7
- openshift3/ruby-20-rhel7
- jboss-amq-6/amq-openshift
- jboss-eap-6/eap-openshift
- jboss-webserver-3/tomcat7-openshift
- jboss-webserver-3/tomcat8-openshift
+ * openshift3/ose-deployer
+ * openshift3/ose-docker-registry
+ * openshift3/ose-pod
+ * openshift3/ose-docker-builder
+ * openshift3/ose-sti-builder
+ * openshift3/ose-haproxy-router
+ * openshift3/mongodb-24-rhel7
+ * openshift3/mysql-55-rhel7
+ * openshift3/nodejs-010-rhel7
+ * openshift3/perl-516-rhel7
+ * openshift3/php-55-rhel7
+ * openshift3/postgresql-92-rhel7
+ * openshift3/python-33-rhel7
+ * openshift3/ruby-20-rhel7
+ * jboss-amq-6/amq-openshift
+ * jboss-eap-6/eap-openshift
+ * jboss-webserver-3/tomcat7-openshift
+ * jboss-webserver-3/tomcat8-openshift
 9.  Sync the data from the newly-created repositories by clicking the select-all checkbox in the top left corner, then clicking "Sync Now" button.  Assuming no other connectivity or typo issues, they should all complete within a few minutes.
 
 
