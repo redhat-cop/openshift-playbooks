@@ -17,9 +17,11 @@ Example
   + dn: ou=Users,dc=example,dc=com  # dn (distinguished name, unique key for each entry in LDAP, ou is organization unit)
     + dn: cn=jamie,ou=Users,dc=scires,dc=com (User entry dn)
       o: posixAccount
-      cn: jamie
+      cn: jamie whetsell
       mail: jwhetsel@redhat.com
       surName: Whetsell
+      givenName: jamie
+      phone: 843-867-5309
       ...  # based on what type of object they are using for the account
   + dn: ou=Groups,dc=sample,dc=com
     + dn: cn=admins,ou=Groups,dc=sample,dc=com
@@ -41,7 +43,37 @@ LDAP
 (&(objectClass=user)(cn=yourUserName)
   (memberof=CN=YourGroup,OU=Users,DC=YourDomain,DC=com))
 
-== First Section
+==== Configure Openshift for LDAP/AD
+
+{source,yaml}
+oauthConfig:
+  ...
+  identityProviders:
+  - name: "my_ldap_provider" 
+    challenge: true 
+    login: true 
+    provider:
+      apiVersion: v1
+      kind: LDAPPasswordIdentityProvider
+      attributes:
+        id: 
+        - dn # the unique id of the user, this is being mapped to the dn field in ldap
+        email: 
+        - mail # users email that is being mapped
+        name: 
+        - cn  # This is the display name it is mapped to the cn(common name field in LDAP)
+        preferredUsername: 
+        - uid # this is the field that is the username when logging into open shift
+      bindDN: "" # If the ldap has anonymous bind turned off, you may need to add a username and password to search for users
+      bindPassword: "" 
+      ca: my-ldap-ca-bundle.crt # This should be provided to you
+      insecure: false # by default the system will try to use TLS for authentication
+      url: "ldap://ldap.example.com/ou=Users,dc=example,dc=com?uid" # by default this is the ldap URI, it contains the ip address, search base (ou=Users,example,dc=com) and the user field you are using.  in this case uid
+      
+
+Adding a filter to a specific group
+
+
 
 * item 1
 * item 2
