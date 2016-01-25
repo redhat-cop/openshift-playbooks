@@ -15,20 +15,21 @@ Example
 [source,ldap]
 + dc=example,dc=com # domain/organization
   + dn: ou=Users,dc=example,dc=com  # dn (distinguished name, unique key for each entry in LDAP, ou is organization unit)
-    + dn: cn=jamie,ou=Users,dc=scires,dc=com (User entry dn)
+    + dn: uid=jamie,ou=Users,dc=scires,dc=com (User entry dn)
       o: posixAccount
       cn: jamie whetsell
+      uid: jamie
       mail: jwhetsel@redhat.com
       surName: Whetsell
       givenName: jamie
       phone: 843-867-5309
       ...  # based on what type of object they are using for the account
   + dn: ou=Groups,dc=sample,dc=com
-    + dn: cn=admins,ou=Groups,dc=sample,dc=com
-      member: cn=jamie,ou=Users,dc=example,dc=com  # This is a pointer to the dn of a user.  This says the user is in the admin groups
-      member: cn=someotheruser,ou=Users,dc=example,dc=com
-    + dn: cn=jamie,ou=Users,dc=example,dc=com
-      member: cn=jamie,ou=Users,dc=example,dc=com # users can be members of multiple groups
+    + dn: uid=admins,ou=Groups,dc=sample,dc=com
+      member: uid=jamie,ou=Users,dc=example,dc=com  # This is a pointer to the dn of a user.  This says the user is in the admin groups
+      member: uid=someotheruser,ou=Users,dc=example,dc=com
+    + dn: uid=jamie,ou=Users,dc=example,dc=com
+      member: uid=jamie,ou=Users,dc=example,dc=com # users can be members of multiple groups
       
       
 === Useful LDAP Queries
@@ -65,11 +66,22 @@ LDAP
       bindDN: "" # If the ldap has anonymous bind turned off, you may need to add a username and password to search for users
       bindPassword: "" 
       ca: my-ldap-ca-bundle.crt # This should be provided to you
-      insecure: false # by default the system will try to use TLS for authentication
+      insecure: false # by default the system will try to use TLS for authentication. setting to true will not use tls
       url: "ldap://ldap.example.com/ou=Users,dc=example,dc=com?uid" # by default this is the ldap URI, it contains the ip address, search base (ou=Users,example,dc=com) and the user field you are using.  in this case uid
       
 
-Adding a filter to a specific group
+====Adding a filter to a specific group
+
+More than likely the logins to Openshift will be limited by a group.  This may include limiting the capabilities to certain groups.  We will discuss Group Syncing Later.
+
+We will assume we are connection to a standard ldap.  The first step is to create a query to limit the user to a group, so from above we have:
+
+{source,conf}
+(&(objectClass=posixAccount)(uid=jamie)(memberof=CN=openshift,OU=groups,DC=example,DC=com))
+
+so in english this looks like:
+
+Where object class equals posixAccount And the common
 
 
 
