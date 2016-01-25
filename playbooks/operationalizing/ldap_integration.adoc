@@ -45,7 +45,7 @@ LDAP
 
 ==== Configure Openshift for LDAP/AD
 
-{source,yaml}
+{source,ldap}
 oauthConfig:
   ...
   identityProviders:
