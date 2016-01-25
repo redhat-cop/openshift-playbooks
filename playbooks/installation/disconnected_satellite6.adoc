@@ -127,5 +127,5 @@ Once packages are available, install docker and setup docker storage.
 
 
 == Issues / Workarounds
-* Satellite 6.1 was unable to pull the OSE3 images from the docker repo, unless a `pull -a` docker command was used.
+* Satellite 6.1 was unable to pull the OSE3 images from the docker repo using a plain `pull` command. This is due to a problem with Satellite interpreting docker labels. You must use a `pull -a` docker command (pull all) to retrieve the OSE3 images.
 * The Docker tab on Satellite 6.1 never had any images listed within it no matter which manifest we put in it. Ticket https://engineering.redhat.com/rt/Ticket/Display.html?id=388088[#388088] was opened to track it.
