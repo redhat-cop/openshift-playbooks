@@ -45,7 +45,7 @@ LDAP
 
 ==== Configure Openshift for LDAP/AD
 
-{source,ldap}
+[source,yaml]
   identityProviders:
   - name: "my_ldap_provider" 
     challenge: true 
