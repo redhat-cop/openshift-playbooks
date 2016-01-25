@@ -8,6 +8,7 @@ https://docs.openshift.com/enterprise/3.1/install_config/syncing_groups_with_lda
 
 http://ldapwiki.willeke.com/wiki/LDAP%20Query%20Examples[LDAP Query Examples]
 
+=== What is LDAP
 
 == Useful LDAP Queries
 
@@ -18,7 +19,7 @@ Active Directory
   
 LDAP
 [source,ldap]
-(&(objectClass=user)(sAMAccountName=yourUserName)
+(&(objectClass=user)(cn=yourUserName)
   (memberof=CN=YourGroup,OU=Users,DC=YourDomain,DC=com))
 
 == First Section
