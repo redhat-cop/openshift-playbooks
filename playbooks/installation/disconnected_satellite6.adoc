@@ -60,7 +60,7 @@ This is where it can get a bit confusing.  Should you add Docker registries?  Do
  * jboss-amq-6/amq-openshift
  * jboss-eap-6/eap-openshift
  * jboss-webserver-3/tomcat7-openshift
- * jboss-webserver-3/tomcat8-openshift
+ *  jboss-webserver-3/tomcat8-openshift
 9.  Sync the data from the newly-created repositories by clicking the select-all checkbox in the top left corner, then clicking "Sync Now" button.  Assuming no other connectivity or typo issues, they should all complete within a few minutes.
 
 
@@ -114,9 +114,9 @@ Download and save the katello server public cert to the default location of /usr
 
 From here you can run subscription-manager as usual to download the ose3 packages and theoretically follow the same installation procedure as a connected server.  Depending on how your katello-ca-consumer-latest.noarch RPM was built, you may need to edit /etc/rhsm/rhsm.conf on your Nodes to point to the correct server.  Typically this should be handled by the RPM's install.
 
- # subscription-manager register --org "my_organization" --activation-key "act_key_id"
+ subscription-manager register --username=jdoe --password=yourpass --org="IT Dept" --activationkey=abcd1234
  The system has been registered with ID: 37f97705-762f-4594-bf6a-d0cdc73a3f79
- #
+
 
 
 Depending on your specific organization setup in Satellite, you may need additional steps to get repositories showing up.  Use the [Satellite 6.1 Docs] (https://access.redhat.com/documentation/en-US/Red_Hat_Satellite/6.1/) to follow the necessary steps to do so.
