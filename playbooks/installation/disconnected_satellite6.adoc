@@ -1,0 +1,131 @@
+= Satellite 6.1 Server Installation as an OSE3 Disconnected Registry
+
+== Purpose
+
+This document is an attempt to help consolidate and fill-in some of the existing documentation gaps for [Satellite 6.1] (https://access.redhat.com/documentation/en-US/Red_Hat_Satellite/6.1/pdf/Installation_Guide/Red_Hat_Satellite-6.1-Installation_Guide-en-US.pdf) and [Disconnected Docker Registries] (http://playbooks-rhtconsulting.rhcloud.com/playbooks/installation/disconnected_environments.html).  It is by no means a 100% complete solution, but rather answers a few FAQs and common frustrations while trying to install these products on the completlely Disconnected networks.
+
+== Assumptions
+
+You are installing Red Hat Satellite 6.1 on a Red Hat Enterprise Linux 7 Server with plenty (see requirements in Satellite 6.1 docs, above) of storage, CPU, RAM, and Internet access.  This host will then be removed from the Internet-connected network and connected to the disconnected network in order to serve the Red Hat Content (both RPMs and Docker Registry) to the disconnected network.
+
+TODO - Figure out and describe how this works with a katello-disconnected host.
+
+== Satellite 6.1 Installation
+
+This process is pretty-well documented.  Basically, just enable the correct channels.
+
+
+ subscription-manager repos --enable rhel-7-server-rpms --enable rhel-server-rhscl-7-rpms --enable rhel-7-server-satellite-6.1-rpms
+
+
+Install katello.
+
+ yum install katello
+
+
+And finally, run katello-installer
+
+ katello-installer
+
+
+Note that you might have several options for the installer script, again they are well-documented in the Satellite documentation and unnecessary for the described functionality.  Be sure to activate the Satellite and to sync all necessary RPM repositories for OSE3 to install/function.
+
+
+== Enable Docker Repositories
+
+This is where it can get a bit confusing.  Should you add Docker registries?  Download Repositories?  Which ones?  It really depends on whether you plan on continued connectivity or not.  Since we'd like the server to disconnect at some point and contain the images/RPMs for everything OSE3, we will follow the new-repository process.
+
+1.  On your newly-created Satellite, click the "Content" pull-down and then "Products".
+2.  Click "New Product".
+3.  Call the Product "Docker Containers" or something else useful to refer to your collection of Docker Registries.  Label it accordingly.  Click "Save" when done.
+4.  Within the product (make sure it is selected in the list to the left), click the "Repositories" tab.  Click "Create Repository".
+5.  Name the Repository "openshift3/ose-deployer".  The label should auto-populate.  The type is "docker".
+6.  Selecting the type will create more options.  Use "https://registry.access.redhat.com" for the URL and "openshift3/ose-deployer" as the Upstream Repository Name.
+7.  Click "Save".
+8.  Repeat steps 4 through 7 for each of the following repositories:
+ openshift3/ose-deployer
+ openshift3/ose-docker-registry
+ openshift3/ose-pod
+ openshift3/ose-docker-builder
+ openshift3/ose-sti-builder
+ openshift3/ose-haproxy-router
+ openshift3/mongodb-24-rhel7
+ openshift3/mysql-55-rhel7
+ openshift3/nodejs-010-rhel7
+ openshift3/perl-516-rhel7
+ openshift3/php-55-rhel7
+ openshift3/postgresql-92-rhel7
+ openshift3/python-33-rhel7
+ openshift3/ruby-20-rhel7
+ jboss-amq-6/amq-openshift
+ jboss-eap-6/eap-openshift
+ jboss-webserver-3/tomcat7-openshift
+ jboss-webserver-3/tomcat8-openshift
+9.  Sync the data from the newly-created repositories by clicking the select-all checkbox in the top left corner, then clicking "Sync Now" button.  Assuming no other connectivity or typo issues, they should all complete within a few minutes.
+
+
+== Enable RPM Repositories
+
+1.  Click the "Content" pull-down and then "Red Hat Repositories".
+2.  Use the various pull-down arrows to enable these products:
+* RHN Tools for Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server
+* Red Hat Enterprise Linux 7 Server - Optional RPMs x86_64 7Server
+* Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server
+* Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64
+* Red Hat OpenShift Enterprise 3.1 RPMs x86_64
+3.  Click the "Content" pull-down and then "Sync Status".
+4.  Click "Expand All", "Select All" and then the "Synchronize Now" button at the bottom.
+5.  Wait for all of the various repositories (both RPM and Docker) to finish their sync.
+6.  If any repo or connectivity errors occur (status other than "Syncing Complete"), simply repeat steps 4-5 until they all come back cleanly or with "No new packages".
+
+This process will take several hours, depending on bandwidth and machine capabilities.
+
+At this point, you no longer need Internet connectivity.  You may disconnect the Satellite 6.1 Server from the Internet-facing network and connect it to the Disconnected network.
+
+
+== Create and manage a Content View
+
+Now we need to create a content view that will enable the products we just downloaded to be available to clients.
+
+Prereq:  First edit /etc/foreman-proxy/settings.yml to include "localhost" as one of the "trusted_hosts" in the proxy, or certain Content View actions won't work.  "systemctl restart foreman-proxy" to enable the changes.
+
+1.  Click the "Content" pull-down and then "Content Views".
+2.  Click "Create New View".
+3.  Name it something appropriate.  We'll use and assume "OSE3 View".  The label will auto-generate, removing spaces and other special characters.  Click Save.
+4.  Under the "Yum Content" tab and the "Add" subtab, select the RPM Repositories we just downloaded.  Click "Add Repositories".
+5.  Click the "Docker Content" tab and it's "Add" subtab.  Again select everything and click "Add Repositories".
+6.  Now your Content View has been created/modified and needs publishing.  Click "Publish New Version" followed by "Save".  Again this will take some time, depending on CPU/Memory capability.
+7.  TODO - add activation key to content view.
+
+
+== Register OpenShift 3 Nodes to Disconnected Satellite
+
+Now we'll proceed to subscribe our clients to the newly-created and populated Satellite Server.
+you will need to download the katello consumer packages from the server, and install the rpms.
+
+ curl -O --insecure https://your.satellite.instance:8003/pub/katello-ca-consumer-latest.noarch.rpm
+ yum localinstall katello-ca-consumer-latest.noarch.rpm
+
+
+Download and save the katello server public cert to the default location of /usr/share/rhn
+
+ curl -O --insecure https://your.satellite.instance:8003/pub/katello-server-ca.crt
+
+
+From here you can run subscription-manager as usual to download the ose3 packages and theoretically follow the same installation procedure as a connected server.  Depending on how your katello-ca-consumer-latest.noarch RPM was built, you may need to edit /etc/rhsm/rhsm.conf on your Nodes to point to the correct server.  Typically this should be handled by the RPM's install.
+
+ # subscription-manager register --org "my_organization" --activation-key "act_key_id"
+ The system has been registered with ID: 37f97705-762f-4594-bf6a-d0cdc73a3f79
+ #
+
+
+Depending on your specific organization setup in Satellite, you may need additional steps to get repositories showing up.  Use the [Satellite 6.1 Docs] (https://access.redhat.com/documentation/en-US/Red_Hat_Satellite/6.1/) to follow the necessary steps to do so.
+
+Once packages are available, install docker and setup docker storage.
+
+ yum install -y docker
+
+
+== Issues / Workarounds
+* Satellite 6.1 was unable to pull the OSE3 images from the docker repo, unless a `pull -a` docker command was used.
+* The Docker tab on Satellite 6.1 never had any images listed within it no matter which manifest we put in it. Ticket https://engineering.redhat.com/rt/Ticket/Display.html?id=388088[#388088] was opened to track it.
