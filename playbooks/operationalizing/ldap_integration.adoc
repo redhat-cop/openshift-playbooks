@@ -8,9 +8,6 @@ https://docs.openshift.com/enterprise/3.1/install_config/syncing_groups_with_lda
 
 http://ldapwiki.willeke.com/wiki/LDAP%20Query%20Examples[LDAP Query Examples]
 
-=== What is LDAP
-LDAP is a database organized in a Tree Structure.  LDAP is made up of standardaized objects with inheritance to include additional fields to that object.
-
 Example
 [source,ldap]
 + dc=example,dc=com # domain/organization
@@ -70,6 +67,10 @@ LDAP
       url: "ldap://ldap.example.com/ou=Users,dc=example,dc=com?uid" # by default this is the ldap URI, it contains the ip address, search base (ou=Users,example,dc=com) and the user field you are using.  in this case uid
       
 
+
+=== What is LDAP
+LDAP is a database organized in a Tree Structure.  LDAP is made up of standardaized objects with inheritance to include additional fields to that object.
+
 ==== Adding a filter to a specific group
 
 More than likely the logins to Openshift will be limited by a group.  This may include limiting the capabilities to certain groups.  We will discuss Group Syncing Later.
@@ -87,7 +88,7 @@ Where object class equals posixAccount and the user is a member of the openshift
 
 * You need to install the ldapsearch utils
 
-{source,bash}
+[source,bash]
 yum install openldap-clients -y
 
 * Search for a user
@@ -104,12 +105,5 @@ ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -s sub 
 ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -s base -b cn=openshift,ou=Groups,dc=opentlc07a7,dc=com
 
 
-
-
-* item 1
-* item 2
-
-[source,ruby]
-puts "Hello, World!"
 
 
