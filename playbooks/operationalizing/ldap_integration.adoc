@@ -91,6 +91,7 @@ Where object class equals posixAccount and the user is a member of the openshift
 yum install openldap-clients -y
 
 * Search for a user
+ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -s base -b cn=openshift,ou=Users,dc=opentlc07a7,dc=com
 
 
 * Search for groups
@@ -99,9 +100,8 @@ ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -s sub 
 
 
 * Get members of a group
-
 [source,bash]
-ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -s sub -b "dc=opentlc07a7,dc=com" "objectclass=groupOfNames"
+ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -s base -b cn=openshift,ou=Groups,dc=opentlc07a7,dc=com
 
 
 
