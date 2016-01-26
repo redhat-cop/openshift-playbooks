@@ -38,8 +38,11 @@ Active Directory
   
 LDAP
 [source,ldap]
-(&(objectClass=user)(cn=yourUserName)
+(&(objectClass=inetOrgPerson)(cn=uid)
   (memberof=CN=YourGroup,OU=Users,DC=YourDomain,DC=com))
+
+ApacheDS pre 2.1
+(&(objectclass=groupOfNames)(cn=openshift)(member=cn=jamie,ou=People,dc=examplex,dc=com))
 
 ==== Configure Openshift for LDAP/AD
 
