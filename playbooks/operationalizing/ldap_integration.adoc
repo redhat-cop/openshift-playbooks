@@ -8,41 +8,6 @@ https://docs.openshift.com/enterprise/3.1/install_config/syncing_groups_with_lda
 
 http://ldapwiki.willeke.com/wiki/LDAP%20Query%20Examples[LDAP Query Examples]
 
-Example
-[source,ldap]
-+ dc=example,dc=com # domain/organization
-  + dn: ou=Users,dc=example,dc=com  # dn (distinguished name, unique key for each entry in LDAP, ou is organization unit)
-    + dn: uid=jamie,ou=Users,dc=scires,dc=com (User entry dn)
-      o: posixAccount
-      cn: jamie whetsell
-      uid: jamie
-      mail: jwhetsel@redhat.com
-      surName: Whetsell
-      givenName: jamie
-      phone: 843-867-5309
-      ...  # based on what type of object they are using for the account
-  + dn: ou=Groups,dc=sample,dc=com
-    + dn: uid=admins,ou=Groups,dc=sample,dc=com
-      member: uid=jamie,ou=Users,dc=example,dc=com  # This is a pointer to the dn of a user.  This says the user is in the admin groups
-      member: uid=someotheruser,ou=Users,dc=example,dc=com
-    + dn: uid=jamie,ou=Users,dc=example,dc=com
-      member: uid=jamie,ou=Users,dc=example,dc=com # users can be members of multiple groups
-      
-      
-=== Useful LDAP Queries
-
-Active Directory
-[source,ldap]
-(&(objectClass=user)(sAMAccountName=yourUserName)
-  (memberof=CN=YourGroup,OU=Users,DC=YourDomain,DC=com))
-  
-LDAP
-[source,ldap]
-(&(objectClass=inetOrgPerson)(cn=uid)
-  (memberof=CN=YourGroup,OU=Users,DC=YourDomain,DC=com))
-
-ApacheDS pre 2.1
-(&(objectclass=groupOfNames)(cn=openshift)(member=cn=jamie,ou=People,dc=examplex,dc=com))
 
 ==== Configure Openshift for LDAP/AD
 
