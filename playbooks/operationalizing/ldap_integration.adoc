@@ -8,6 +8,8 @@ https://docs.openshift.com/enterprise/3.1/install_config/syncing_groups_with_lda
 
 http://ldapwiki.willeke.com/wiki/LDAP%20Query%20Examples[LDAP Query Examples]
 
+http://www.openldap.org/faq/data/cache/185.html[Configuring OpenLDAP TLS]
+
 
 ==== Configure Openshift for LDAP/AD
 
