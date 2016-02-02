@@ -8,8 +8,8 @@ before_script:
 script: ./script/cibuild.sh
 
 after_success:
+ - openssl aes-256-cbc -K $encrypted_1645300b04d0_key -iv $encrypted_1645300b04d0_iv -in id_rsa.enc -out deploy_key.pem -d
  - eval "$(ssh-agent -s)"
- - echo "$DEPLOY_KEY" > deploy_key.pem
  - chmod 600 deploy_key.pem
  - ssh-add deploy_key.pem
  - cd _site/
