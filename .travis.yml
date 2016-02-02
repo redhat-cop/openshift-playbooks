@@ -12,6 +12,7 @@ after_success:
  - eval "$(ssh-agent -s)"
  - chmod 600 deploy_key.pem
  - ssh-add deploy_key.pem
+ - ssh-keyscan playbookstest-rhtconsulting.rhcloud.com >> ~/.ssh/known_hosts
  - cd _site/
  - git init
  - git commit -a -m "Deploy for ${TRAVIS_COMMIT}"
