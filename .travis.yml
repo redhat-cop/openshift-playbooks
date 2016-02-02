@@ -1,0 +1,24 @@
+language: ruby
+rvm:
+- 2.0
+
+before_script:
+ - chmod +x ./script/cibuild.sh
+
+script: ./script/cibuild.sh
+
+after_success:
+ - openssl aes-256-cbc -K $encrypted_1645300b04d0_key -iv $encrypted_1645300b04d0_iv -in id_rsa.enc -out deploy_key.pem -d
+ - eval "$(ssh-agent -s)"
+ - chmod 600 deploy_key.pem
+ - ssh-add deploy_key.pem
+ - ssh-keyscan playbookstest-rhtconsulting.rhcloud.com >> ~/.ssh/known_hosts
+ - cd _site/
+ - git init
+ - git commit -a -m "Deploy for ${TRAVIS_COMMIT}"
+ - git remote add deploy ssh://564b93450c1e666a530000d1@playbookstest-rhtconsulting.rhcloud.com/~/git/playbookstest.git/
+ - git push --force deploy
+
+env:
+  global:
+  - NOKOGIRI_USE_SYSTEM_LIBRARIES=true # speeds up installation of html-proofer

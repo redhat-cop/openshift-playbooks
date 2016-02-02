@@ -112,7 +112,7 @@ The next commands will pull all of the required OpenShift dockerized components:
 
 The next commands will pull Red Hat’s certified Source-to-Image (S2I) builder images. Source-to-Image (S2I) is the process that OpenShift uses to take application code and build it into a Docker image to run on the platform. More information about S2I can be found here:
 
-link:../AppDev/builds{outfilesuffix}[OpenShift Playbooks: Builds]
+link:../app_dev/builds{outfilesuffix}[OpenShift Playbooks: Builds]
 
 If there are any languages, runtimes or databases that you do not wish to use, you can skip them.
 
