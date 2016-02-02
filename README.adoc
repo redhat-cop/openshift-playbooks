@@ -14,20 +14,20 @@ This site is written in asciidoc format and is built using the link:https://gith
 
 2. Clone git repositories
 +
----
+----
 git clone https://github.com/rhtconsulting/rhc-ose.git
 git clone https://github.com/rhtconsulting/openshift-playbooks.git
----
+----
 3. Create and run Jekyll Asciidoc Docker container
 +
----
+----
 /path/to/rhc-ose/docker/jekyll-asciidoc/run.sh -d=/path/to/openshift-playbooks
----
+----
 4. Launch browser and find site using default docker-machine IP address, for example:
 +
----
+----
 http://192.168.99.100:4000/
----
+----
 
 
 === Quickstart Guide using RHEL (or derivatives)
