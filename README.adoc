@@ -26,7 +26,7 @@ git clone https://github.com/rhtconsulting/openshift-playbooks.git
 4. Launch browser and find site using default docker-machine IP address, for example:
 +
 ----
-http://192.168.99.100:4000/
+http://<docker_ip>:4000/
 ----
 
 
