@@ -101,18 +101,75 @@ yum install openldap-clients -y
 
 * Search for a user
 [source,bash]
-ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -s base -b cn=openshift,ou=Users,dc=opentlc07a7,dc=com
+ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -xZ -s base -b cn=openshift,ou=Users,dc=opentlc07a7,dc=com
 
 
 * Search for groups
 [source,bash]
-ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -s sub -b "dc=opentlc07a7,dc=com" "objectclass=groupOfNames"
+ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -sZ sub -b "dc=opentlc07a7,dc=com" "objectclass=groupOfNames"
 
 
 * Get members of a group
 [source,bash]
-ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -s base -b cn=openshift,ou=Groups,dc=opentlc07a7,dc=com
+ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -xZ -s base -b cn=openshift,ou=Groups,dc=opentlc07a7,dc=com
+
+** Issues you May See with LDAP Search
+_TLS: can't accept: TLS error -12195:Peer does not recognize and trust the CA that issued your certificate.._
+
+[source,bash]
+Modify your /etc/openldap/ldap.conf
+TLS_CACERTDIR   /etc/openldap/certs # change to your cert dir
+TLS_CACERT      /etc/openldap/certs/ca.cert.pem # use the ca issuer cert
+
+** Issues with Openshift
+
+_Problem_
+[source,bash]
+atomic-openshift-master[8827]: F1207 12:55:23.250834 8827
+auth.go:114] error loading cert pool from ca file
+/etc/pki/tls/certs/ca-bundle.crt: error reading
+/etc/pki/tls/certs/ca-bundle.crt: x509: negative serial number
+
+_Answer_
+[source,bash]
+Your CA cert from open ldap was not generated correctly.  It appears if you use the default CA this is an issue.  Create your own CA if possible.
 
 
+==== Group Syncing with LDAP
 
+Openshift allows for automatic syncing of groups from LDAP Server.  Generally you will not want to sync the entire LDAP.  So you must specify a user defined group.
 
+[source,yaml]
+kind: LDAPSyncConfig
+apiVersion: v1
+url: ldap://10.3.9.248
+insecure: false
+bindDN: "cn=Manager,dc=opentlcx,dc=com"
+bindPassword: "password"
+ca: /etc/openldap/certs/ca.cert.pem
+groupUIDNameMapping:
+    "cn=openshift,ou=Group,dc=opentlcx,dc=com": Users
+    "cn=osadmins,ou=Group,dc=opentlcx,dc=com": Administrators
+rfc2307:
+    groupQuery:
+        baseDN: "ou=Group,dc=opentlcx,dc=com"
+        scope: sub
+        derefAliases: never
+        filter: (objectclass=groupOfNames)
+    groupUIDAttribute: dn
+    groupNameAttributes: [ cn ]
+    groupMembershipAttributes: [ member ]
+    usersQuery:
+        baseDN: "ou=users,dc=opentlcx,dc=com"
+        scope: sub
+        derefAliases: never
+        filter: (objectclass=inetOrgPerson)
+    userUIDAttribute: dn
+    userNameAttributes: [ cn ]
+    
+    * Errors *
+    
+    _Here the error: error: validation of LDAP sync config failed: groupsQuery.filter: invalid value '', Details: invalid query filter: LDAP Result Code 201 "": ldap: filter does not start with an '('_
+    
+    [source,bash]
+    Still researching
