@@ -13,6 +13,9 @@ http://www.openldap.org/faq/data/cache/185.html[Configuring OpenLDAP TLS]
 
 ==== Configure Openshift for LDAP/AD
 
+1-  Add your configuration provider to /etc/orgins/master/master-config.yaml
+2-  restart openshift `systemctl restart atomic-openshift-master`
+
 [source,yaml]
   identityProviders:
   - name: "my_ldap_provider" 
@@ -40,7 +43,6 @@ http://www.openldap.org/faq/data/cache/185.html[Configuring OpenLDAP TLS]
 
 === What is LDAP
 LDAP is a database organized in a Tree Structure.  LDAP is made up of standardaized objects with inheritance to include additional fields to that object.
-
 
 Example
 [source,ldap]
@@ -74,6 +76,8 @@ LDAP
 [source,ldap]
 (&(objectClass=inetOrgPerson)(cn=uid)
   (memberof=CN=YourGroup,OU=Users,DC=YourDomain,DC=com))
+
+TIP: The member of overlay needs to be added to LDAP server for the member of query to work.
 
 ApacheDS pre 2.1
 [source,ldap]
@@ -132,27 +136,30 @@ auth.go:114] error loading cert pool from ca file
 
 _Answer_
 [source,bash]
-Your CA cert from open ldap was not generated correctly.  It appears if you use the default CA this is an issue.  Create your own CA if possible.
+Your CA cert from open ldap was not generated correctly.  It appears if you use the default CA for CentOS/Fedora  is an issue.  Create your own CA if possible.
 
 
 ==== Group Syncing with LDAP
 
-Openshift allows for automatic syncing of groups from LDAP Server.  Generally you will not want to sync the entire LDAP.  So you must specify a user defined group.
+Openshift allows for automatic syncing of groups from LDAP Server.  Generally you will not want to sync the entire LDAP.  So you must specify a user defined group.  The file below will sync two groups inside of openshift.  
+
+1- osadmin which contains the users that are determined to be openshift administrators
+2- openshift: which contains the users that are determined to be the users allowed to login into open.  **The login configuration is handled through your master-config.yaml
 
 [source,yaml]
+---
 kind: LDAPSyncConfig
 apiVersion: v1
-url: ldap://10.3.9.248
-insecure: false
 bindDN: "cn=Manager,dc=opentlcx,dc=com"
 bindPassword: "password"
-ca: /etc/openldap/certs/ca.cert.pem
+insecure: true
+url: ldap://172.17.84.23/
 groupUIDNameMapping:
-    "cn=openshift,ou=Group,dc=opentlcx,dc=com": Users
-    "cn=osadmins,ou=Group,dc=opentlcx,dc=com": Administrators
+  "cn=osadmin,ou=Group,dc=opentlcx,dc=com": Administrators
+  "cn=openshift,ou=Group,dc=opentlcx,dc=com": Users
 rfc2307:
-    groupQuery:
-        baseDN: "ou=Group,dc=opentlcx,dc=com"
+    groupsQuery:
+        baseDN: "ou=group,dc=opentlcx,dc=com"
         scope: sub
         derefAliases: never
         filter: (objectclass=groupOfNames)
@@ -160,16 +167,24 @@ rfc2307:
     groupNameAttributes: [ cn ]
     groupMembershipAttributes: [ member ]
     usersQuery:
-        baseDN: "ou=users,dc=opentlcx,dc=com"
+        baseDN: "ou=People,dc=opentlcx,dc=com"
         scope: sub
         derefAliases: never
         filter: (objectclass=inetOrgPerson)
     userUIDAttribute: dn
     userNameAttributes: [ cn ]
+
+_To Sync the LDAP server with openshift run the command above_
+[source,bash]
+oadm groups sync --sync-config=config.yaml --confirm
+
+NOTE: You can remove the --confirm for a dry run
+
+NOTE:The sync will be automatic after it has setup
     
-    * Errors *
+* Errors *
     
-    _Here the error: error: validation of LDAP sync config failed: groupsQuery.filter: invalid value '', Details: invalid query filter: LDAP Result Code 201 "": ldap: filter does not start with an '('_
+_Here the error: error: validation of LDAP sync config failed: groupsQuery.filter: invalid value '', Details: invalid query filter: LDAP Result Code 201 "": ldap: filter does not start with an '('_
     
-    [source,bash]
-    Still researching
+[source,bash]
+    This is more than likely because you cannot connect to your ldap server.  
