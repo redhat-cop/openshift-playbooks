@@ -181,7 +181,27 @@ oadm groups sync --sync-config=config.yaml --confirm
 NOTE: You can remove the --confirm for a dry run
 
 NOTE:The sync will be automatic after it has setup
+
+_Show the Openshift groups_
+[source,bash]
+oc describe groups
     
+
+_Add Role to a synced Group_
+
+This will make the administrators group in openshift which is mapped above to the osadmin group in ldap a cluster-admin.
+[source,bash]
+oadm policy add-role-to-group cluster-admin Administrators
+
+From the example above make everyone in the LDAP group openshift (In Openshift Users).  basic-users
+[source,bash]
+oadm policy add-role-to-group basic-user Users
+
+To see the policy bindings
+[source,bash]
+oc describe policyBindings
+
+
 * Errors *
     
 _Here the error: error: validation of LDAP sync config failed: groupsQuery.filter: invalid value '', Details: invalid query filter: LDAP Result Code 201 "": ldap: filter does not start with an '('_
