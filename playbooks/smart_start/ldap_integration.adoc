@@ -7,24 +7,13 @@ Jamie Whetsell <jwhetsel@redhat.com>
 
 toc::[]
 
-=== References
-https://docs.openshift.com/enterprise/3.0/admin_guide/configuring_authentication.html#LDAPPasswordIdentityProvider[OpenShift LDAP Authentication Reference]
+== Configure Openshift for LDAP/AD
 
-https://docs.openshift.com/enterprise/3.1/install_config/syncing_groups_with_ldap.html[Syncing LDAP Groups]
-
-http://ldapwiki.willeke.com/wiki/LDAP%20Query%20Examples[LDAP Query Examples]
-
-http://www.openldap.org/faq/data/cache/185.html[Configuring OpenLDAP TLS]
-
-http://www.ldapexplorer.com/en/manual/109010000-ldap-filter-syntax.htm[LDAP Filter Syntax]
-
-
-==== Configure Openshift for LDAP/AD
-
-1-  Add your configuration provider to /etc/orgins/master/master-config.yaml
-2-  restart openshift `systemctl restart atomic-openshift-master`
+1.  [Add your configuration provider to /etc/orgins/master/master-config.yaml]
+2.  [restart openshift `systemctl restart atomic-openshift-master`]
 
 [source,yaml]
+----
   identityProviders:
   - name: "my_ldap_provider" 
     challenge: true 
@@ -41,19 +30,26 @@ http://www.ldapexplorer.com/en/manual/109010000-ldap-filter-syntax.htm[LDAP Filt
         - cn  # This is the display name it is mapped to the cn(common name field in LDAP)
         preferredUsername: 
         - uid # this is the field that is the username when logging into open shift
+      #  This should be provided by the Customer
+      #  Generally the LDAP will have an anonymous bind for authentication purposes
       bindDN: "" # If the ldap has anonymous bind turned off, you may need to add a username and password to search for users
       bindPassword: "" 
+      # This should be provided by the client
       ca: my-ldap-ca-bundle.crt # This should be provided to you
       insecure: false # by default the system will try to use TLS for authentication. setting to true will not use tls
+      # LDAP by default runs on port 389 for insecure and will communicate via TLS over 389
+      # if you are using SSL, then you will need to use ldaps://
       url: "ldap://ldap.example.com/ou=Users,dc=example,dc=com?uid" # by default this is the ldap URI, it contains the ip address, search base (ou=Users,example,dc=com) and the user field you are using.  in this case uid
+----
       
 
 
-=== What is LDAP
+== What is LDAP
 LDAP is a database organized in a Tree Structure.  LDAP is made up of standardaized objects with inheritance to include additional fields to that object.
 
-Example
+Here is an example of what an LDAP directory tree may look like.
 [source,ldap]
+----
 + dc=example,dc=com # domain/organization
   + dn: ou=Users,dc=example,dc=com  # dn (distinguished name, unique key for each entry in LDAP, ou is organization unit)
     + dn: uid=jamie,ou=Users,dc=scires,dc=com (User entry dn)
@@ -71,90 +67,120 @@ Example
       member: uid=someotheruser,ou=Users,dc=example,dc=com
     + dn: uid=jamie,ou=Users,dc=example,dc=com
       member: uid=jamie,ou=Users,dc=example,dc=com # users can be members of multiple groups
+----
       
       
-=== Useful LDAP Queries
+== Useful LDAP Queries
 
 Active Directory
 [source,ldap]
+----
 (&(objectClass=user)(sAMAccountName=yourUserName)
   (memberof=CN=YourGroup,OU=Users,DC=YourDomain,DC=com))
+----
   
 LDAP
 [source,ldap]
+----
 (&(objectClass=inetOrgPerson)(cn=uid)
   (memberof=CN=YourGroup,OU=Users,DC=YourDomain,DC=com))
+----
 
 TIP: The member of overlay needs to be added to LDAP server for the member of query to work.
 
 ApacheDS pre 2.1
+----
 [source,ldap]
 (&(objectclass=groupOfNames)(cn=openshift)(member=cn=jamie,ou=People,dc=examplex,dc=com))
+----
 
-==== Adding a filter to a specific group
+Example URL for master-config.yaml
+[source,ldap]
+----
+url: "ldap://10.3.9.248/ou=People,dc=opentlcx,dc=com?uid?sub?(&(objectClass=inetOrgPerson)(memberOf=cn=openshift,ou=Group,dc=opentlcx,dc=com))"
+----
+
+== Adding a filter to a specific group
 
 More than likely the logins to Openshift will be limited by a group.  This may include limiting the capabilities to certain groups.  We will discuss Group Syncing Later.
 
 We will assume we are connection to a standard ldap.  The first step is to create a query to limit the user to a group, so from above we have:
 
 [source,conf]
+----
 (&(objectClass=posixAccount)(memberof=CN=openshift,OU=groups,DC=example,DC=com))
+----
 
 so in english this looks like:
 
 Where object class equals posixAccount and the user is a member of the openshift group.
 
-==== Testing your LDAP queries
+== Testing your LDAP queries
 
 * You need to install the ldapsearch utils
 
 [source,bash]
+----
 yum install openldap-clients -y
+----
 
 * Search for a user
 [source,bash]
+----
 ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -xZ -s base -b cn=openshift,ou=Users,dc=opentlc07a7,dc=com
+----
 
 
 * Search for groups
 [source,bash]
+----
 ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -sZ sub -b "dc=opentlc07a7,dc=com" "objectclass=groupOfNames"
+----
 
 
 * Get members of a group
 [source,bash]
+----
 ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -xZ -s base -b cn=openshift,ou=Groups,dc=opentlc07a7,dc=com
+----
 
 ** Issues you May See with LDAP Search
 _TLS: can't accept: TLS error -12195:Peer does not recognize and trust the CA that issued your certificate.._
 
 [source,bash]
+----
 Modify your /etc/openldap/ldap.conf
 TLS_CACERTDIR   /etc/openldap/certs # change to your cert dir
 TLS_CACERT      /etc/openldap/certs/ca.cert.pem # use the ca issuer cert
+----
 
 ** Issues with Openshift
 
 _Problem_
 [source,bash]
+----
 atomic-openshift-master[8827]: F1207 12:55:23.250834 8827
 auth.go:114] error loading cert pool from ca file
 /etc/pki/tls/certs/ca-bundle.crt: error reading
 /etc/pki/tls/certs/ca-bundle.crt: x509: negative serial number
+----
 
 _Answer_
 [source,bash]
+----
 Your CA cert from open ldap was not generated correctly.  It appears if you use the default CA for CentOS/Fedora  is an issue.  Create your own CA if possible.
+----
 
 
-==== Group Syncing with LDAP
+== Group Syncing with LDAP
 
 Openshift allows for automatic syncing of groups from LDAP Server.  Generally you will not want to sync the entire LDAP.  So you must specify a user defined group.  The file below will sync two groups inside of openshift.  
 
-1- osadmin which contains the users that are determined to be openshift administrators
-2- openshift: which contains the users that are determined to be the users allowed to login into open.  **The login configuration is handled through your master-config.yaml
+1. [osadmin which contains the users that are determined to be openshift administrators]
+2. [openshift: which contains the users that are determined to be the users allowed to login into open.  **The login configuration is handled through your master-config.yaml]
 
 [source,yaml]
+----
 ---
 kind: LDAPSyncConfig
 apiVersion: v1
@@ -181,10 +207,13 @@ rfc2307:
         filter: (objectclass=inetOrgPerson)
     userUIDAttribute: dn
     userNameAttributes: [ cn ]
+----
 
 _To Sync the LDAP server with openshift run the command above_
 [source,bash]
+----
 oadm groups sync --sync-config=config.yaml --confirm
+----
 
 NOTE: You can remove the --confirm for a dry run
 
@@ -192,22 +221,30 @@ NOTE:The sync will be automatic after it has setup
 
 _Show the Openshift groups_
 [source,bash]
+----
 oc describe groups
+----
     
 
 _Add Role to a synced Group_
 
 This will make the administrators group in openshift which is mapped above to the osadmin group in ldap a cluster-admin.
 [source,bash]
+----
 oadm policy add-role-to-group cluster-admin Administrators
+----
 
 From the example above make everyone in the LDAP group openshift (In Openshift Users).  basic-users
 [source,bash]
+----
 oadm policy add-role-to-group basic-user Users
+----
 
 To see the policy bindings
 [source,bash]
+----
 oc describe policyBindings
+----
 
 
 * Errors *
@@ -215,4 +252,19 @@ oc describe policyBindings
 _Here the error: error: validation of LDAP sync config failed: groupsQuery.filter: invalid value '', Details: invalid query filter: LDAP Result Code 201 "": ldap: filter does not start with an '('_
     
 [source,bash]
+----
     This is more than likely because you cannot connect to your ldap server.  
+----
+
+== References
+https://docs.openshift.com/enterprise/3.0/admin_guide/configuring_authentication.html#LDAPPasswordIdentityProvider[OpenShift LDAP Authentication Reference]
+
+https://docs.openshift.com/enterprise/3.1/install_config/syncing_groups_with_ldap.html[Syncing LDAP Groups]
+
+http://ldapwiki.willeke.com/wiki/LDAP%20Query%20Examples[LDAP Query Examples]
+
+http://www.openldap.org/faq/data/cache/185.html[Configuring OpenLDAP TLS]
+
+http://www.ldapexplorer.com/en/manual/109010000-ldap-filter-syntax.htm[LDAP Filter Syntax]
+
+
