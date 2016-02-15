@@ -8,7 +8,10 @@ This document is an attempt to help consolidate and fill-in some of the existing
 
 You are installing Red Hat Satellite 6.1 on a Red Hat Enterprise Linux 7 Server with plenty (see requirements in Satellite 6.1 docs, above) of storage, CPU, RAM, and Internet access.  This host will then be removed from the Internet-connected network and connected to the disconnected network in order to serve the Red Hat Content (both RPMs and Docker Registry) to the disconnected network.
 
-TODO - Figure out and describe how this works with a katello-disconnected host.
+.Feedback or Contribution Needed
+****
+Figure out and describe how this works with a katello-disconnected host.
+****
 
 == Satellite 6.1 Installation
 
@@ -33,7 +36,7 @@ Note that you might have several options for the installer script, again they ar
 
 == Enable Docker Repositories
 
-This is where it can get a bit confusing.  Should you add Docker registries?  Download Repositories?  Which ones?  It really depends on whether you plan on continued connectivity or not.  Since we'd like the server to disconnect at some point and contain the images/RPMs for everything OSE3, we will follow the new-repository process.
+This is where it can get a bit confusing.  Should you add Docker registries?  Download Repositories?  Which ones?  It really depends on whether you plan on continued connectivity or not.  Since we'd like the server to disconnect at some point and contain the images/RPMs for everything OSE3, we will follow the new-repository process. (Note, there is currently a Bug that breaks this for OSE 3.1.x & Sat 6.1.x. See Issues/Workarounds below.)
 
 1.  On your newly-created Satellite, click the "Content" pull-down and then "Products".
 2.  Click "New Product".
@@ -103,13 +106,13 @@ Prereq:  First edit /etc/foreman-proxy/settings.yml to include "localhost" as on
 Now we'll proceed to subscribe our clients to the newly-created and populated Satellite Server.
 you will need to download the katello consumer packages from the server, and install the rpms.
 
- curl -O --insecure https://your.satellite.instance:8003/pub/katello-ca-consumer-latest.noarch.rpm
+ curl -O --insecure https://your.satellite.instance/pub/katello-ca-consumer-latest.noarch.rpm
  yum localinstall katello-ca-consumer-latest.noarch.rpm
 
 
 Download and save the katello server public cert to the default location of /usr/share/rhn
 
- curl -O --insecure https://your.satellite.instance:8003/pub/katello-server-ca.crt
+ curl -O --insecure https://your.satellite.instance/pub/katello-server-ca.crt
 
 
 From here you can run subscription-manager as usual to download the ose3 packages and theoretically follow the same installation procedure as a connected server.  Depending on how your katello-ca-consumer-latest.noarch RPM was built, you may need to edit /etc/rhsm/rhsm.conf on your Nodes to point to the correct server.  Typically this should be handled by the RPM's install.
@@ -128,4 +131,4 @@ Once packages are available, install docker and setup docker storage.
 
 == Issues / Workarounds
 * Satellite 6.1 was unable to pull the OSE3 images from the docker repo using a plain `pull` command. This is due to a problem with Satellite interpreting docker labels. You must use a `pull -a` docker command (pull all) to retrieve the OSE3 images.
-* The Docker tab on Satellite 6.1 never had any images listed within it no matter which manifest we put in it. Ticket https://engineering.redhat.com/rt/Ticket/Display.html?id=388088[#388088] was opened to track it.
+* The Docker tab on Satellite 6.1 never had any images listed within it no matter which manifest we put in it. Bugzilla https://bugzilla.redhat.com/show_bug.cgi?id=1308709[#1308709] was opened to track it.
