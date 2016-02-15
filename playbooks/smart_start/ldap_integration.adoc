@@ -100,6 +100,13 @@ Example URL for master-config.yaml
 url: "ldap://10.3.9.248/ou=People,dc=opentlcx,dc=com?uid?sub?(&(objectClass=inetOrgPerson)(memberOf=cn=openshift,ou=Group,dc=opentlcx,dc=com))"
 ----
 
+Example Ansible.cfg
+[source,yaml]
+----
+openshift_master_identity_providers=[{'name': 'my_ldap_provider', 'challenge': 'true', 'login': 'true', 'kind': 'LDAPPasswordIdentityProvider', 'attributes': {'id': ['dn'], 'email': ['mail'], 'name': ['cn'], 'p\
+referredUsername': ['uid']}, 'bindDN': '', 'bindPassword': '', 'ca': '/path/to/my-ldap-cacert.crt', 'insecure': 'false', 'url': 'ldap://ldap.mycompany.com:389/ou=users,dc=mycompany,dc=com?uid'}]
+----
+
 == Adding a filter to a specific group
 
 More than likely the logins to Openshift will be limited by a group.  This may include limiting the capabilities to certain groups.  We will discuss Group Syncing Later.
@@ -144,7 +151,8 @@ ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -sZ sub
 ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -xZ -s base -b cn=openshift,ou=Groups,dc=opentlc07a7,dc=com
 ----
 
-** Issues you May See with LDAP Search
+=== Issues you May See with LDAP Search
+
 _TLS: can't accept: TLS error -12195:Peer does not recognize and trust the CA that issued your certificate.._
 
 [source,bash]
@@ -154,7 +162,7 @@ TLS_CACERTDIR   /etc/openldap/certs # change to your cert dir
 TLS_CACERT      /etc/openldap/certs/ca.cert.pem # use the ca issuer cert
 ----
 
-** Issues with Openshift
+=== Issues with Openshift
 
 _Problem_
 [source,bash]
@@ -217,7 +225,7 @@ oadm groups sync --sync-config=config.yaml --confirm
 
 NOTE: You can remove the --confirm for a dry run
 
-NOTE:The sync will be automatic after it has setup
+NOTE: The sync will be automatic after it has setup
 
 _Show the Openshift groups_
 [source,bash]
