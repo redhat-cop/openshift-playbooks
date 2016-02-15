@@ -1,5 +1,11 @@
-== LDAP Integration
+---
+---
+= LDAP Integration
 Jamie Whetsell <jwhetsel@redhat.com>
+:toc: macro
+:toc-title:
+
+toc::[]
 
 === References
 https://docs.openshift.com/enterprise/3.0/admin_guide/configuring_authentication.html#LDAPPasswordIdentityProvider[OpenShift LDAP Authentication Reference]
@@ -9,6 +15,8 @@ https://docs.openshift.com/enterprise/3.1/install_config/syncing_groups_with_lda
 http://ldapwiki.willeke.com/wiki/LDAP%20Query%20Examples[LDAP Query Examples]
 
 http://www.openldap.org/faq/data/cache/185.html[Configuring OpenLDAP TLS]
+
+http://www.ldapexplorer.com/en/manual/109010000-ldap-filter-syntax.htm[LDAP Filter Syntax]
 
 
 ==== Configure Openshift for LDAP/AD
