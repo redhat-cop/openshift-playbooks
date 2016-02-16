@@ -71,7 +71,9 @@ Requirements for a Full Integration include:
 
 In this way, the OpenShift router pods work as configuration agents for the F5. Rather than handling incoming web traffic, the pods just watch the OpenShift API for new routes to be created and pass that configuration information up to the F5 via its API to configure routes and handle traffic at the load balancer level.
 
-Through the use of tunnels provided by ramp nodes, the F5 BIG-IP is given direct access to OpenShift pods, removing the need for an intermediate network hop through a proxy server.
+Through the use of tunnels provided by ramp nodes, the F5 BIG-IP is given the ability to directly send traffic to OpenShift pods.
+
+TIP: By default, the use of a Ramp Node creates a single point of failure. To avoid this, you must configure a link:https://docs.openshift.org/latest/install_config/routing_from_edge_lb.html#configuring-a-highly-available-ramp-node[highly available ramp node].
 
 image::/images/load_balancing_full.jpg[Simple Integration]
 
