@@ -1,0 +1,211 @@
+---
+---
+= External Load Balancer Integrations with OpenShift Enterprise 3
+Eric Sauer <esauer@redhat.com>, obedin@redhat.com
+v1.0, 2015-10-30
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Load Balancing For HA Applications
+
+=== Simple Integration (External LB as a Passthrough)
+
+This is the most lightweight integration possible between OpenShift and an external load balancer. The goal here is to satisfy common requirements that application traffic originating outside of an organization go through a DMZ or public network layer before hitting applications behind a firewall.
+
+In order to keep the implementation as simple as possible, we use the load balancer as a simple passthrough to OpenShift’s routing layer. The OpenShift routers then handle things like SSL termination and making decisions on where to send traffic for particular applications.
+
+Required components for a simple integration include:
+
+* External load balancer
+** Single VIP for OpenShift applications
+** SSL passthrough
+** Round robin load balancing
+* OpenShift router
+** Will support application specific routes
+** Handles SSL via a combination of wildcard and unique certificates
+*** Any application can create a route with a unique certificate
+*** Applications that want SSL but don’t provide unique certificates will use the wildcard certificate provided for the router
+*** Non-Secure HTTP routes are also supported and are the default behavior out of the box
+
+image::/images/load_balancing_simple.jpg[Simple Integration]
+
+=== Hybrid Integration (External LB Termination)
+
+NOTE: Hybrid Integration is recommended only in the case that security policy or network structure inhibit the ability to implement the Simple Integration above.
+
+This scenario is very similar to the Simple Integration with one simple, but important difference. In this scenario we are offloading SSL termination to the Load Balancer, instead of to OpenShift. The advantage here is that we have the ability to host SSL Certificates and unique public IP addresses at the Load Balancer level, which some organizations prefer. The drawback is that, in order to do that, we now have some extra administration overhead on the Load Balancer in order to onboard each new application. This process can generally be automated without much trouble, but it does significantly increase the level of effort required to integrate.
+
+NOTE: For organizations that use an F5 BIG-IP as their External Load Balancer, OpenShift provides a built-in plugin for integrating that as OpenShift’s router, thus removing the overhead of building this custom automation.
+
+Required components for the hybrid approach include:
+
+* External Load Balancer
+** One Default VIP, hosting a wildcard certificate for OpenShift applications
+** One additional VIP per application that requires one of:
+*** Unique Certificate
+*** Vanity URL that doesn’t match the OpenShift Wildcard domain name
+** Round Robin config Responsible for
+*** LB algorithm (sticky, round robin, etc.)
+** OpenShift Router Responsible for
+
+image::/images/load_balancing_hybrid.jpg[Hybrid Integration]
+
+=== Full Integration (Integrating F5 as the OpenShift Router)
+
+OpenShift provides an out of the box plugin that allows an administrator to configure OpenShift to use an external F5 BIG-IP appliance as its router. This feature works by providing OpenShift with access to the BIG-IP’s API in order to dynamically configure new unique virtual hosts as new applications come online. While this feature makes for a much more dynamic environment with Enterprise-ready features, it has more stringent requirements than the Simple or Hybrid Integration in order to be successful.
+
+Requirements for a Full Integration include:
+
+* F5 BIG-IP version 11.6 or greater
+* Connectivity and Authentication Access to the BIG-IP REST API from OpenShift nodes
+** Specifically the OpenShift nodes running your router pods
+** SSH Access to the BIG-IP for transferring files like certificates and keys
+* Authorization allowances for OpenShift to Control the BIG-IP to do things like:
+** Create virtual hosts
+** Delete virtual hosts
+** Add and configure certificates
+* One or more link:https://docs.openshift.com/enterprise/3.0/admin_guide/routing_from_edge_lb.html#establishing-a-tunnel-using-a-ramp-node[OpenShift Ramp Nodes] by which access to the internal SDN is provided to the BIG-IP
+
+In this way, the OpenShift router pods work as configuration agents for the F5. Rather than handling incoming web traffic, the pods just watch the OpenShift API for new routes to be created and pass that configuration information up to the F5 via its API to configure routes and handle traffic at the load balancer level.
+
+Through the use of tunnels provided by ramp nodes, the F5 BIG-IP is given direct access to OpenShift pods, removing the need for an intermediate network hop through a proxy server.
+
+image::/images/load_balancing_full.jpg[Simple Integration]
+
+For more information on configuration, view the routing section of the official OpenShift Enterprise docs:
+https://docs.openshift.com/enterprise/3.0/install_config/install/deploy_router.html#deploying-the-f5-router
+
+== Load Balancing For HA Infrastructure
+
+=== External Load Balancing for the OpenShift Master
+
+OpenShift Enterprise 3.1 introduced a Native HA mode that provides high availability of the Master without the need for Pacemaker/RHEL Clustering. When installed in Native HA, the stateless API component (`atomic-openshift-master-api`) of the master is split out from the stateful Controller component (`atomic-openshift-master-controllers`). This is so that the API service can be setup active-active, while the Controller service runs active-passive. Once we have an active-active master API (which includes the Web Console as well), all that's needed to have a fully HA orchestration infrastructure is a proper load balancer.
+
+Out of the box, the OpenShift has the ability to install an HAProxy instance on a host you designate as a lightweight load balancer between masters in Native HA mode. However, this only creates another single point of failure. It is much preferred to integrate an enterprise load balancer (LB) such as an F5 Big-IP(TM) or a Citrix Netscaler(TM) appliance. This integration does add some complexity to the install process. We attempt to explain those options below.
+
+==== SSL Passthrough (Non-Prod only)
+
+===== Overview
+
+One option is to configure a VIP on a load balancer as SSL Passthrough. This means that the LB does not terminate SSL, but simply proxies encrypted traffic through to the masters, which then handle termination. This has the advantage of being a fairly simple implementation on the LB side, and a slightly simpler setup process on the OpenShift installation than terminating on the LB. The drawback of this method is that we are presenting a self-signed certificate, so users of the Web Console or API will see untrusted or unknown certificate errors.
+
+===== Example Configuration
+
+====== Pre-requisites
+
+* Load Balancer VIP pre-created
+  ** Configured for SSL Passthrough
+  ** VIP must listen on port 8443, and proxy back to all master hosts on port 8443
+* Domain Name for VIP registered in DNS
+  ** Domain name will become value of both `openshift_master_cluster_public_hostname` and `openshift_master_cluster_hostname` in OpenShift Installer
+* Master hosts created and prepped per link:https://docs.openshift.com/enterprise/3.1/install_config/install/prerequisites.html[Install Prerequisites]
+  ** Additionally, we need to manually install the `atomic-openshift` package to the first master, so we can use the `oadm` command to create certs
+
+====== 1. Pre-create Master Certificates
+
+In order to prevent issues with hostname matching for certificates, it's required to pre-create the certificates OpenShift will use for communication between various components.
+
+[source,bash]
+----
+oadm ca create-master-certs \
+  --hostnames=paas.myorg.com,master01.myorg.com,master02.myorg.com,master03.myorg.com \ <1>
+  --master=https://paas.myorg.com:8443 \ <2>
+  --public-master=https://paas.myorg.com:8443 \ <3>
+  --cert-dir=/etc/origin/master
+----
+
+<1> Domain name of VIP, plus all of the master hostnames
+<2> Master URL VIP
+<3> Master URL VIP
+
+====== 2. Setup the Installer
+
+[source,bash]
+----
+# Native HA with External LB VIPs
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname=master.example.com
+openshift_master_cluster_public_hostname=master.example.com
+----
+
+====== 3. Run the Advanced Installer
+
+Run the installer per the instructions in the link:https://docs.openshift.com/enterprise/3.1/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Insallation Guide]
+
+==== SSL Termination
+
+===== Overview
+
+The other option is to have the LB terminate SSL connections. The LB would need to re-encrpyt and send traffic on to the masters. The advantage here is that we now have the ability to make the Web Console & API available externally using a publicly signed certificate, or one signed by your organization's PKI, making for a better user experience.
+
+===== Example Configuration
+
+====== Pre-requisites
+
+* Two Load Balancer VIPs Pre-created
+  ** External VIP
+    *** Configured for SSL Termination, using either:
+      **** A certificate signed by a Public Certificate Authority
+      **** A trusted certificate from your org's PKI
+    *** VIP must listen on port 8443, and proxy back to all master hosts on port 8443
+  ** External VIP
+    *** Configured for SSL Termination, using a cert Generated by OpenShift (see step 1 below)
+    *** VIP must listen on port 8443, and proxy back to all master hosts on port 8443
+* Domain Name for each VIP registered in DNS
+  ** Domain name for _external_ VIP will become value of `openshift_master_cluster_public_hostname` in OpenShift Installer (i.e. paas.myorg.com)
+  ** Domain name for _internal_ VIP will become value of `openshift_master_cluster_hostname` in OpenShift Installer (i.e. paas-internal.myorg.com)
+* Master hosts created and prepped per link:https://docs.openshift.com/enterprise/3.1/install_config/install/prerequisites.html[Install Prerequisites]
+  ** Additionally, we need to manually install the `atomic-openshift` package to the first master, so we can use the `oadm` command to create certs
+
+====== 1. Pre-create Master Certificates
+
+Because we need to use a cert created by OpenShift (signed by OpenShift's private CA), we need to pre-create certificates for OpenShift before actually running the installer. To do this, run this from the first master host, with the `atomic-openshift` package installed:
+
+[source,bash]
+----
+oadm ca create-master-certs \
+  --hostnames=paas-internal.myorg.com,master01.myorg.com,master02.myorg.com,master03.myorg.com \ <1>
+  --master=https://paas-internal.myorg.com:8443 \ <2>
+  --public-master=https://paas.myorg.com:8443 \ <3>
+  --cert-dir=/etc/origin/master
+----
+
+<1> Domain names of internal VIP, plus all of the master hostnames
+<2> Master URL using internal VIP
+<3> Master URL using external VIP
+
+Then, create the server certificate that will be hosted on the internal VIP:
+
+[source,bash]
+----
+oadm ca create-server-cert --signer-cert=/etc/origin/master/ca.crt \
+  --signer-key=/etc/origin/master/ca.key \
+  --signer-serial=/etc/origin/master/ca.serial.txt \
+	--hostnames='paas-internal.myorg.com' \ <1>
+	--cert=internal-vip.crt --key=internal-vip.key
+----
+
+<1> Domain name of internal VIP
+
+Finally, provide the generated `internal-vip.crt` and `internal-vip.key` to the LB VIP to be configured as server certificates
+
+====== 2. Setup the Installer
+
+Before running the installer, you'll need to be provided the certificate and keyfile that will be hosted on the External VIP, so that they can be added to OpenShift's trust. Those files must be placed somewhere on the host that will run the installer.
+
+[source,bash]
+----
+# Native HA with External LB VIPs
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname=paas-internal.myorg.com
+openshift_master_cluster_public_hostname=paas.myorg.com
+openshift_master_named_certificates=[{ "certfile":"/root/.certs/pass.myorg.com.pem", "keyfile":"/root/.certs/paas.myorg.com.key", "names": "master"}]
+openshift_master_overwrite_named_certificates=true
+----
+
+====== 3. Run the Advanced Installer
+
+Run the installer per the instructions in the link:https://docs.openshift.com/enterprise/3.1/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Insallation Guide]
