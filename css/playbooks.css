@@ -17,3 +17,28 @@ aside ul li a {
 aside ul li a:hover {
   background-color: #eee;
 }
+
+body {
+  font-family: "Open Sans", Helvetica, Arial, sans-serif;
+}
+
+code {
+  border-radius: 5px;
+  color:rgba(45,65,150,.9);
+}
+
+code, kbd, pre, samp {
+  font-size: .8em;
+}
+
+pre,pre>code {
+  color:rgba(45,65,150,.9);
+  word-break:break-all;
+  word-wrap:normal;
+  overflow-x:auto;
+  white-space:pre
+}
+
+*:not(pre)>code {
+  font-size: .8em;
+}
