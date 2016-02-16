@@ -42,3 +42,33 @@ pre,pre>code {
 *:not(pre)>code {
   font-size: .8em;
 }
+
+.admonitionblock>table td.icon {
+  font-family: FontAwesome;
+  font-size: 2em;
+  width: 80px;
+}
+
+.admonitionblock>table td.icon .title {
+  text-indent: -9999px;
+  line-height: 0;
+  visibility: hidden;
+}
+
+.admonitionblock>table td.icon .title:before {
+  visibility: visible;
+  text-indent: 0;
+  display: block;
+  line-height: initial;
+  font-family: FontAwesome;
+}
+
+.note td.icon .title:before {
+  content: "\f05a";
+  color: #4E9FDD;
+}
+
+.important td.icon .title:before {
+  content: "\f06a";
+  color: #c00;
+}
