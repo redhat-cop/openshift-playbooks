@@ -68,7 +68,22 @@ pre,pre>code {
   color: #4E9FDD;
 }
 
+.tip td.icon .title:before {
+  content: "\f0eb";
+  color: #0a0;
+}
+
 .important td.icon .title:before {
   content: "\f06a";
   color: #c00;
+}
+
+.caution td.icon .title:before {
+  content: "\f06d";
+  color: #ec7a08;
+}
+
+.warning td.icon .title:before {
+  content: "\f071";
+  color: #ec7a08;
 }
