@@ -75,7 +75,7 @@ Through the use of tunnels provided by ramp nodes, the F5 BIG-IP is given the ab
 
 TIP: By default, the use of a Ramp Node creates a single point of failure. To avoid this, you must configure a link:https://docs.openshift.org/latest/install_config/routing_from_edge_lb.html#configuring-a-highly-available-ramp-node[highly available ramp node].
 
-image::/images/load_balancing_full.jpg[Simple Integration]
+image::/images/load_balancing_full.jpg[Full Integration]
 
 For more information on configuration, view the routing section of the official OpenShift Enterprise docs:
 https://docs.openshift.com/enterprise/3.0/install_config/install/deploy_router.html#deploying-the-f5-router
@@ -91,6 +91,8 @@ Out of the box, the OpenShift has the ability to install an HAProxy instance on 
 ==== Overview
 
 One option is to configure a VIP on a load balancer as SSL Passthrough. This means that the LB does not terminate SSL, but simply proxies encrypted traffic through to the masters, which then handle termination. This has the advantage of being a fairly simple implementation on the LB side, and a slightly simpler setup process on the OpenShift installation than terminating on the LB. The drawback of this method is that we are presenting a self-signed certificate, so users of the Web Console or API will see untrusted or unknown certificate errors.
+
+image::/images/load_balancing_masters_simple.png[Simple Passthrough for OpenShift Masters]
 
 ==== Example Configuration
 
@@ -188,6 +190,8 @@ Run the installer per the instructions in the link:https://docs.openshift.com/en
 ==== Overview
 
 The other option is to have the LB terminate SSL connections for incoming . The LB would need to re-encrpyt and send traffic on to the masters. The advantage here is that we now have the ability to make the Web Console & API available externally using a publicly signed certificate, or one signed by your organization's PKI, making for a better user experience.
+
+image::/images/load_balancing_masters_prod.png[Production Ready Load Balancing for OpenShift Masters]
 
 ==== Example Configuration
 
