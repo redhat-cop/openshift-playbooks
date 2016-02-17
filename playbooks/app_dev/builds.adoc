@@ -302,7 +302,7 @@ The following S2I builder images are available in the OpenShift ecosystem
 
 ==== JBoss EAP Integration
 
-The JBoss EAP image for OpenShift includes S2I scripts located in the `/usr/local/sti` directory. These are run by default if the application being built does not include any of the S2I scripts.
+The JBoss EAP image for OpenShift includes S2I scripts located in the `/usr/local/s2i` directory. These are run by default if the application being built does not include any of the S2I scripts.
 
 The best way to learn how the JBoss S2I builder works is to investigate the builder itself. Run the following command to start a container containing the builder image
 
