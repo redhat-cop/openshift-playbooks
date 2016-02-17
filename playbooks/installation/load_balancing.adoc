@@ -88,7 +88,7 @@ OpenShift Enterprise 3.1 introduced a Native HA mode that provides high availabi
 
 Out of the box, the OpenShift has the ability to install an HAProxy instance on a host you designate as a lightweight load balancer between masters in Native HA mode. However, this only creates another single point of failure. It is much preferred to integrate an enterprise load balancer (LB) such as an F5 Big-IP(TM) or a Citrix Netscaler(TM) appliance. This integration does add some complexity to the install process. We attempt to explain those options below.
 
-==== SSL Passthrough (Non-Prod only)
+==== Simple SSL Passthrough (Non-Prod only)
 
 ===== Overview
 
@@ -96,60 +96,104 @@ One option is to configure a VIP on a load balancer as SSL Passthrough. This mea
 
 ===== Example Configuration
 
-====== Pre-requisites
+====== 1. Pre-requisites
 
 * Load Balancer VIP pre-created
   ** Configured for SSL Passthrough
   ** VIP must listen on port 8443, and proxy back to all master hosts on port 8443
 * Domain Name for VIP registered in DNS
   ** Domain name will become value of both `openshift_master_cluster_public_hostname` and `openshift_master_cluster_hostname` in OpenShift Installer
-  ** For this example, we will give our VIP a domain name: _paas-internal.myorg.com_
+  ** For this example, we will give our VIP a domain name: *paas.myorg.com*
 * Master hosts created and prepped per link:https://docs.openshift.com/enterprise/3.1/install_config/install/prerequisites.html[Install Prerequisites]
-  ** Additionally, we need to manually install the `atomic-openshift` package to the first master, so we can use the `oadm` command to create certs
-  ** For this example, we will give our masters the following hostnames: _master01.myorg.com_, _master02.myorg.com_, _master03.myorg.com_
-  ** Fir this example, we will give our masters the following IP addresses: 192.168.122.1, 192.168.122.2, 192.168.122.3
 
-====== 1. Pre-create Master Certificates
+For the purposes of this example, we will use the hosts specified in the table below
 
-In order to prevent issues with hostname matching for certificates, it's required to pre-create the certificates OpenShift will use for communication between various components.
+[options="header"]
+|===
+|Host Name |Infrastructure Component
+|*paas.myorg.com*
+|Pre-Configured LB VIP
+|*master01.myorg.com*
+.3+.^|Master (clustered using native HA) and node
+|*master02.myorg.com*
+|*master03.myorg.com*
 
-[source,bash]
-----
-export service_names="kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster.local,openshift,openshift.default,openshift.default.svc,openshift.default.svc.cluster.local"
-export master_hosts="master01.myorg.com,master02.myorg.com,master03.myorg.com,192.168.122.1,192.168.122.2,192.168.122.3"
-oadm ca create-master-certs \
-  --hostnames=paas-internal.myorg.com,$master_hosts,172.30.0.1,$service_names \
-  --master=paas-internal.myorg.com \
-  --public-master=paas-internal.myorg.com \
-  --cert-dir=/etc/origin/master/ \
-  --overwrite=false
-----
+|*etcd01.myorg.com*
+.3+.^|etcd Data Store
+|*etcd02.myorg.com*
+|*etcd03.myorg.com*
 
-TIP: See link:https://docs.openshift.org/latest/install_config/upgrades.html#updating-master-certificates[Updating Master Certificates] for more details on filling out the `--hostnames` parameter.
+|*node01.myorg.com*
+.2+.^|Node
+|*node02.myorg.com*
+|===
 
 ====== 2. Setup the Installer
 
+To set up the install, we need to create a host inventory file for the ansible-based installer.
+
 [source,bash]
 ----
+# Create an OSEv3 group that contains the master, nodes, etcd, and lb groups.
+# The lb group lets Ansible configure HAProxy as the load balancing solution.
+# Comment lb out if your load balancer is pre-configured.
+[OSEv3:children]
+masters
+nodes
+etcd
+# Since we are providing a pre-configured LB VIP, no need for this group
+#lb
+
+# Set variables common for all OSEv3 hosts
+[OSEv3:vars]
+ansible_ssh_user=root
+deployment_type=openshift-enterprise
+
+# Uncomment the following to enable htpasswd authentication; defaults to
+# DenyAllPasswordIdentityProvider.
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/htpasswd'}]
+
 # Native HA with External LB VIPs
 openshift_master_cluster_method=native
-openshift_master_cluster_hostname=master.example.com
-openshift_master_cluster_public_hostname=master.example.com
+openshift_master_cluster_hostname=paas.myorg.com
+openshift_master_cluster_public_hostname=paas.myorg.com
+
+# host group for masters
+[masters]
+master01.myorg.com
+master02.myorg.com
+master03.myorg.com
+
+# host group for etcd
+[etcd]
+etcd01.myorg.com
+etcd02.myorg.com
+etcd03.myorg.com
+
+# Since we are providing a pre-configured LB VIP, no need for this group
+#[lb]
+#lb.example.com
+
+# host group for nodes, includes region info
+[nodes]
+master[01:03].myorg.com openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+node01.myorg.com openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
+node02.myorg.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
 ----
 
 ====== 3. Run the Advanced Installer
 
 Run the installer per the instructions in the link:https://docs.openshift.com/enterprise/3.1/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Insallation Guide]
 
-==== SSL Termination
+==== Custom Certificate SSL Termination (Production)
 
 ===== Overview
 
-The other option is to have the LB terminate SSL connections. The LB would need to re-encrpyt and send traffic on to the masters. The advantage here is that we now have the ability to make the Web Console & API available externally using a publicly signed certificate, or one signed by your organization's PKI, making for a better user experience.
+The other option is to have the LB terminate SSL connections for incoming . The LB would need to re-encrpyt and send traffic on to the masters. The advantage here is that we now have the ability to make the Web Console & API available externally using a publicly signed certificate, or one signed by your organization's PKI, making for a better user experience.
 
 ===== Example Configuration
 
-====== Pre-requisites
+====== 1. Pre-requisites
 
 * Two Load Balancer VIPs Pre-created
   ** External VIP
@@ -158,16 +202,40 @@ The other option is to have the LB terminate SSL connections. The LB would need 
       **** A trusted certificate from your org's PKI
     *** VIP must listen on port 8443, and proxy back to all master hosts on port 8443
     *** For this example, we will give our External VIP a domain name: _paas.myorg.com_
-  ** Internal VIP
-    *** Configured for SSL Termination, using a cert Generated by OpenShift (see step 1 below)
+  ** Internal VIP (will be the same configuration as the Simple integration option above)
+    *** Configured for SSL Passthrough (see step 1 below)
     *** VIP must listen on port 8443, and proxy back to all master hosts on port 8443
     *** For this example, we will give our Internal VIP a domain name: _paas-internal.myorg.com_
 * Domain Name for each VIP registered in DNS
   ** Domain name for _external_ VIP will become value of `openshift_master_cluster_public_hostname` in OpenShift Installer (i.e. paas.myorg.com)
   ** Domain name for _internal_ VIP will become value of `openshift_master_cluster_hostname` in OpenShift Installer (i.e. paas-internal.myorg.com)
 * Master hosts created and prepped per link:https://docs.openshift.com/enterprise/3.1/install_config/install/prerequisites.html[Install Prerequisites]
-  ** Additionally, we need to manually install the `atomic-openshift` package to the first master, so we can use the `oadm` command to create certs
 
+For the purposes of this example, we will use the hosts specified in the table below
+
+[options="header"]
+|===
+|Host Name |Infrastructure Component
+|*paas.myorg.com*
+|Pre-Configured *_External_* LB VIP with Public SSL Cert
+|*paas-internal.myorg.com*
+|Pre-Configured *_Internal_* LB VIP configured for SSL Passthrough
+|*master01.myorg.com*
+.3+.^|Master (clustered using native HA) and node
+|*master02.myorg.com*
+|*master03.myorg.com*
+
+|*etcd01.myorg.com*
+.3+.^|etcd Data Store
+|*etcd02.myorg.com*
+|*etcd03.myorg.com*
+
+|*node01.myorg.com*
+.2+.^|Node
+|*node02.myorg.com*
+|===
+
+////////////
 ====== 1. Pre-create Master Certificates
 
 Because we need to use a cert created by OpenShift (signed by OpenShift's private CA), we need to pre-create certificates for OpenShift before actually running the installer. To do this, run this from the first master host, with the `atomic-openshift` package installed:
@@ -199,6 +267,7 @@ oadm ca create-server-cert --signer-cert=/etc/origin/master/ca.crt \
 <1> Domain name of internal VIP
 
 Finally, provide the generated `internal-vip.crt` and `internal-vip.key` to the LB VIP to be configured as server certificates
+////////////
 
 ====== 2. Setup the Installer
 
@@ -206,12 +275,51 @@ Before running the installer, you'll need to be provided the certificate and key
 
 [source,bash]
 ----
-# Native HA with External LB VIPs
+# Create an OSEv3 group that contains the master, nodes, etcd, and lb groups.
+# The lb group lets Ansible configure HAProxy as the load balancing solution.
+# Comment lb out if your load balancer is pre-configured.
+[OSEv3:children]
+masters
+nodes
+etcd
+# Since we are providing pre-configured LB VIPs, no need for this group
+#lb
+
+# Set variables common for all OSEv3 hosts
+[OSEv3:vars]
+ansible_ssh_user=root
+deployment_type=openshift-enterprise
+
+# Uncomment the following to enable htpasswd authentication; defaults to
+# DenyAllPasswordIdentityProvider.
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/htpasswd'}]
+
+# Native HA with an Internal & External LB VIPs
 openshift_master_cluster_method=native
 openshift_master_cluster_hostname=paas-internal.myorg.com
 openshift_master_cluster_public_hostname=paas.myorg.com
-openshift_master_named_certificates=[{ "certfile":"/root/.certs/pass.myorg.com.pem", "keyfile":"/root/.certs/paas.myorg.com.key", "names": "master"}]
-openshift_master_overwrite_named_certificates=true
+
+# host group for masters
+[masters]
+master01.myorg.com
+master02.myorg.com
+master03.myorg.com
+
+# host group for etcd
+[etcd]
+etcd01.myorg.com
+etcd02.myorg.com
+etcd03.myorg.com
+
+# Since we are providing pre-configured LB VIPs, no need for this group
+#[lb]
+#lb.example.com
+
+# host group for nodes, includes region info
+[nodes]
+master[01:03].myorg.com openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+node01.myorg.com openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
+node02.myorg.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
 ----
 
 ====== 3. Run the Advanced Installer
