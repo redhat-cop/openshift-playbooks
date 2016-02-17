@@ -18,6 +18,7 @@ A build configuration is defined by a BuildConfig object. The parameters are use
 Key Components:
 
 * Build Strategy
+* Build Types
 * Triggers
 
 
@@ -159,7 +160,7 @@ image::https://raw.githubusercontent.com/openshift/source-to-image/master/docs/s
 
 === S2I Scripts
 
-The following table provides an overview of the S2I builder image is required to implement the following scripts
+The following table provides an overview of the S2I scripts that are executed within the builder image:
 
 
 .S2I Scripts
@@ -294,13 +295,14 @@ The following S2I builder images are available in the OpenShift ecosystem
 * Python
 * Node
 * PHP
-* Python
+* Perl
+* Ruby
 * ...
 
 
 ==== JBoss EAP Integration
 
-The JBoss EAP image for OpenShift includes S2I scripts located in the `/usr/local/sti` directory. These are run by default if the application being built does not include any of the S2I scripts.
+The JBoss EAP image for OpenShift includes S2I scripts located in the `/usr/local/s2i` directory. These are run by default if the application being built does not include any of the S2I scripts.
 
 The best way to learn how the JBoss S2I builder works is to investigate the builder itself. Run the following command to start a container containing the builder image
 
@@ -335,9 +337,13 @@ There are a number of existing S2I builders that you can look to leverage for yo
 
 === Binary deployments
 
-In certain cases, an application may be previously compiled outside of an OpenShift build. You can use the _assemble_ phase of an S2I build process to retrieve the previously packaged artifact and insert it into the typical build process of the builder being leveraged.
 
-The following is an example of a deployment of a binary application for the OpenShift JBoss EAP image
+In certain cases, an application may be previously compiled outside of an OpenShift build. There are two methods to include an existing binary artifact(s) in the resulting image:
+
+1. Customize the _assemble_ script as part of the S2I build process to retrieve a previously packaged artifact from a remote source (such as an artifact repository) and place in the JBoss deployments folder.
+2. Place prepackaged jar, war, or ear in a folder called *deployments* at the root of repository. These files will be automatically copied to the JBoss deployments folder. 
+
+The following is an example of a deployment of a binary application for the OpenShift JBoss EAP image using a customized _assemble_ script
 
 [source, bash]
 ----
@@ -410,6 +416,79 @@ The following is a snippet of code demonstrating the use of a BuildConfig
 
 <1> Specifies the source repository that will be injected into the build
 <2> Allows the Docker socket to be available inside the builder. Essential when the builder is use to build and push new Docker images
+
+== Build Types
+
+Depending on the build strategy, one or more of the following types can be applied:
+
+* Git
+* Dockerfile
+* Binary
+
+
+=== Git
+
+Source code is retrieved from a Git based repository
+
+=== Dockerfile
+
+An inline dockerfile can be specified within the *BuildConfig* object
+
+[source]
+----
+{
+ "source" : {
+    "type" : "Dockerfile",
+    "dockerfile": "FROM centos:7\nRUN yum install -y httpd"
+ },
+}
+
+----
+
+=== Binary
+
+Unlike the other build strategies and types, a binary source is an interactive build where a binary artifact is provided when starting a new build using the `oc start-build` command. A binary artifact can be a single file if the *asFile* field is specified, similar to the following:
+
+[source]
+----
+{
+ "source" : {
+    "type" : "Binary",
+    "binary": {
+      "asFile": "webapp.war"
+    },
+ }
+}
+
+----
+
+Otherwise, it is expected that the content received by the builder will be a compressed archive containing a directory structure that will be extracted at the start of a build.
+
+Two options are available by the `oc start-build` command that directly relates to Binary builds.
+
+* `--from-file` - The location of a single file that will be used as the binary content
+* `--from-directory` - Directory that will be archived and supplied as binary content
+
+==== Usage with JBoss Applications and S2I Builds
+
+As described in the <<Binary deployments>> section, artifacts located in the *deployments* folder of the build context will be automatically copied to the JBoss deployments folder. This provides the ability to easily deploy JBoss artifacts with ease. 
+
+Assuming there is existing artifact (war, ear etc), the following folder structure could be created as binary content:
+
+[source]
+----
+-- ose
+---- deployments
+------ ROOT.war
+
+----
+
+Start a build specifying the location of the newly created folder structure
+
+`oc --start-build <build_name> --from-dir=<path_to_directory>`
+
+The folder will be zipped, streamed into the builder and extracted.
+
 
 == Triggers
 
