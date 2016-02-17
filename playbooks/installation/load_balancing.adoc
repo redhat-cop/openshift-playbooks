@@ -80,23 +80,21 @@ image::/images/load_balancing_full.jpg[Simple Integration]
 For more information on configuration, view the routing section of the official OpenShift Enterprise docs:
 https://docs.openshift.com/enterprise/3.0/install_config/install/deploy_router.html#deploying-the-f5-router
 
-== Load Balancing For HA Infrastructure
-
-=== External Load Balancing for the OpenShift Master
+== Load Balancing For HA Master Infrastructure
 
 OpenShift Enterprise 3.1 introduced a Native HA mode that provides high availability of the Master without the need for Pacemaker/RHEL Clustering. When installed in Native HA, the stateless API component (`atomic-openshift-master-api`) of the master is split out from the stateful Controller component (`atomic-openshift-master-controllers`). This is so that the API service can be setup active-active, while the Controller service runs active-passive. Once we have an active-active master API (which includes the Web Console as well), all that's needed to have a fully HA orchestration infrastructure is a proper load balancer.
 
 Out of the box, the OpenShift has the ability to install an HAProxy instance on a host you designate as a lightweight load balancer between masters in Native HA mode. However, this only creates another single point of failure. It is much preferred to integrate an enterprise load balancer (LB) such as an F5 Big-IP(TM) or a Citrix Netscaler(TM) appliance. This integration does add some complexity to the install process. We attempt to explain those options below.
 
-==== Simple SSL Passthrough (Non-Prod only)
+=== Simple SSL Passthrough (Non-Prod only)
 
-===== Overview
+==== Overview
 
 One option is to configure a VIP on a load balancer as SSL Passthrough. This means that the LB does not terminate SSL, but simply proxies encrypted traffic through to the masters, which then handle termination. This has the advantage of being a fairly simple implementation on the LB side, and a slightly simpler setup process on the OpenShift installation than terminating on the LB. The drawback of this method is that we are presenting a self-signed certificate, so users of the Web Console or API will see untrusted or unknown certificate errors.
 
-===== Example Configuration
+==== Example Configuration
 
-====== 1. Pre-requisites
+===== 1. Pre-requisites
 
 * Load Balancer VIP pre-created
   ** Configured for SSL Passthrough
@@ -128,7 +126,7 @@ For the purposes of this example, we will use the hosts specified in the table b
 |*node02.myorg.com*
 |===
 
-====== 2. Setup the Installer
+===== 2. Setup the Installer
 
 To set up the install, we need to create a host inventory file for the ansible-based installer.
 
@@ -181,19 +179,19 @@ node01.myorg.com openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
 node02.myorg.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
 ----
 
-====== 3. Run the Advanced Installer
+===== 3. Run the Advanced Installer
 
 Run the installer per the instructions in the link:https://docs.openshift.com/enterprise/3.1/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Insallation Guide]
 
-==== Custom Certificate SSL Termination (Production)
+=== Custom Certificate SSL Termination (Production)
 
-===== Overview
+==== Overview
 
 The other option is to have the LB terminate SSL connections for incoming . The LB would need to re-encrpyt and send traffic on to the masters. The advantage here is that we now have the ability to make the Web Console & API available externally using a publicly signed certificate, or one signed by your organization's PKI, making for a better user experience.
 
-===== Example Configuration
+==== Example Configuration
 
-====== 1. Pre-requisites
+===== 1. Pre-requisites
 
 * Two Load Balancer VIPs Pre-created
   ** External VIP
@@ -269,7 +267,7 @@ oadm ca create-server-cert --signer-cert=/etc/origin/master/ca.crt \
 Finally, provide the generated `internal-vip.crt` and `internal-vip.key` to the LB VIP to be configured as server certificates
 ////////////
 
-====== 2. Setup the Installer
+===== 2. Setup the Installer
 
 Before running the installer, you'll need to be provided the certificate and keyfile that will be hosted on the External VIP, so that they can be added to OpenShift's trust. Those files must be placed somewhere on the host that will run the installer.
 
@@ -322,6 +320,6 @@ node01.myorg.com openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
 node02.myorg.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
 ----
 
-====== 3. Run the Advanced Installer
+===== 3. Run the Advanced Installer
 
 Run the installer per the instructions in the link:https://docs.openshift.com/enterprise/3.1/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Insallation Guide]
