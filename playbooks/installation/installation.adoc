@@ -55,7 +55,7 @@ Ansible playbook will manage the host-based firewall configuration.  If you have
 | 4789 | UDP      | Master-to-Master      | required between nodes for SDN communication between pods on separate hosts  
 | 4001 | TCP/UDP  | Master-to-Master      | Master: ETCD. accepts changes in state  
 | 7001 | TCP      | Master-to-Master      | Etcd requires 7001 between masters as well, which is used for leader election and peering connections.  
-| 10025 | TCP      | Master-to-Nodes      | on the minons(Kublet), master proxies to nodes via kubelet for things like `oc logs` or `oc exec`
+| 10250 | TCP      | Master-to-Nodes      | on the minons(Kublet), master proxies to nodes via kubelet for things like `oc logs` or `oc exec`
 | 8443 | TCP      | External-to-Master(s) | To allow API updates via cli, GUI or REST  
 |========================================================
 
