@@ -1,0 +1,84 @@
+---
+---
+= Validating an OpenShift Install
+Eric Sauer <eric@redhat.com>
+:toc: macro
+:toc-title:
+
+toc::[]
+
+After having gone through the process of building an OpenShift environment, it's important to go through a few validation steps to ensure that all components are in proper working order. This document walks you through those steps.
+
+== Validate Nodes
+
+----
+# oc get nodes
+----
+
+Check the output to ensure that:
+
+* All expected hosts (masters and nodes) are listed and show as `Ready` in the `Status` field
+* All masters show as unschedulable
+* All labels that were listed in the ansible inventory files are accurate
+
+== Check that Registry Is Running
+
+----
+# oc get pods -n default
+[ copy the pod name for the registry pod(s) ]
+# oc logs <pod name>
+----
+
+Ensure that the logs say that the registry is listening on port 5000.
+
+== Check that Router is Running
+
+----
+# oc get pods
+[ copy the pod name for the router pod(s) ]
+# oc logs <pod name>
+----
+
+== Create an Application
+
+Going through the process of running one of our Quickstart Templates validates that all of the components we've installed work together. The following commands will:
+
+* Validate Authentication (make sure a user can log in)
+* Make sure we can run a build
+  ** Ensures proper connectivity to Git
+  ** Ensures proper connectivity to an External Image registry
+  ** Tests that our Registry is working and that we can push images to it
+* Make sure we can run a Deploy
+  ** Checks that triggers work
+  ** Checks that we can create an app Pod
+* Make sure that we can expose an app and hit it through our Router
+  ** Checks that the Router is properly set up
+
+Follow the steps below
+
+----
+# oadm new-project validate
+# oadm policy add-role-to-user admin joe -n validate
+# oc login -u joe
+[Enter password]
+# oc new-app --template=nodejs-example -n validate
+[Wait for build to start]
+# oc get pods | grep build
+[ copy the pod id ]
+# oc logs <pod id>
+[ Look for message saying an image was successfully pushed ]
+# oc get deployments
+[ make sure one has succeeded ]
+# oc get routes
+[ copy the `hostname` field]
+# curl http://[hostname]
+[ should get back html output ]
+----
+
+Finally, make sure you can pull up your app via a web browser, and that you see a welcome page.
+
+DONE!
+
+== But wait, something didn't work!
+
+If something during validation failed, check out out Troubleshooting playbook for recommendations on how to figure out why.
