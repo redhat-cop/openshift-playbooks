@@ -55,30 +55,30 @@ image::/images/load_balancing_hybrid.jpg[Hybrid Integration]
 
 === Full Integration (Integrating F5 as the OpenShift Router)
 
-OpenShift provides an out of the box plugin that allows an administrator to configure OpenShift to use an external F5 BIG-IP appliance as its router. This feature works by providing OpenShift with access to the BIG-IP’s API in order to dynamically configure new unique virtual hosts as new applications come online. While this feature makes for a much more dynamic environment with Enterprise-ready features, it has more stringent requirements than the Simple or Hybrid Integration in order to be successful.
+OpenShift provides an out of the box plugin that allows an administrator to configure OpenShift to use an external F5 BIG-IP appliance as its router. This feature works by providing OpenShift with access to the F5 BIG-IP(TM)’s API in order to dynamically configure new unique virtual hosts as new applications come online. While this feature makes for a much more dynamic environment with Enterprise-ready features, it has more stringent requirements than the Simple or Hybrid Integration in order to be successful.
 
 Requirements for a Full Integration include:
 
-* F5 BIG-IP version 11.6 or greater
-* Connectivity and Authentication Access to the BIG-IP REST API from OpenShift nodes
+* F5 BIG-IP(TM) version 11.6 or greater
+* Connectivity and Authentication Access to the F5 BIG-IP(TM) REST API from OpenShift nodes
 ** Specifically the OpenShift nodes running your router pods
 ** SSH Access to the BIG-IP for transferring files like certificates and keys
-* Authorization allowances for OpenShift to Control the BIG-IP to do things like:
+* Authorization allowances for OpenShift to Control the F5 BIG-IP(TM) to do things like:
 ** Create virtual hosts
 ** Delete virtual hosts
 ** Add and configure certificates
-* One or more link:https://docs.openshift.com/enterprise/3.0/admin_guide/routing_from_edge_lb.html#establishing-a-tunnel-using-a-ramp-node[OpenShift Ramp Nodes] by which access to the internal SDN is provided to the BIG-IP
+* One or more link:https://docs.openshift.com/enterprise/3.0/admin_guide/routing_from_edge_lb.html#establishing-a-tunnel-using-a-ramp-node[OpenShift Ramp Nodes] by which access to the internal SDN is provided to the BIG-IP(TM)
 
 In this way, the OpenShift router pods work as configuration agents for the F5. Rather than handling incoming web traffic, the pods just watch the OpenShift API for new routes to be created and pass that configuration information up to the F5 via its API to configure routes and handle traffic at the load balancer level.
 
-Through the use of tunnels provided by ramp nodes, the F5 BIG-IP is given the ability to directly send traffic to OpenShift pods.
+Through the use of tunnels provided by ramp nodes, the F5 BIG-IP(TM) is given the ability to directly send traffic to OpenShift pods.
 
 TIP: By default, the use of a Ramp Node creates a single point of failure. To avoid this, you must configure a link:https://docs.openshift.org/latest/install_config/routing_from_edge_lb.html#configuring-a-highly-available-ramp-node[highly available ramp node].
 
 image::/images/load_balancing_full.jpg[Full Integration]
 
 For more information on configuration, view the routing section of the official OpenShift Enterprise docs:
-https://docs.openshift.com/enterprise/3.0/install_config/install/deploy_router.html#deploying-the-f5-router
+https://docs.openshift.com/enterprise/3.1/install_config/install/deploy_router.html#deploying-the-f5-router
 
 == Load Balancing For HA Master Infrastructure
 
@@ -103,7 +103,7 @@ image::/images/load_balancing_masters_simple.png[Simple Passthrough for OpenShif
   ** VIP must listen on port 8443, and proxy back to all master hosts on port 8443
 * Domain Name for VIP registered in DNS
   ** Domain name will become value of both `openshift_master_cluster_public_hostname` and `openshift_master_cluster_hostname` in OpenShift Installer
-  ** For this example, we will give our VIP a domain name: *paas.myorg.com*
+  ** For this example, we will give our VIP an FQDN: *paas.myorg.com*
 * Master hosts created and prepped per link:https://docs.openshift.com/enterprise/3.1/install_config/install/prerequisites.html[Install Prerequisites]
 
 For the purposes of this example, we will use the hosts specified in the table below
@@ -208,9 +208,9 @@ image::/images/load_balancing_masters_prod.png[Production Ready Load Balancing f
     *** Configured for SSL Passthrough (see step 1 below)
     *** VIP must listen on port 8443, and proxy back to all master hosts on port 8443
     *** For this example, we will give our Internal VIP a domain name: _paas-internal.myorg.com_
-* Domain Name for each VIP registered in DNS
-  ** Domain name for _external_ VIP will become value of `openshift_master_cluster_public_hostname` in OpenShift Installer (i.e. paas.myorg.com)
-  ** Domain name for _internal_ VIP will become value of `openshift_master_cluster_hostname` in OpenShift Installer (i.e. paas-internal.myorg.com)
+* FQDN for each VIP registered in DNS
+  ** FQDN for _external_ VIP will become value of `openshift_master_cluster_public_hostname` in OpenShift Installer (i.e. paas.myorg.com)
+  ** FQDN for _internal_ VIP will become value of `openshift_master_cluster_hostname` in OpenShift Installer (i.e. paas-internal.myorg.com)
 * Master hosts created and prepped per link:https://docs.openshift.com/enterprise/3.1/install_config/install/prerequisites.html[Install Prerequisites]
 
 For the purposes of this example, we will use the hosts specified in the table below
@@ -326,4 +326,4 @@ node02.myorg.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
 
 ===== 3. Run the Advanced Installer
 
-Run the installer per the instructions in the link:https://docs.openshift.com/enterprise/3.1/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Insallation Guide]
+Run the installer per the instructions in the link:https://docs.openshift.com/enterprise/3.1/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Installation Guide]
