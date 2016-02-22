@@ -1,0 +1,24 @@
+---
+---
+= Docker Reference Guide
+Eric Sauer <esauer@redhat.com>
+:toc: macro
+:toc-title:
+
+A reference guide for Docker knowledge.
+
+toc::[]
+
+== Getting Started
+
+ * link:https://docs.docker.com/mac/[Getting started with Docker] (Docker.io)
+ * link:https://access.redhat.com/documentation/en/red-hat-enterprise-linux-atomic-host/version-7/getting-started-with-containers/[Getting Started with Containers] (Red Hat)
+
+== Building Images
+
+* link:http://developerblog.redhat.com/2016/01/13/a-practical-introduction-to-docker-container-terminology/[A Practical Introduction to Docker Container Terminology] (Red Hat Blogs)
+* link:http://www.projectatomic.io/docs/docker-building-images/[Building Docker Images] (Project Atomic)
+
+== Priveleged Containers
+
+* link:https://www.youtube.com/watch?v=dM2Fc53Dtd4[Super Priveleged Containers] (Red Hat Summit Video)

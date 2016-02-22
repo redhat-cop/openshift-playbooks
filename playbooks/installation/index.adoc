@@ -10,10 +10,12 @@ A guide for implementing the OSE 3 SmartStart described above.
 
 * link:./installation{outfilesuffix}[Initial Installation]
 * link:./disconnected_environments{outfilesuffix}[Enterprise Environments]
+* link:./load_balancing{outfilesuffix}[Integrating with External Load Balancing]
 * Routers
 * Docker Registry Setup
 * link:./logging{outfilesuffix}[Log Management]
 * link:./install_validation{outfilesuffix}[Validating the Install]
+* link:./ldap_integration{outfilesuffix}[Integrating with LDAP & Active Directory]
 
 == Presenter Guide
 

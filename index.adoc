@@ -11,6 +11,7 @@ Current in-development playbooks include the following:
 * Continuous Integration
 * Continuous Delivery with Traditional Platforms
 ////
+* link:playbooks/fundamentals[OpenShift & Container Fundamentals]
 * link:playbooks/continuous_delivery[Container-Driven Continuous Delivery]
 * link:playbooks/installation[OpenShift Enterprise 3 SmartStart (Production-Ready Installation and Configuration)]
 * link:playbooks/app_dev[OpenShift Enterprise 3 Application Development]
