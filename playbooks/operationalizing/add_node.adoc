@@ -19,22 +19,23 @@ The following prerequisites are required prior to beginning the steps to "ScaleU
 * A healthy and operational OpenShift Environment
 ** Version 3.1.1 is recommended, but earlier 3.1.x versions may work as well after updating the "openshift-ansible" package
 * The current "inventory" file used for install (or any previous scaleup runs) of the OpenShift Environment
-* Additional VMs / hosts to be used for the node(s)
+* Additional VM(s) / hosti(s) to be used for the node(s) - each prepared by following the prerequisites steps in the official documentation + any custom additions unique to the hosting environment
 ** Needs to be running the correct OS release and "aligned" with the rest of the nodes in the OpenShift Environment.
+** Configure and enable separate disk partitions (logs, openshift, docker, etc.)
+** Ensure the VMs / hosts for the new nodes have a valid subscription and correct channels enabled for use with OpenShift Enterprise 3. 
+** Install and configure Docker and Docker storage. 
+** DNS records added and configuration set correctly for the new VMs / hosts.
+** Copy the correct SSH keys to the new VMs / hosts, allowing ansible to successfully run the playbooks.
 
+Please see the https://docs.openshift.com/enterprise/3.1/install_config/install/prerequisites.html[official installation docs] for more details.
 
 == Goals
 
 Add in new OpenShift node(s) for increased capacity 
 
 == OpenShift ScaleUP
-Before the scaleup can be performed on the new node(s), make sure to install and configure the VM/host to resemble the rest of the environment. This includes, but not limited to:
 
-* Configuring and enabling separate disk partitions (logs, openshift, docker, etc.)
-* Install and configure Docker and Docker storage. 
-* DNS records added and configuration set correctly for the new hosts
-
-Please see the https://docs.openshift.com/enterprise/3.1/install_config/install/prerequisites.html[official installation docs] for more details.
+Before the scaleup can be performed on the new node(s), make sure the above steps in the prerequisites section have been successfully completed.
 
 For this example, let us presume that the OpenShift environment was originally installed according to the inventory file shown below - i.e.: one master and 2 OpenShift nodes.  
 
