@@ -1,0 +1,37 @@
+---
+---
+= The DevOps Reading List
+Eric Sauer <eric@redhat.com>
+:toc: macro
+:toc-title:
+
+toc::[]
+
+Paas & Container technologies are often very closely tied with DevOps. In fact, we often confuse the adoption of "next-gen" technology stacks like OpenShift with "DevOps adoption". While it's true that certain automation and cloud technologies fit very nicely into a DevOps frame of mind, it's important to understand that employing DevOps means much more than just having the right technology, or writing automation scripts. DevOps is at its core a philosophy and a mindset that revolves around taking _lean manufacturing_ principles and applying them to an IT organization. DevOps is first and foremost about providing value to your Business through technology, but technology alone can't get you there.
+
+To that end, we have compiled a reading list to get you familiar with this philosophy and the principles of DevOps. Check back often for more resources or additional articles we will write in the future.
+
+== For the Novice
+
+We recommend starting here. The following references help to answer the question, "What is DevOps?" and provide a base of knowledge on which to build.
+
+* link:http://itrevolution.com/books/phoenix-project-devops-book/[The Phoenix Project] (Book)
+* link:http://itrevolution.com/the-convergence-of-devops/[The Convergence of DevOps] (Article)
+* link:http://itrevolution.com/the-three-ways-principles-underpinning-devops/[The Three Ways: The Principles Underpinning DevOps] (Article)
+
+== Intermediate Level
+
+OK, so now you have some base understand about what DevOps is. This section is intended to expand upon that knowledge and really start to answer the question, "How can I start adopting DevOps in my Organization?"
+
+* link:http://blog.crisp.se/2016/01/25/henrikkniberg/making-sense-of-mvp[Making Sense of MVP] (Article)
+* link:http://itrevolution.com/learn-more-about-concepts-in-phoenix-project/[Pheonix Project Reference Guide part 1] and link:http://itrevolution.com/resource-guide-for-the-phoenix-project-kanbans-part-2/[Part 2] (Articles)
+* link:http://theleanstartup.com/book[The Lean Startup] (Book)
+* link:http://www.personalkanban.com/pk/personal-kanban-the-book/#sthash.9h5jtSMZ.dpbs[Personal Kanban] (Book)
+
+== Deep Dives & Further Learning
+
+These Books expand on some of the knowledge above and go deeper into particualar aspects of DevOps.
+
+* Lean Enterprise
+* Continuous Delivery by Humble and Farley
+* Principles of Product Development Flow
