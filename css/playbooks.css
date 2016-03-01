@@ -17,3 +17,73 @@ aside ul li a {
 aside ul li a:hover {
   background-color: #eee;
 }
+
+body {
+  font-family: "Open Sans", Helvetica, Arial, sans-serif;
+}
+
+code {
+  border-radius: 5px;
+  color:rgba(45,65,150,.9);
+}
+
+code, kbd, pre, samp {
+  font-size: .8em;
+}
+
+pre,pre>code {
+  color:rgba(45,65,150,.9);
+  word-break:break-all;
+  word-wrap:normal;
+  overflow-x:auto;
+  white-space:pre
+}
+
+*:not(pre)>code {
+  font-size: .8em;
+}
+
+.admonitionblock>table td.icon {
+  font-family: FontAwesome;
+  font-size: 2em;
+  width: 80px;
+}
+
+.admonitionblock>table td.icon .title {
+  text-indent: -9999px;
+  line-height: 0;
+  visibility: hidden;
+}
+
+.admonitionblock>table td.icon .title:before {
+  visibility: visible;
+  text-indent: 0;
+  display: block;
+  line-height: initial;
+  font-family: FontAwesome;
+}
+
+.note td.icon .title:before {
+  content: "\f05a";
+  color: #4E9FDD;
+}
+
+.tip td.icon .title:before {
+  content: "\f0eb";
+  color: #0a0;
+}
+
+.important td.icon .title:before {
+  content: "\f06a";
+  color: #c00;
+}
+
+.caution td.icon .title:before {
+  content: "\f06d";
+  color: #ec7a08;
+}
+
+.warning td.icon .title:before {
+  content: "\f071";
+  color: #ec7a08;
+}
