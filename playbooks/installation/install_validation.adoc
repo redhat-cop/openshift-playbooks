@@ -21,6 +21,36 @@ Check the output to ensure that:
 * All masters show as unschedulable
 * All labels that were listed in the ansible inventory files are accurate
 
+== Validate Status of Default Project
+
+The `oc status` command is helpful to validate that a namespace is in the state that you expect it to be in. This is especially helpful after doing an install to, at a high level, check that all of the supporting services and pods that you expect to exist actually do. At minimum, you should see the following after a successful install:
+
+* a Kubernetes service
+* a Router service with one or more pods
+* a Registry service with one or more pods
+
+An example of a healthy output might look like:
+
+----
+# oc status
+In project default on server https://master.exaple.com:8443
+
+svc/docker-registry - 172.30.164.69:5000
+  dc/docker-registry deploys registry.access.redhat.com/openshift3/ose-docker-registry:v3.1.0.4
+    #2 deployed 6 weeks ago - 1 pod
+    #1 deployed 6 weeks ago
+  exposed by route/registry
+
+svc/kubernetes - 172.30.0.1 ports 443, 53, 53
+
+svc/router-default - 172.30.25.65:80
+  dc/router-default deploys registry.access.redhat.com/openshift3/ose-haproxy-router:v3.1.0.4
+    #1 deployed 6 weeks ago - 1 pod
+
+To see more, use 'oc describe <resource>/<name>'.
+You can use 'oc get all' to see a list of other objects.
+----
+
 == Check that Registry Is Running
 
 ----
@@ -37,6 +67,20 @@ Ensure that the logs say that the registry is listening on port 5000.
 # oc get pods
 [ copy the pod name for the router pod(s) ]
 # oc logs <pod name>
+----
+
+== Run Diagnostics
+
+OpenShift provides an additional CLI tool that can perform more fine grained diagnostics, including validating that services can see eachother, than certificates are valid, and much more. The output of a diagnostics run can be quite verbose, but will include a final report of `Errors` and `Warnings` at the end. If there are errors or warnings, you may want to go back to them and validate that they are not errors and warnings for any critical services.
+
+NOTE: Not all errors or warnings warrant action. The diagnostics check will additionally examine all deployed services and report anything out of the ordinary. This could include apps that may have been misconfigured by a developer, and would not necessarily warrant administrative intervention.
+
+----
+# openshift ex diagnostics
+.... Lots of output ......
+[Note] Summary of diagnostics execution (version v3.1.0.4-16-g112fcc4):
+[Note] Warnings seen: 3
+[Note] Errors seen: 1
 ----
 
 == Create an Application
