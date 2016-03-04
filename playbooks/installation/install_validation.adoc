@@ -126,3 +126,7 @@ DONE!
 == But wait, something didn't work!
 
 If something during validation failed, check out out Troubleshooting playbook for recommendations on how to figure out why.
+
+== Other Resources
+
+* link:https://access.redhat.com/solutions/2068843[How to verify my Openshift Environment is deployed successfully.]
