@@ -98,7 +98,6 @@ Prereq:  First edit /etc/foreman-proxy/settings.yml to include "localhost" as on
 4.  Under the "Yum Content" tab and the "Add" subtab, select the RPM Repositories we just downloaded.  Click "Add Repositories".
 5.  Click the "Docker Content" tab and it's "Add" subtab.  Again select everything and click "Add Repositories".
 6.  Now your Content View has been created/modified and needs publishing.  Click "Publish New Version" followed by "Save".  Again this will take some time, depending on CPU/Memory capability.
-7.  TODO - add activation key to content view.
 
 == Create an Activation Key and add the Content View to it
 
@@ -128,7 +127,7 @@ Download and save the katello server public cert to the default location of /usr
 From here you can run subscription-manager as usual to download the ose3 packages and theoretically follow the same installation procedure as a connected server.  Depending on how your katello-ca-consumer-latest.noarch RPM was built, you may need to edit /etc/rhsm/rhsm.conf on your Nodes to point to the correct server.  Typically this should be handled by the RPM's install.
 
  subscription-manager register --username=jdoe --password=yourpass --org="IT Dept" --activationkey=dockerActKey
- The system has been registered with ID: 37f97705-762f-4594-bf6a-d0cdc73a3f79
+ The system has been registered with ID: abcd1234-1234-5678-abcd-abc123abc123abc
 
 This command uses the Activation Key we setup earlier - so you'll need minimal configuration from here on out.
 
