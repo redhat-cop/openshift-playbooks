@@ -29,6 +29,8 @@ An OpenShift Enterprise disconnected installation differs from a regular install
 
 This document details providing access to the OpenShift software when Satellite is not available in the environment. For environments with Satellite, it is assumed that someone can synchronize the OpenShift software into the Satellite for use with the OpenShift servers. Once the OpenShift software is made available to the relevant servers, the installation process is the same as a standard “connected” installation.
 
+For additional information on utilizing Satellite for a disconnected installation, visit:  link:./disconnected_satellite6.adoc[Satellite 6.1 Server Installation as an OSE3 Disconnected Registry]
+
 This document additionally details manually downloading the Docker images and how to transport them onto the relevant servers. Satellite 6.1 introduces the ability to act as a Docker registry, and it can be used to host the OpenShift dockerized components. Doing so is outside of scope for this document.
 
 Once installed, in order to use OpenShift, you will need source code in a source control repository (current Git). We assume that an internal git repository is available that can host source code and this repository is accessible from the OpenShift nodes. Installing the source control repository is out of scope of this document.
