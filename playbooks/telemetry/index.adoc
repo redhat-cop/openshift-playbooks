@@ -1,0 +1,7 @@
+---
+---
+= Telemetry in OpenShift Enterprise 3
+
+The Telemetry OpenShift Enterprise 3 playbook provides methods for monitoring an OpenShift environment. This includes collecting health and logs produced by application and overall environment monitoring and metrics.
+
+* link:./cloudforms{outfilesuffix}[CloudForms Integration]
