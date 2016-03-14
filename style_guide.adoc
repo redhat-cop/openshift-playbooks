@@ -23,6 +23,32 @@ toc::[]
 
 == Content Best Practices
 
+=== Section Headers
+
+Section headers should follow a sequential order, such that a Table of Contents can be properly generated, and Proper nesting should be followed at all times.
+
+.Good Example
+----
+= Top Header
+== Section 1
+== Section 2
+=== Section 2.1
+==== Section 2.1.1
+=== Section 2.2
+== Section 3
+----
+
+.Bad Example
+----
+= Top Header
+=== Section 1
+=== Section 2
+=== Section 2.1
+===== Section 2.1.1
+== Section 2.2
+= Section 3
+----
+
 === Links
 
 Links between documents should follow the following format:
@@ -30,7 +56,6 @@ Links between documents should follow the following format:
 link:/path/to/file{outfilesuffix}[Link Name]
 ----
 The `{outfilesuffix}` parameter should replace the file type and is there to handle the translation from '.adoc' to '.html' when we publish this content to our web front end.
-
 
 == Requesting Feedback
 
