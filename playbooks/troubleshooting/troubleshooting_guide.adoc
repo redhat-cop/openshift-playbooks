@@ -9,12 +9,9 @@ v1.0, 2016-03-11
 
 :toc:
 
-Pod related issues
-~~~~~~~~~~~~~~~~~~
+== Pod related issues
 
-
-Router/Registry Not deploying to correct node
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== Router/Registry Not deploying to correct node
 
 Ensure that you created the registry with the *--selector* flag.
 
@@ -29,8 +26,7 @@ oadm registry --config=/etc/origin/master/admin.kubeconfig \
 
 |=======================================================================
 
-Solution
-++++++++
+==== Solution
 
 To see if you've specified a selector, type *oc edit dc/docker-registry*
 and search for **nodeSelector**. If this value is not defined, it is
@@ -39,8 +35,7 @@ easier to delete the entire registry and re-create it with the
  +
  +
  
-Registry not showing contents of NFS mount (persistent volume)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== Registry not showing contents of NFS mount (persistent volume)
 
 You may run into a situation with Persistent Volumes where the node
 which is hosting the registry shows that the mount is there:
@@ -114,8 +109,7 @@ docker-storage-claim   <none>    Bound     docker-registry-storage   50Gi       
 |=======================================================================
 
 
-Solution
-++++++++
+==== Solution
 
 This is most likely an error during the editing of the deployment
 config. When assigning the volume the *--name=* section refers to the
@@ -149,21 +143,19 @@ oc volume deploymentconfigs/docker-registry --add --name=registry-storage -t pvc
 |=======================================================================
 
 
-Hosts Can No Longer Resolve Each During Anisble Install
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== Hosts Can No Longer Resolve Each During Anisble Install
 
 During the install, firewalld is disabled in favor of iptables. This
 transition may not open port 53 which is required for DNS lookups.
 
-Solution
-++++++++
+==== Solution
+
 Use a DNS source external to the installer (at least during the installation
   phase) so that the installation does not fail due to host name lookup problems.
   +
   +
 
-Failure to deploy registry (permissions issues)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== Failure to deploy registry (permissions issues)
 
 Deploying a registry requires a user with cluster-admin privileges. The
 system:admin user should have these
@@ -171,8 +163,7 @@ privileges. https://docs.openshift.com/enterprise/3.1/install_config/install/doc
  +
  +
 
-Application Pod fails to deploy
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== Application Pod fails to deploy
 
 This can be caused by DNS issues. Turn on the debugging on your dns
 server. If using bind:
@@ -186,7 +177,6 @@ rdnc querylog
 
 |============
 
-
 Then tail */var/log/messages* if you see entries like this:
 
 [width="100%",cols="100%",]
@@ -199,24 +189,20 @@ github.com.jarae.example.com
 
 |===========================================================
 
-
 The likely cause is that your DNS wild card is redirecting this causing
 the build to fail
  +
  +
 
-Issues with Nodes
-~~~~~~~~~~~~~~~~~
+== Issues with Nodes
 
-Nodes being reported as ready, but builds failing
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== Nodes being reported as ready, but builds failing
 
 When in a virtual environment, resuming the VM's doesn't always put the
 atomic-openshift-node.service into a clean state. Try restarting the
 service on all nodes and ensure they start without any failures.
 
-Node reporting NotReady
-^^^^^^^^^^^^^^^^^^^^^^^
+=== Node reporting NotReady
 
 In the event that you run
 
@@ -330,8 +316,7 @@ not resolved by restarting the *atomic-openshift-node* service
  +
  +
 
-Nodes report ready but ETCD health check fails
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== Nodes report ready but ETCD health check fails
 
 [width="100%",cols="100%",]
 |=======================================================================
@@ -405,8 +390,7 @@ Feb 25 11:42:25 master00 etcd[1097]: the connection to peer a9e031ea9ce2a521 is 
 |=======================================================================
 
 
-Solution
-++++++++
+==== Solution
 
 In most cases restarting *etcd* one at a time on each master resolves
 the issue
@@ -420,8 +404,7 @@ systemctl restart etcd
 |=====================
 
 
-Atomic-openshift-node service fails to start
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== Atomic-openshift-node service fails to start
 
 The installer fails with:
 
@@ -479,19 +462,16 @@ Unable to connect to the server: x509: certificate signed by unknown authority
 |=======================================================================
 
 
-Solution
-++++++++
+==== Solution
 
 The problem is that the keys are most likely corrupt or missing from
 **/etc/origin/node**. Copy the files from a host that did succeed.
  +
  +
 
-Registry issues
-~~~~~~~~~~~~~~~
+== Registry issues
 
-OpenShift builds fail trying to push image using a wrong IP address for the registry
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== OpenShift builds fail trying to push image using a wrong IP address for the registry
 
 While attempting to deploy an application in Openshift you see the
 following error in the event logs:
@@ -524,8 +504,7 @@ router            172.50.49.239    <none>        80/TCP                  router=
 |=======================================================================
 
 
-Solution
-++++++++
+==== Solution
 
 This can be caused during the setup of the registry. If you have a
 change which triggers a re-ip of the docker-registry container (such as
@@ -544,8 +523,7 @@ systemctl restart atomic-openshift-master-api
 |============================================
 
 
-OpenShift build error: failed to push image while using NFS persistent storage
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== OpenShift build error: failed to push image while using NFS persistent storage
 
 During the deployment of an application you see
 
@@ -600,8 +578,7 @@ If the volume is mounted on the registry host, it is not a firewall, or
 nfs-server configuration issue.
 
 
-Solution
-++++++++
+==== Solution
 
 It is likely that SELinux is blocking access to NFS from within the
 docker container. Check that the proper boolean is set:
@@ -630,8 +607,7 @@ setsebool -P virt_use_nfs=true
 |=============================
 
 
-ha-registry with NFS persistent storage failed to push images
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== ha-registry with NFS persistent storage failed to push images
 
 When attempting to do an S2I build over 200M, the build fails with
 either
@@ -673,8 +649,7 @@ time="2016-03-10T09:00:56.671348073-05:00" level=error msg="response completed w
 |=======================================================================
 
 
-Solution
-++++++++
+==== Solution
 
 There is a https://bugzilla.redhat.com/show_bug.cgi?id=1277356[Red Hat
 Bugzilla report] describing that the solution is to add **no_wdelay** to
@@ -708,11 +683,10 @@ Restart the nfs server and restart the S2I build
  +
  +
 
-Quotas and Limitranges
-~~~~~~~~~~~~~~~~~~~~~~
+== Quotas and Limitranges
 
-Must make a non-zero request for cpu
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== Must make a non-zero request for cpu
+
 After creating a quota for for CPU usage inside of a project you receive the
 following error:
 [width="100%",cols="100%",]
@@ -724,8 +698,7 @@ failed to create build pod: Pod "nodejs-example-2-build" is forbidden: must make
 
 |=======================================================================
 
-Solution:
-+++++++++
+==== Solution:
 
 There must be a corresponding CPU amount defined in your project limits
 to go along with the defined quota. Click for more information on
@@ -735,20 +708,16 @@ https://docs.openshift.com/enterprise/3.1/dev_guide/limits.html[limits].
  +
  +
  
-I have enough ram for another pod but it won't build
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== I have enough ram for another pod but it won't build
 
 Quotas can prevent build if *build machine* + *new pod* is greater than
 quota
  +
  +
 
-Installation Fails...
-~~~~~~~~~~~~~~~~~~~~~
+== Installation Fails...
 
-Job for atomic-openshift-master-api.service failed
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+=== Job for atomic-openshift-master-api.service failed
 
 [width="100%",cols="100%",]
 |=======================================================================
@@ -764,8 +733,7 @@ FATAL: all hosts have already failed -- aborting
 |=======================================================================
 
 
-Solution:
-+++++++++
+==== Solution:
 
 The exact cause of this is unknown at this time. You can try to log into
 each master and checking the status and journald entries mentioned in
@@ -776,18 +744,15 @@ been known to allow the installer to continue
  +
  +
 
-WebUI Related
-~~~~~~~~~~~~~
+== WebUI Related
 
-Web Console Public URL on a different Port
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== Web Console Public URL on a different Port
 
 If the client wishes to move the public URL off of 8443 either because
 of a port conflict or other reason you need to edit the
 master-config.yaml
 
-Solution
-++++++++
+==== Solution
 
 Edit the *master-config.yaml* on each master and replace the following lines with
 the appropriate values:
@@ -805,8 +770,7 @@ Then restart the *atomic-openshift-master-api* service on each master
  +
  +
 
-UI Redirecting to the URL of the masters instead of the LB
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== UI Redirecting to the URL of the masters instead of the LB
 
 The main cause for this seems to be the installer failing to honor the 
 **openshift_master_cluster_public_hostnam** option for the OSEv3:vars section.
@@ -818,8 +782,7 @@ have implications when deploying your Docker registry.
  +
  +
 
-Intermittent Login issues
-^^^^^^^^^^^^^^^^^^^^^^^^^
+=== Intermittent Login issues
 
 If following the standard lab instructions using *htpasswd* it is
 possible that *htpasswd* has not propagated to all masters. To
@@ -895,19 +858,16 @@ func (a *Authenticator) loadIfNeeded() error {
 
 |===================================================================
 
-Solution:
-+++++++++
+==== Solution:
 
 Create the htpasswd on each master, or otherwise sync the correct
 htpasswd file
  +
  +
 
-Misc
-~~~~
+== Misc
 
-Docker won't start
-^^^^^^^^^^^^^^^^^^
+=== Docker won't start
 
 [width="100%",cols="100%",]
 |=======================================================================
@@ -949,16 +909,14 @@ Mar  2 20:06:43 master00 docker: time="2016-03-02T20:06:43.879826788-06:00" leve
 |=======================================================================
 
 
-Solution:
-+++++++++
+==== Solution:
 
 Chances are the key is empty. Remove the key and restart docker, the key
 will be regenerated
  +
  +
  
-oc new-app runs s2i instead of Docker build
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== oc new-app runs s2i instead of Docker build
 
 An application that was created containing a builder image appears to
 ignore any Dockerfile that is in the github repo. To ensure a Docker
