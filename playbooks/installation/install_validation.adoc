@@ -1,0 +1,132 @@
+---
+---
+= Validating an OpenShift Install
+Eric Sauer <eric@redhat.com>
+:toc: macro
+:toc-title:
+
+toc::[]
+
+After having gone through the process of building an OpenShift environment, it's important to go through a few validation steps to ensure that all components are in proper working order. This document walks you through those steps.
+
+== Validate Nodes
+
+----
+# oc get nodes
+----
+
+Check the output to ensure that:
+
+* All expected hosts (masters and nodes) are listed and show as `Ready` in the `Status` field
+* All masters show as unschedulable
+* All labels that were listed in the ansible inventory files are accurate
+
+== Validate Status of Default Project
+
+The `oc status` command is helpful to validate that a namespace is in the state that you expect it to be in. This is especially helpful after doing an install to, at a high level, check that all of the supporting services and pods that you expect to exist actually do. At minimum, you should see the following after a successful install:
+
+* a Kubernetes service
+* a Router service with one or more pods
+* a Registry service with one or more pods
+
+An example of a healthy output might look like:
+
+----
+# oc status
+In project default on server https://master.exaple.com:8443
+
+svc/docker-registry - 172.30.164.69:5000
+  dc/docker-registry deploys registry.access.redhat.com/openshift3/ose-docker-registry:v3.1.0.4
+    #2 deployed 6 weeks ago - 1 pod
+    #1 deployed 6 weeks ago
+  exposed by route/registry
+
+svc/kubernetes - 172.30.0.1 ports 443, 53, 53
+
+svc/router-default - 172.30.25.65:80
+  dc/router-default deploys registry.access.redhat.com/openshift3/ose-haproxy-router:v3.1.0.4
+    #1 deployed 6 weeks ago - 1 pod
+
+To see more, use 'oc describe <resource>/<name>'.
+You can use 'oc get all' to see a list of other objects.
+----
+
+== Check that Registry Is Running
+
+----
+# oc get pods -n default
+[ copy the pod name for the registry pod(s) ]
+# oc logs <pod name>
+----
+
+Ensure that the logs say that the registry is listening on port 5000.
+
+== Check that Router is Running
+
+----
+# oc get pods
+[ copy the pod name for the router pod(s) ]
+# oc logs <pod name>
+----
+
+== Run Diagnostics
+
+OpenShift provides an additional CLI tool that can perform more fine grained diagnostics, including validating that services can see eachother, than certificates are valid, and much more. The output of a diagnostics run can be quite verbose, but will include a final report of `Errors` and `Warnings` at the end. If there are errors or warnings, you may want to go back to them and validate that they are not errors and warnings for any critical services.
+
+NOTE: Not all errors or warnings warrant action. The diagnostics check will additionally examine all deployed services and report anything out of the ordinary. This could include apps that may have been misconfigured by a developer, and would not necessarily warrant administrative intervention.
+
+----
+# openshift ex diagnostics
+.... Lots of output ......
+[Note] Summary of diagnostics execution (version v3.1.0.4-16-g112fcc4):
+[Note] Warnings seen: 3
+[Note] Errors seen: 1
+----
+
+== Create an Application
+
+Going through the process of running one of our Quickstart Templates validates that all of the components we've installed work together. The following commands will:
+
+* Validate Authentication (make sure a user can log in)
+* Make sure we can run a build
+  ** Ensures proper connectivity to Git
+  ** Ensures proper connectivity to an External Image registry
+  ** Tests that our Registry is working and that we can push images to it
+* Make sure we can run a Deploy
+  ** Checks that triggers work
+  ** Checks that we can create an app Pod
+* Make sure that we can expose an app and hit it through our Router
+  ** Checks that the Router is properly set up
+
+Follow the steps below
+
+----
+# oadm new-project validate
+# oadm policy add-role-to-user admin joe -n validate
+# oc login -u joe
+[Enter password]
+# oc new-app --template=nodejs-example -n validate
+[Wait for build to start]
+# oc get pods | grep build
+[ copy the pod id ]
+# oc logs <pod id>
+[ Look for message saying an image was successfully pushed ]
+# oc get deployments
+[ make sure one has succeeded ]
+# oc get routes
+[ copy the `hostname` field]
+# curl http://[hostname]
+[ should get back html output ]
+----
+
+Finally, make sure you can pull up your app via a web browser, and that you see a welcome page.
+
+DONE!
+
+== But wait, something didn't work!
+
+If something during validation failed, check out out Troubleshooting playbook for recommendations on how to figure out why.
+
+== Other Resources
+
+* link:https://access.redhat.com/solutions/2068843[How to verify my Openshift Environment is deployed successfully.]
