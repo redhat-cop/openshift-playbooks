@@ -1,13 +1,8 @@
 ---
 ---
 =  Troubleshooting Guide for OpenShift Enterprise 3.1
-
-Steve Ovens
- +
-Justin Jarae
-
+Steve Ovens, Justin Jarae
 v1.0, 2016-03-11
-
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
 :toc: macro
 :toc-title:
@@ -109,7 +104,7 @@ which will not be able to be mounted in */registry*
 oc volume deploymentconfigs/docker-registry --add --name=registry-storage -t pvc --claim-name=docker-storage-claim --overwrite
 ----
 
-=== Hosts Can No Longer Resolve Each During Anisble Install
+=== Hosts Can No Longer Resolve Each Other During Anisble Install
 
 During the install, firewalld is disabled in favor of iptables. This
 transition may not open port 53 which is required for DNS lookups.
@@ -305,7 +300,7 @@ Feb 25 11:42:25 master00 etcd[1097]: the connection to peer a9e031ea9ce2a521 is 
 
 ==== Solution
 
-In most cases restarting *etcd* one at a time on each master resolves
+In most cases restarting *etcd* one at a time on each etcd host resolves
 the issue
 
 ----
