@@ -25,11 +25,42 @@ toc::[]
 
 === Links
 
-Links between documents should follow the following format:
+Links should follow the following format:
 ----
 link:/path/to/file{outfilesuffix}[Link Name]
 ----
 The `{outfilesuffix}` parameter should replace the file type and is there to handle the translation from '.adoc' to '.html' when we publish this content to our web front end.
+
+=== Interlinking Playbook Guides
+
+Whenever possible we try to have playbook guides refer to other playbook guides. Tying content together in a logical way helps us build up complete stories and solutions and even lead to other solutions.
+
+When linking to other playbook guides, we like to take steps to make it as obvious as possible without ruining the flow of the doc. Here are some guidelines for formatting your links:
+
+1. Include the title of the guide in the link text. For example...
++
+----
+link:/playbooks/installation/installation{outfilesuffix}[OpenShift Enterprise 3 Installation]
+----
++
+rather than
++
+----
+link:/playbooks/installation/installation{outfilesuffix}[click here!]
+----
++
+2. Provide some context as to why you are providing this link. For example...
++
+----
+The link:/playbooks/installation/load_balancing{outfilesuffix}[External Load Balancers Guide] provides an introduction to the strategies that can be employed within OpenShift
+----
++
+3. Use an INFO callout when there's no natural flow.
++
+----
+INFO: The link:/playbooks/installation/load_balancing{outfilesuffix}[External Load Balancers Guide] provides an introduction to the strategies that can be employed within OpenShift
+----
+
 
 
 == Requesting Feedback
