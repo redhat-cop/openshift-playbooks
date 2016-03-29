@@ -23,6 +23,32 @@ toc::[]
 
 == Content Best Practices
 
+=== Section Headers
+
+Section headers should follow a sequential order, such that a Table of Contents can be properly generated, and Proper nesting should be followed at all times.
+
+.Good Example
+----
+= Top Header
+== Section 1
+== Section 2
+=== Section 2.1
+==== Section 2.1.1
+=== Section 2.2
+== Section 3
+----
+
+.Bad Example
+----
+= Top Header
+=== Section 1
+=== Section 2
+=== Section 2.1
+===== Section 2.1.1
+== Section 2.2
+= Section 3
+----
+
 === Links
 
 Links should follow the following format:
@@ -60,8 +86,6 @@ The link:/playbooks/installation/load_balancing{outfilesuffix}[External Load Bal
 ----
 INFO: The link:/playbooks/installation/load_balancing{outfilesuffix}[External Load Balancers Guide] provides an introduction to the strategies that can be employed within OpenShift
 ----
-
-
 
 == Requesting Feedback
 
