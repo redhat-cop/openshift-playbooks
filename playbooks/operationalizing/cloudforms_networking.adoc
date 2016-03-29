@@ -18,7 +18,7 @@ CloudForms provides a single pane of glass over an OpenShift environment. To fac
 * Overall environment statistics (Nodes, pods, routes, etc)
 * Application metrics
 
-These resources are provided by two separate sets of services in the OpenShift environment: the API and cluster metrics. The API is a service that runs on the OpenShift master instances to provide access the topology of the environment, while cluster metrics are provided as running application containers from the link:http://www.hawkular.org/[Hawkular] project to measure the performance of the environment. In CloudForms today, the Container provider communicates with a single fixed hostname or IP address. This becomes a challenge when integrating CloudForms with OpenShift as both types of services must be accessed from a single host. Most architectures of OpenShift split out master and application (serviced by router pods running on nodes) communication in order to provide a separation of concerns and to optimize network traffic. To overcome this limitation, it is recommended in the link:https://access.redhat.com/documentation/en/red-hat-cloudforms/version-4.0/managing-providers/[CloudForms Provider Management documentation] that a secondary application router be deployed on each master instance with the sole purpose of serving service traffic for CloudForms. 
+These resources are provided by two separate sets of services in the OpenShift environment: the API and cluster metrics. The API is a service that runs on the OpenShift master instances to provide access to the topology of the environment, while cluster metrics are provided as running application containers from the link:http://www.hawkular.org/[Hawkular] project to measure the performance of the environment. In CloudForms today, the Container provider communicates with a single fixed hostname or IP address. This becomes a challenge when integrating CloudForms with OpenShift as both types of services must be accessed from a single host. Most architectures of OpenShift split out master and application (serviced by router pods running on nodes) communication in order to provide a separation of concerns and to optimize network traffic. To overcome this limitation, it is recommended in the link:https://access.redhat.com/documentation/en/red-hat-cloudforms/version-4.0/managing-providers/[CloudForms Provider Management documentation] that a secondary application router be deployed on each master instance with the sole purpose of serving service traffic for CloudForms. 
 
 The deployment of a router on master instances is typically not recommended due to the following reasons:
 
@@ -32,7 +32,7 @@ The purpose of this document is to provide an alternative solution for integrati
 
 To overcome the requirement of deploying a router on OpenShift master instances, the provisioning and configuration of a VIP using an LTM alongside configurations in the OpenShift environment will be required. 
 
-NOTE: It is reccommended that the link:/playbooks/installation/load_balancing.adoc[External Load Balancers Guide] which covers the load balancing strategies in OpenShift be reviewed prior to implementing this solution.
+NOTE: It is recommended that the link:/playbooks/installation/load_balancing.adoc[External Load Balancers Guide] which covers the load balancing strategies in OpenShift be reviewed prior to implementing this solution.
 
 image::images/ose-cloudforms-network.png[title=OpenShift/CloudForms Networking Overview]
 
