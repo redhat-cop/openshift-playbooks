@@ -5,6 +5,8 @@ Eric Sauer <esauer@redhat.com>
 :toc: macro
 :toc-title:
 
+We welcome contribution and would like to do everything we can to encourage help from the community. Here are some guidelines to help you get started with contributing to the OpenShift Delivery Playbooks.
+
 toc::[]
 
 == Starting a New Document
@@ -87,7 +89,11 @@ The link:/playbooks/installation/load_balancing{outfilesuffix}[External Load Bal
 INFO: The link:/playbooks/installation/load_balancing{outfilesuffix}[External Load Balancers Guide] provides an introduction to the strategies that can be employed within OpenShift
 ----
 
-== Requesting Feedback
+=== Include a "What's Next?" section to encourage further reading
+
+We like to conclude our documents with a "call to action" or something of that sort. Whenever applicable, think about ending your doc with a "What's Next?" section with links out to further suggested playbooks guides, or other documents when a playbook guide doesn't yet exist (if you think it SHOULD exist, please link:https://github.com/rhtconsulting/openshift-playbooks/issues/new[Open an Issue]).
+
+=== Requesting Feedback
 
 If there are specific places where you'd like to request feedback or expansion from the community, we encourage you to call that out in your playbooks. Please use the following format:
 
@@ -104,3 +110,7 @@ This will render as...
 ****
 This is a block where we would put a request for feedback or additional detail.
 ****
+
+== Follow the Asciidoctor Style Recommendations
+
+The above guidelines were specific to the OpenShift Delivery Playbooks. In addition, please keep the following link:http://asciidoctor.org/docs/asciidoc-recommended-practices/[AsciiDoc Recommended Practices] in mind while writing guides.
