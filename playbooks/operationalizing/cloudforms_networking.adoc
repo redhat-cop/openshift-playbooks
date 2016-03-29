@@ -32,7 +32,7 @@ The purpose of this document is to provide an alternative solution for integrati
 
 To overcome the requirement of deploying a router on OpenShift master instances, the provisioning and configuration of a VIP using an LTM alongside configurations in the OpenShift environment will be required. 
 
-NOTE: It is reccommended that the link:../installation/load_balancing.adoc[External Load Balancers Guide] which covers the load balancing strategies in OpenShift be reviewed prior to implementing this solution.
+NOTE: It is reccommended that the link:/playbooks/installation/load_balancing.adoc[External Load Balancers Guide] which covers the load balancing strategies in OpenShift be reviewed prior to implementing this solution.
 
 image::images/ose-cloudforms-network.png[title=OpenShift/CloudForms Networking Overview]
 
