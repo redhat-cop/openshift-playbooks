@@ -1,17 +1,17 @@
 ---
 ---
-= Solution Playbook Development Guide
+= Delivery Playbook Development Guide
 Eric Sauer <esauer@redhat.com>
 :toc: macro
 :toc-title:
 
 toc::[]
 
-== What is a playbook?
+== What is a Delivery Playbook?
 
-A _playbook_ is a guide for implementing DevOps technical practices and container automation approaches using Red Hat commercial open source products, including OpenShift Enterprise 3. Playbooks are intended to reflect real-world experience delivering solutions through these processes and technologies.
+A _delivery playbook_ is a guide for implementing DevOps technical practices and container automation approaches using Red Hat commercial open source products, including OpenShift Enterprise 3. Playbooks are intended to reflect real-world experience delivering solutions through these processes and technologies.
 
-== Playbook Components
+== Delivery Playbook Components
 
 === Presenter Guide
 
@@ -24,26 +24,6 @@ A good Presenter Guide should…
 * List prerequisite knowledge needed to understand the demo material, including resource links to help a presenter ramp up.
 * Contain all execution steps needed to step through a successful demo
 * Include some presenter notes that call out things to highlight, subject matter to cover
-
-==== Presenter Guide Structure
-
-* Overview
-  ** Abstract discussing what this demo does
-* Bill Of Materials
-  ** Environment Specs -- describe the environment required to run this demo
-  ** Template files
-  ** Config files
-  ** External Source Code repos
-  ** etc. (any other technical collateral needed to run your demo)
-* Setup Instructions
-  ** Describe the steps required to setup your Demo
-  ** Scripts to run
-  ** Terminal commands
-  ** etc.
-* Presenter Notes
-  ** Guidelines for "what to {type|click|do}" to walk through the demo
-  ** Guidelines for "what to say" while giving the demo (level of detail will vary depending on the audience and intended presenter)
-  ** Interesting concepts, anecdotes to point out along the way
 
 === Implementer Guide
 

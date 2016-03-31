@@ -2,7 +2,5 @@
 ---
 = OSE 3 TroubleShooting
 
-
 * link:troubleshooting_guide{outfilesuffix}[Troubleshooting Guide]
-* link:STI-JWS{outfilesuffix}[STI JWS]
 * link:known_bugs{outfilesuffix}[Known Bugs]
