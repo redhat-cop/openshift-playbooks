@@ -1,3 +1,5 @@
+---
+---
 = Network Integration for OpenShift v3 and Red Hat CloudForms
 Andrew Block <ablock@redhat.com>
 v1.0, 2016-03-24
@@ -32,7 +34,7 @@ The purpose of this document is to provide an alternative solution for integrati
 
 To overcome the requirement of deploying a router on OpenShift master instances, the provisioning and configuration of a VIP using an LTM alongside configurations in the OpenShift environment will be required. 
 
-NOTE: It is recommended that the link:/playbooks/installation/load_balancing.adoc[External Load Balancers Guide] which covers the load balancing strategies in OpenShift be reviewed prior to implementing this solution.
+NOTE: It is recommended that the link:/playbooks/installation/load_balancing.html[External Load Balancers Guide] which covers the load balancing strategies in OpenShift be reviewed prior to implementing this solution.
 
 image::images/ose-cloudforms-network.png[title=OpenShift/CloudForms Networking Overview]
 
@@ -106,4 +108,4 @@ cloudforms   ose.example.com             hawkular-metrics                       
 
 Verify Hawkular can be reached by navigating to the following location in a web browser: https://ose.example.com:5000
 
-You are now ready to move on to Integrating CloudForms with OpenShift
+With the modifications described in this document complete, you can now finalize and validate link:/playbooks/operationalizing/cloudforms.html[CloudForms Integration with OpenShift Enterprise v3]
