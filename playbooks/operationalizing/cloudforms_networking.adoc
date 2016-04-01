@@ -108,4 +108,4 @@ cloudforms   ose.example.com             hawkular-metrics                       
 
 Verify Hawkular can be reached by navigating to the following location in a web browser: https://ose.example.com:5000
 
-You are now ready to move on to Integrating CloudForms with OpenShift
+With the modifications described in this document complete, you can now finalize and validate link:/playbooks/operationalizing/cloudforms.html[CloudForms Integration with OpenShift Enterprise v3]
