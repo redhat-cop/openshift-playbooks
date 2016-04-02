@@ -73,7 +73,7 @@ In this way, the OpenShift router pods work as configuration agents for the F5. 
 
 Through the use of tunnels provided by ramp nodes, the F5 BIG-IP(TM) is given the ability to directly send traffic to OpenShift pods.
 
-TIP: By default, the use of a Ramp Node creates a single point of failure. To avoid this, you must configure a link:https://docs.openshift.org/latest/install_config/routing_from_edge_lb.html#configuring-a-highly-available-ramp-node[highly available ramp node].
+TIP: By default, the use of a Ramp Node creates a single point of failure. To avoid this, you must configure a link:https://docs.openshift.com/enterprise/3.1/install_config/routing_from_edge_lb.html#establishing-a-tunnel-using-a-ramp-node[highly available ramp node].
 
 image::/images/load_balancing_full.jpg[Full Integration]
 
