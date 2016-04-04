@@ -9,14 +9,14 @@ if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == false ]; then
     cp -f deploy_key.pem ~/.ssh/id_rsa
     chmod 600 ~/.ssh/id_rsa
     ssh-add ~/.ssh/id_rsa
-    ssh-keyscan playbookstest-rhtconsulting.rhcloud.com >> ~/.ssh/known_hosts
+    ssh-keyscan $git_host >> ~/.ssh/known_hosts
     cd _site/
     git init
     git config user.name "Travis"
     git config user.emal "noreply@redhat.com"
     git add *
     git commit -m "Deploy for ${TRAVIS_COMMIT}"
-    git remote add deploy ssh://564b93450c1e666a530000d1@playbookstest-rhtconsulting.rhcloud.com/~/git/playbookstest.git/
+    git remote add deploy $git_repo
     git push --force deploy
 else
     echo "Skipping deployment. Not on master branch"
