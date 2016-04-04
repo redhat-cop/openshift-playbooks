@@ -106,6 +106,6 @@ NAME         HOST/PORT            PATH      SERVICE            LABELS    INSECUR
 cloudforms   ose.example.com             hawkular-metrics                               passthrough
 ----
 
-Verify Hawkular can be reached by navigating to the following location in a web browser: https://ose.example.com:5000
+Verify Hawkular can be reached by navigating to the following location in a web browser: \https://ose.example.com:5000
 
-With the modifications described in this document complete, you can now finalize and validate link:/playbooks/operationalizing/cloudforms.html[CloudForms Integration with OpenShift Enterprise v3]
+With the modifications described in this document complete, you can now finalize and validate link:/playbooks/operationalizing/cloudforms{outfilesuffix}[CloudForms Integration with OpenShift Enterprise v3]

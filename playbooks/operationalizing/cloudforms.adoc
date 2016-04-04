@@ -49,7 +49,7 @@ eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW5
 
 For CloudForms to display metrics from the OpenShift environment, CloudForms leans heavily on the cluster metrics functionality within OpenShift 
 
-IMPORTANT: Due to a limitation within CloudForms, only a single hostname can be used to communicate with OpenShift.  As previously mentioned, CloudForms communicates with OpenShift via the API to retrieve basic environment information, but it also need to communicate over port 5000 to retrieve cluster metrics from Hawkular. This requires a deployment of an additional router on the OpenShift master to access the SDN to communicate with Hawkular. An alternate solution is available where a Virtual IP Address (VIP) is used to provide a single destination for CloudForms, but to provide the appropriate logic necessary to route the traffic accordingly depending on the request. Please see the link:/playbooks/operationalizing/cloudforms_networking.html[Network Integration for OpenShift v3 and Red Hat CloudForms] document for more information. This section can be skipped if the implementation covered in the aforementioned documentation is adhered to. 
+IMPORTANT: Due to a limitation within CloudForms, only a single hostname can be used to communicate with OpenShift.  As previously mentioned, CloudForms communicates with OpenShift via the API to retrieve basic environment information, but it also need to communicate over port 5000 to retrieve cluster metrics from Hawkular. This requires a deployment of an additional router on the OpenShift master to access the SDN to communicate with Hawkular. An alternate solution is available where a Virtual IP Address (VIP) is used to provide a single destination for CloudForms, but to provide the appropriate logic necessary to route the traffic accordingly depending on the request. Please see the link:/playbooks/operationalizing/cloudforms_networking{outfilesuffix}[Network Integration for OpenShift v3 and Red Hat CloudForms] document for more information. This section can be skipped if the implementation covered in the aforementioned documentation is adhered to. 
 
 To support the deployment of a router on the master, the master must be configured as schedulable. Execute the following command to make the master schedulable: 
 
@@ -128,7 +128,7 @@ For installations that contain more than one appliance, repeat the above steps m
 
 Once the machine reboots, the web console should be accessible at the host public ip.
 
-https://<public_host>
+\https://<public_host>
 
 The default username/password combination is _admin/smartvm_
 
