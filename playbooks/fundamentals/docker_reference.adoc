@@ -9,16 +9,22 @@ A reference guide for Docker knowledge.
 
 toc::[]
 
-== Getting Started
+== Generic Docker Knowledge
 
- * link:https://docs.docker.com/mac/[Getting started with Docker] (Docker.io)
+=== Intro to Docker Concepts
+
  * link:https://access.redhat.com/documentation/en/red-hat-enterprise-linux-atomic-host/version-7/getting-started-with-containers/[Getting Started with Containers] (Red Hat)
 
-== Building Images
+=== Building Images
 
 * link:http://developerblog.redhat.com/2016/01/13/a-practical-introduction-to-docker-container-terminology/[A Practical Introduction to Docker Container Terminology] (Red Hat Blogs)
 * link:http://www.projectatomic.io/docs/docker-building-images/[Building Docker Images] (Project Atomic)
 
-== Priveleged Containers
+=== Priveleged Containers
 
 * link:https://www.youtube.com/watch?v=dM2Fc53Dtd4[Super Priveleged Containers] (Red Hat Summit Video)
+
+== OpenShift Specific Guidance for Images
+
+* link:https://docs.openshift.com/enterprise/3.1/creating_images/guidelines.html[Guidelines for Creating OpenShift Images]
+* link:https://docs.openshift.com/enterprise/3.1/creating_images/custom.html[Building Custom S2I Builder Images]
