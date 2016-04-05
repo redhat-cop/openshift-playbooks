@@ -6,7 +6,7 @@
  <li class="name"><h1><a href="/">{{ page.title }}</a></h1></li>
 {% else %}
  <li class="name"><h1><a href="/">Home</a></h1></li>
- <li class="name"><h1> &#187; </h1></l1>
+ <li class="name"><h1> &#187; </h1></li>
 
   {% for part in url_parts %}
     {% capture new_part %}{{ part | replace:' ','' }}{% endcapture %}
@@ -18,7 +18,7 @@
       <li class="name"><h1><a href="{{previous}}">{{page.title}}</a></h1></li>
     {% else %}
       <li class="name"><h1><a href="{{previous}}">{{new_part}}</a></h1></li>
-      <li class="name"><h1> &#187; </h1></l1>
+      <li class="name"><h1> &#187; </h1></li>
     {% endif %}
   {% endfor %}
 {% endif %}
