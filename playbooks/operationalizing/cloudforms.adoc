@@ -116,9 +116,9 @@ The CloudForms appliance is delivered as a virtual image template that can be in
 
 Once the machine is up and available, use ssh to login using the username/password combination of `root/smartvm`
 
-Configure CloudForms and database connectivity according to the documentation and to your specific environment. 
+Configure CloudForms and database connectivity according to the documentation and to your specific environment using the `appliance_console` command.
 
-At a minimum, this requires the following steps:
+At a minimum, this requires the following `appliance_console` menu items:
 
 * 2. Set static network configuration
 * 5. Configure Timezone, Date and Time
