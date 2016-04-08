@@ -32,13 +32,13 @@ Execute the following commands in the OpenShift environment to retrieve the serv
 
 [source]
 ----
-# oc get -n management-infra sa/management-admin --template='{{range .secrets}}{{printf "%s\n" .name}}{{end}}'
+# oc get -n management-infra sa/management-admin --template='{% raw %}{{range .secrets}}{{printf "%s\n" .name}}{{end}}{% endraw %}'
 
 management-admin-token-59thq <1>
 management-admin-token-8c2mk
 management-admin-dockercfg-de6dh
 
-# oc get -n management-infra secrets management-admin-token-59thq --template='{{.data.token}}' | base64 -d 
+# oc get -n management-infra secrets management-admin-token-59thq --template='{% raw %}{{.data.token}}{% endraw %}' | base64 -d 
 
 eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJtYW5hZ2VtZW50LWluZnJhIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6Im1hbmFnZW1lbnQtYWRtaW4tdG9rZW4tNTl0aHEiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoibWFuYWdlbWVudC1hZG1pbiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjZjNThlZDMyLWUyOTgtMTFlNS1hZmY0LWZhMTYzZTlkOTQ0NyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDptYW5hZ2VtZW50LWluZnJhOm1hbmFnZW1lbnQtYWRtaW4ifQ.F59Z38mcEktTRWjgz8yjQgbudgtEg5wBE-t7OpIAoO42ozpTOohSQSaTo5yO_9jIQQo8eb4MiJEWtEX5EbkqJ1anMRrp67qxBYVIfdNC2xmQ1wVHQYvvYe8JsLjrumKDDfOhk4CY1vJbAXeRkO3BBuUaJFODWjxBQWzyC55yB4YZpmXIY8WiVky9BbnwOSLzq0QCBggThrZpUWu60UrxpMliW_1hwJPIJ0mTXIwXRNWp7GjhAIECr8og2EXhAKwJ5YpM0kzilAt27zXYOH_5m5Oi_jgKt98LYFzN4sZlqA6ei_ePzLKxb5f48dx2UGHFzKD8XRSk_nVRUqGSqHuWqA <2>
 ----
@@ -114,9 +114,11 @@ CloudForms can be deployed into all types of environments. A full https://access
 
 The CloudForms appliance is delivered as a virtual image template that can be installed on several platforms including OpenStack, Red Hat Enterprise Virtualization and in the VMWare vSphere environment. Consult the link:https://access.redhat.com/documentation/en/red-hat-cloudforms/[installation documentation] for platform specific directions outside of the materials provided here.
 
-Configure CloudForms and database connectivity according to the documentation and to your specific environment. 
+Once the machine is up and available, use ssh to login using the username/password combination of `root/smartvm`
 
-At a minimum, this requires the following steps:
+Configure CloudForms and database connectivity according to the documentation and to your specific environment using the `appliance_console` command.
+
+At a minimum, this requires the following `appliance_console` menu items:
 
 * 2. Set static network configuration
 * 5. Configure Timezone, Date and Time
@@ -137,6 +139,8 @@ After logging into the console, configure basic server settings by select the *c
 Set the *Company Name* to customize the name of the organization. Next, specify the *Appliance Name* as the value that should be visible on the appliance that is logged into. 
 
 Under the _Server Control_ section, apply the following roles based on the appliance type:
+
+NOTE: If an all in one deployment of CloudForms is being utilized, all roles can be selected
 
 .DB Server Role
 [options="header,footer"]
