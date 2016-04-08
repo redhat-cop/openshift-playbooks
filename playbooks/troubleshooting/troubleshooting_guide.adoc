@@ -138,8 +138,8 @@ rdnc querylog
 Then tail */var/log/messages* if you see entries like this:
 
 ----
-lb00-jarae.jarae.example.com.jarae.example.com
-github.com.jarae.example.com
+lb00.ose.example.com.jarae.example.com
+github.com.ose.example.com
 ----
 
 The likely cause is that your DNS wild card is redirecting this causing
@@ -450,7 +450,7 @@ setsebool -P virt_use_nfs=true
 ----
 
 
-=== ha-registry with NFS persistent storage failed to push images
+=== Failure to push image to OpenShift's Registry when backed by shared storage
 
 When attempting to do an S2I build over 200M, the build fails with
 either
@@ -520,7 +520,7 @@ https://docs.openshift.com/enterprise/3.1/dev_guide/limits.html[limits].
 === I have enough ram for another pod but it won't build
 
 Quotas can prevent build if *build machine* + *new pod* is greater than
-quota
+quota. Click for more information on https://docs.openshift.com/enterprise/3.1/dev_guide/quota.html[quotas].
  +
  +
 
@@ -561,8 +561,8 @@ Edit the *master-config.yaml* on each master and replace the following lines wit
 the appropriate values:
 
 ----
-  publicURL: https://jarae.example.com:8443/console/
-  assetPublicURL: https://jarae.example.com:8443/console/
+  publicURL: https://ose.example.com:8443/console/
+  assetPublicURL: https://ose.example.com:8443/console/
 ----
 
 Then restart the *atomic-openshift-master-api* service on each master
