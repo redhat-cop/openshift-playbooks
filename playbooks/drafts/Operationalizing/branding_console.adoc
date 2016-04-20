@@ -10,7 +10,9 @@ v1.0, 2016-03-16
 
 toc::[]
 
-This document provides the ways to change brand images on web console, login page and template. From time to time, using own brand on OSE is one of usual requirements. It is out of the scope of smart start but you set it up easily and quickly because this document also contains ansible playbooks.  Hence, this would be suggested to configure it on master servers after Openshift installed. 
+This document provides the ways to change brand images on web console, login page and template. From time to time, using
+own brand on OSE is one of usual requirements. It is out of the scope of smart start but you set it up easily and
+quickly because this document will contains ansible playbooks.[TBD]  Hence, this would be suggested to configure it on master servers after Openshift installed. 
 
 
 == Prerequisites
@@ -267,7 +269,6 @@ Use the css class in a template::
 
 ----
 <1> This value must be same as the css style in extension.css
-
 
 []
 == Ansible Playbook
