@@ -56,7 +56,7 @@ OpenVSwitch is required on every host in order to support the OpenShift SDN comm
 
 IMPORTANT: Note that the `openvswitch` service is _disabled_ in `systemd`. This is because it is a dependency of the OpenShift Node service, and should not be started/stopped independently of that service.
 
-NOTE: For an overview of the OpenShift SDN, see the link:https://docs.openshift.org/latest/architecture/additional_concepts/sdn.html[OpenShift SDN Architectural Overview]. For help troubleshooting SDN issues, see link:https://docs.openshift.org/latest/admin_guide/sdn_troubleshooting.html[Troubleshooting the OpenShift SDN]
+NOTE: For an overview of the OpenShift SDN, see the link:https://docs.openshift.com/enterprise/latest/architecture/additional_concepts/sdn.html[OpenShift SDN Architectural Overview]. For help troubleshooting SDN issues, see link:https://docs.openshift.com/enterprise/latest/admin_guide/sdn_troubleshooting.html[Troubleshooting the OpenShift SDN]
 
 ----
 # systemctl status openvswitch
