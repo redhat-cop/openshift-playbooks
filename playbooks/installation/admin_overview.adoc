@@ -1,0 +1,190 @@
+---
+---
+= An Overview of OpenShift for System Administrators
+Eric Sauer <esauer@redhat.com>
+v1.0, 2016-05-17
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Overview
+
+This is a brief overview to aimed at system administrators aimed at getting accustomed to what OpenShift actually looks like installed on a host, and common places to look when things go wrong.
+
+== What should be running (systemctl)
+
+At a high level, a host in an OpenShift cluster could include the following components:
+
+* Docker (`docker.service`)
+* OpenVSwitch (`openvswitch.service`)
+* Etcd (`etcd.service`)
+* OpenShift Node (`atomic-openshift-node.service`)
+* OpenShift Master (`atomic-openshift-master` OR `atomic-openshift-master-api` and `atomic-openshift-master-controllers` depending on HA Configuration)
+
+Depending on the roles of each host and configuration of the cluster, finding these components running might vary, so we'll break down the potential variants
+
+=== Nodes
+
+All hosts in OpenShift are OpenShift Nodes, including Masters. This is a design of Kubernetes since all hosts have some basic pieces in common, to make them part of the Node component and require them everywhere. Therefore, every host in an OpenShift Cluster (masters and nodes) should have the following components running on them.
+
+*Docker*
+
+Docker is a required dependency of all openshift* packages and therefore should be *_active_* and *_enabled_* on all hosts.
+
+----
+# systemctl status docker
+● docker.service - Docker Application Container Engine
+   Loaded: loaded (/usr/lib/systemd/system/docker.service; enabled; vendor preset: disabled)
+  Drop-In: /usr/lib/systemd/system/docker.service.d
+           └─docker-sdn-ovs.conf
+   Active: active (running) since Thu 2016-04-07 12:53:20 EDT; 1 months 9 days ago
+     Docs: http://docs.docker.com
+ Main PID: 5130 (docker)
+   Memory: 11.1M
+   CGroup: /system.slice/docker.service
+           ├─1381 docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 5000 -container-ip 10.1.1.78 -container-port 443
+           ├─1394 docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 1937 -container-ip 10.1.1.78 -container-port 1937
+           └─5130 /usr/bin/docker daemon --insecure-registry=172.30.0.0/16 --selinux-enabled --storage-driver devicemapper --storage-opt dm.fs=xfs --storage-opt dm.thinpooldev=/dev/mapper/vg--docker-docker--p...
+
+----
+
+*OpenVSwitch (OVS)*
+
+OpenVSwitch is required on every host in order to support the OpenShift SDN communication. However, it should be noted that the OpenShift SDN is packaged as part of the OpenShift Node component (below) not with OVS. OpenVSwitch merely provides the supporting components of the SDN. The `openvswitch` service should be *_active_* and *_disabled_*
+
+IMPORTANT: Note that the `openvswitch` service is _disabled_ in `systemd`. This is because it is a dependency of the OpenShift Node service, and should not be started/stopped independently of that service.
+
+NOTE: For an overview of the OpenShift SDN, see the link:https://docs.openshift.org/latest/architecture/additional_concepts/sdn.html[OpenShift SDN Architectural Overview]. For help troubleshooting SDN issues, see link:https://docs.openshift.org/latest/admin_guide/sdn_troubleshooting.html[Troubleshooting the OpenShift SDN]
+
+----
+# systemctl status openvswitch
+● openvswitch.service - Open vSwitch
+   Loaded: loaded (/usr/lib/systemd/system/openvswitch.service; disabled; vendor preset: disabled)
+   Active: active (exited) since Thu 2016-04-07 12:52:24 EDT; 1 months 9 days ago
+ Main PID: 1126 (code=exited, status=0/SUCCESS)
+   Memory: 0B
+   CGroup: /system.slice/openvswitch.service
+----
+
+*OpenShift Node*
+
+All hosts in the cluster should have the `atomic-openshift-node` service *_active_* and *_enabled_*.
+
+----
+# systemctl status atomic-openshift-node
+● atomic-openshift-node.service - Atomic OpenShift Node
+   Loaded: loaded (/usr/lib/systemd/system/atomic-openshift-node.service; enabled; vendor preset: disabled)
+  Drop-In: /usr/lib/systemd/system/atomic-openshift-node.service.d
+           └─openshift-sdn-ovs.conf
+   Active: active (running) since Thu 2016-04-07 12:53:20 EDT; 1 months 9 days ago
+     Docs: https://github.com/openshift/origin
+ Main PID: 4903 (openshift)
+   Memory: 111.6M
+   CGroup: /system.slice/atomic-openshift-node.service
+           ├─  4903 /usr/bin/openshift start node --config=/etc/origin/node/node-config.yaml --loglevel=2
+           ├─ 88436 journalctl -k -f
+           └─117241 journalctl -k -f
+----
+
+=== Masters
+
+In addition to the sofware that runs on all nodes, OpenShift masters include some specialized components that are involved in managing the cluster's state. They are:
+
+* Etcd Datastore (Responsible for holding state data for the cluster)
+* Master API (Resonsible for handling requests from clients, including Nodes, Users, Administrators, and other Infrastructure systems deployed to OpenShift)
+* Master Controllers (Includes the Scheduler and Replication Controller)
+
+Depending on the configuration of your cluster, these components may be deployed in different ways. Here we break those down.
+
+==== Single Master
+
+In a cluster with a single master, all master components are bundled together in a single package/service. The `atomic-openshift-master` service should be *_active_* and *_enabled_* on all hosts.
+
+----
+# systemctl atomic-openshift-master
+Unknown operation 'atomic-openshift-master'.
+[root@master ~]# systemctl status atomic-openshift-master
+● atomic-openshift-master.service - Atomic OpenShift Master
+   Loaded: loaded (/usr/lib/systemd/system/atomic-openshift-master.service; enabled; vendor preset: disabled)
+   Active: active (running) since Fri 2016-04-08 16:26:04 EDT; 1 months 8 days ago
+     Docs: https://github.com/openshift/origin
+ Main PID: 33812 (openshift)
+   Memory: 497.7M
+   CGroup: /system.slice/atomic-openshift-master.service
+           └─33812 /usr/bin/openshift start master --config=/etc/origin/master/master-config.yaml --loglevel=2
+----
+
+==== Multi-Master (Native-HA)
+
+In a multi-master cluster setup using Native-HA, the master components are separated due to the various requirements of the different components to cluster (or not) when there are multiple instances of them.
+
+*Etcd*
+
+When in an HA Cluster, Etcd requires at least 3 active cluster memebers. In order to facilitate this, the etcd component is split out into its own service. In this case, the `etcd` service should be *_active_* and *_enabled_*.
+
+----
+# systemctl status etcd
+● etcd.service - Etcd Server
+   Loaded: loaded (/usr/lib/systemd/system/etcd.service; enabled; vendor preset: disabled)
+   Active: active (running) since Mon 2016-05-16 17:21:20 EDT; 24h ago
+ Main PID: 13188 (etcd)
+   CGroup: /system.slice/etcd.service
+           └─13188 /usr/bin/etcd
+----
+
+*Master API*
+
+The Master API is a stateless component, and therefore should be *_active_* and *_enabled_* on all masters.
+
+----
+# systemctl status atomic-openshift-master-api
+● atomic-openshift-master-api.service - Atomic OpenShift Master API
+   Loaded: loaded (/usr/lib/systemd/system/atomic-openshift-master-api.service; enabled; vendor preset: disabled)
+   Active: active (running) since Tue 2016-05-17 10:53:13 EDT; 6h ago
+     Docs: https://github.com/openshift/origin
+ Main PID: 107132 (openshift)
+   CGroup: /system.slice/atomic-openshift-master-api.service
+           └─107132 /usr/bin/openshift start master api --config=/etc/origin/master/master-config.yaml --loglevel=2 -...
+----
+
+*Master Controllers*
+
+The Master Controllers component consists of the OpenShift Scheduler and Replication Controller. These components are responsible for the placement and maintenance of pods in the cluster. Because of the stateful nature of these responsibilities, the Controllers component operates in an Active/Passive mode. This avoids cases where, for example, all 3 replication controllers might attempt to recreate a failed pod, resulting in 3 instead of 1 pods being added to the system, etc. As a result, the `atomic-openshift-master-controllers` service may show as *_inactive_* or even *_failed_* at certain times in the cluster lifecycle. This is generally ok, as long as there is always one *_active_* controller. All controllers should be *_enabled_* at all times.
+
+== Viewing Logs
+
+OpenShift writes logs to the system by way of `journald`. Ultimately logs are streamed through the journal and eventually written to the filesystem. By default journald writes most of OpenShift's logs to `/var/log/messages`. This can be quite difficult to parse through, so it is recommended to use the `journalctl` command to view logs for individual components.
+
+For example,
+
+----
+# journalctl -u docker
+----
+
+will spit out logs for the `docker` systemd _unit_ that are currently in journald's stream. Additionally,
+
+----
+# journalctl -fu docker
+----
+
+will _follow_ the docker logs.
+
+This can be applied the same to all components of OpenShift and is a convenient way to look at logs for System Administrators.
+
+== Storage Management
+
+The following tables show the main directories to which OpenShift components may write data.
+
+[width="100%",frame="topbot",options="header",cols="4*"]
+|=====
+| Directory           | Notes     | Sizing      | Expected Growth
+| /var/lib/openshift  | Used for etcd storage *_only when in single master mode and etcd is embedded in the `atomic-openshift-master` process_* | less than 10GB | Will grow slowly with environment. Only storing metadata
+| /var/lib/etcd       | Used for etcd storage *_when in Multi-Master mode or when etcd has been made standalone by an administrator_* | less than 20 GB | Will grow slowly with environment. Only storing metadata
+| /var/lib/docker     | Storage used for active container runtimes (including Pods) _and_ storage of local images (not used for registry storage). Mount point should be managed by docker-storage rather than manually. | 50 GB for a Node with 16 GB memory.
+
+Additional 20-25 GB for every additional 8 GB Memory | Growth limited by capacity for running containers
+| /var/lib/origin/openshift.local.volumes | Ephemeral volume storage for pods. This includes anything external that is mounted into a container at runtime. Includes environment variables, kube secrets, and data volumes not backed by persistent storage PVs. | Varies | Minimal if pods requiring storage are using Persistent Volumes; If using ephemeral storage, this can grow quite quickly.
+| /var/log | Log files for all components | 10 - 30 GB | Log files can grow quickly; size can be managed by growing disks or managed using logrotate
+|=====
