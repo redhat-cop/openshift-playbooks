@@ -2,7 +2,7 @@
 ---
 =  Troubleshooting Guide for OpenShift Enterprise 3.1
 Steve Ovens, Justin Jarae
-v1.0, 2016-03-11
+v1.0, 2016-05-27
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
 :toc: macro
 :toc-title:
@@ -28,8 +28,7 @@ To see if you've specified a selector, type *oc edit dc/docker-registry*
 and search for **nodeSelector**. If this value is not defined, it is
 easier to delete the entire registry and re-create it with the
 *--selector* flag seen above.
- +
- +
+
 
 === Registry not showing contents of NFS mount (persistent volume)
 
@@ -581,11 +580,10 @@ have implications when deploying your Docker registry.
  +
  +
 
-=== Intermittent Login issues
+=== Intermittent Login issues (htpasswd)
 
-If following the standard lab instructions using *htpasswd* it is
-possible that *htpasswd* has not propagated to all masters. To
-troubleshoot do the following
+Using *htpasswd*, it is possible that the *htpasswd* file has not propagated to
+all masters. To troubleshoot, do the following
 
 1.  Open a terminal session to each master and examine
 */var/log/messages*
@@ -613,8 +611,8 @@ Feb 25 12:35:47 master00 journal: http: TLS handshake error from 192.168.200.2:5
 ----
 
 +
-If there is no error messages in the log files it is likely that the
-*htpasswd* file has not been updated from the default file which was
+If there is no error messages in the log files, it is likely that the
+*htpasswd* file has not been updated from the default file that was
 created during the installation. Below is the function that is called to
 load the htpasswd file. You can see on line 7 that the file's
 modification time is compared to the information about the file. If they
@@ -644,8 +642,8 @@ func (a *Authenticator) loadIfNeeded() error {
 
 ==== Solution:
 
-Create the htpasswd on each master, or otherwise sync the correct
-htpasswd file
+Create the htpasswd on each master or sync the correct htpasswd file from
+one master to all other masters.
  +
  +
 
@@ -685,8 +683,10 @@ Mar  2 20:06:43 master00 docker: time="2016-03-02T20:06:43.879826788-06:00" leve
 
 Chances are the key is empty. Remove the key and restart docker, the key
 will be regenerated
- +
- +
+----
+# rm -f /etc/docker/key.json
+# systemctl restart docker
+----
 
 === oc new-app runs s2i instead of Docker build
 
