@@ -33,6 +33,6 @@ OK, so now you have some base understand about what DevOps is. This section is i
 
 These Books expand on some of the knowledge above and go deeper into particular aspects of DevOps.
 
-* link:http://www.leanenterprisebook.com/[Lean Enterprise] (Book)
+* link:http://amzn.com/1449368425[Lean Enterprise] (Book)
 * link:http://www.amazon.com/Continuous-Delivery-Deployment-Automation-Addison-Wesley/dp/0321601912[Continuous Delivery] (Book)
 * link:http://www.amazon.com/The-Principles-Product-Development-Flow/dp/1935401009[Principles of Product Development Flow] (Book)
