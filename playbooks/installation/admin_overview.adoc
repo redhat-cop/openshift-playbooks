@@ -95,8 +95,11 @@ In addition to the sofware that runs on all nodes, OpenShift masters include som
 * Etcd Datastore (Responsible for holding state data for the cluster)
 * Master API (Resonsible for handling requests from clients, including Nodes, Users, Administrators, and other Infrastructure systems deployed to OpenShift)
 * Master Controllers (Includes the Scheduler and Replication Controller)
+* OpenShift Client tools (`oc` and `oadm`).
 
 Depending on the configuration of your cluster, these components may be deployed in different ways. Here we break those down.
+
+NOTE: The `oc` client tools are installed as a single binary on all masters. They can additionally be downloaded to administrators' and developers' local machines to be used remotely. Instructions for installing client tools can be found in link:https://docs.openshift.com/enterprise/latest/cli_reference/get_started_cli.html[Getting Started with the CLI].
 
 ==== Single Master
 
