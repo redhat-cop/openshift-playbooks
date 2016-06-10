@@ -1,0 +1,120 @@
+---
+---
+= OpenShift Enterprise 3 Adding nodes - "ScaleUP"
+Øystein Bedin <bedin@redhat.com>
+v1.0, 02-Feb-2016
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+toc::[]
+
+After running OpenShift for awhile, there may be a need to add in additional capacity for hosting applications and pods. This can be done by adding additional "compute nodes", or OpenShift nodes, to the existing infrastructure without having to go through a re-install. One option is to re-run the installation with an updated inventory file, and additional nodes. However, this can be a bit risky as it will revert custom configurations made after initial installation back to "fresh install" state. A better mechanism is to use the "scaleup" playbook part of the "openshift-ansible" installation implementation. This document describes the steps necessary to do this work and gotcha's that you may have to consider. 
+
+
+== Prerequisites
+
+The following prerequisites are required prior to beginning the steps to "ScaleUP" the environment 
+
+* A healthy and operational OpenShift Environment
+** Version 3.1.1 is recommended, but earlier 3.1.x versions may work as well after updating the "openshift-ansible" package
+* The current "inventory" file used for install (or any previous scaleup runs) of the OpenShift Environment
+* Additional VM(s) / hosti(s) to be used for the node(s) - each prepared by following the prerequisites steps in the official documentation + any custom additions unique to the hosting environment
+** Needs to be running the correct OS release and "aligned" with the rest of the nodes in the OpenShift Environment.
+** Configure and enable separate disk partitions (logs, openshift, docker, etc.)
+** Ensure the VMs / hosts for the new nodes have a valid subscription and correct channels enabled for use with OpenShift Enterprise 3. 
+** Install and configure Docker and Docker storage. 
+** DNS records added and configuration set correctly for the new VMs / hosts.
+** Copy the correct SSH keys to the new VMs / hosts, allowing ansible to successfully run the playbooks.
+
+Please see the https://docs.openshift.com/enterprise/3.1/install_config/install/prerequisites.html[official installation docs] for more details.
+
+== Goals
+
+Add in new OpenShift node(s) for increased capacity 
+
+== OpenShift ScaleUP
+
+Before the scaleup can be performed on the new node(s), make sure the above steps in the prerequisites section have been successfully completed.
+
+For this example, let us presume that the OpenShift environment was originally installed according to the inventory file shown below - i.e.: one master and 2 OpenShift nodes.  
+
+[source]
+----
+[OSEv3:children]
+masters
+nodes
+
+[OSEv3:vars]
+deployment_type=openshift-enterprise
+ansible_ssh_user=root
+osm_default_subdomain=apps.example.com
+
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/openshift-passwd'}]
+
+# host group for masters
+[masters]
+master.ose.example.com 
+
+# host group for nodes
+[nodes]
+master.ose.example.com openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+node1.ose.example.com openshift_node_labels="{'region': 'primary', 'zone': 'north'}"
+node2.ose.example.com openshift_node_labels="{'region': 'primary', 'zone': 'south'}"
+----
+
+Next we would like to add in two more nodes. First, the *openshift_pkg_version* and *g_new_node_hosts* variables have to be added to the [OSEv3:vars] section. The *openshift_pkg_version* variable should be populated with the correct version based on the operational OpenShift environment. There are many ways the version string can be obtained, but one option is to login to the CLI of the master and use the "rpm" command:
+
+    # rpm -q atomic-openshift-master
+    atomic-openshift-master-3.1.0.4-1.git.15.5e061c3.el7aos.x86_64
+
+Based on the example above, the version string is what is between "atomic-openshift-master" and ".x86_64" - i.e.: "-3.1.0.4-1.git.15.5e061c3.el7aos"
+
+**__NOTE__** _the leading '-' must be included_
+
+
+Lastly, the new nodes need to be added to the *g_new_node_hosts* variable as well as in the [nodes] host group with the appropriate parameters.
+
+The resulting inventory file then becomes:
+
+[source]
+----
+[OSEv3:children]
+masters
+nodes
+
+[OSEv3:vars]
+deployment_type=openshift-enterprise
+ansible_ssh_user=root
+osm_default_subdomain=apps.example.com
+openshift_pkg_version=-3.1.0.4-1.git.15.5e061c3.el7aos <1>
+g_new_node_hosts=[node3.ose.example.com, node4.ose.example.com] <2>
+
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/openshift-passwd'}]
+
+# host group for masters
+[masters]
+master.ose.example.com
+
+# host group for nodes
+[nodes]
+master.ose.example.com openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+node1.ose.example.com openshift_node_labels="{'region': 'primary', 'zone': 'north'}"
+node2.ose.example.com openshift_node_labels="{'region': 'primary', 'zone': 'south'}"
+node3.ose.example.com openshift_node_labels="{'region': 'primary', 'zone': 'north'}" <3>
+node4.ose.example.com openshift_node_labels="{'region': 'primary', 'zone': 'south'}" <4>
+----
+<1> OpenShift version string for the environment
+<2> New OpenShift nodes to be added
+<3> New node listed in the [nodes] host group
+<4> Same as 3., new node listed in the [nodes] host group
+
+Next, run the ansible-playbook for scaleup with the inventory file above:
+
+    ansible-playbook -i <path_to_inventory_file> /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/scaleup.yml
+
+== Post ScaleUP tasks
+After completing the scaleup, make sure to complete all post-install steps that were performed on the already existing nodes. This can include, but is not limited to:
+
+* Install custom certificates
+* Ensure NFS shares are accessible
