@@ -1,6 +1,6 @@
 ---
 ---
-= OpenShift Enterprise 3.2 Smart Start Installation
+= OpenShift Enterprise 3.2 Installation
 Eric Sauer <esauer@redhat.com>
 Brent Roskos <broskos@redhat.com>
 Nick Poyant <npoyant@redhat.com
@@ -67,6 +67,11 @@ If you expect to support a healthy mix of different workload types and sizes, th
 
 ==== Node Limit
 // This section needs to be updated to reflect 3.2 information.
+.Update Needed.
+****
+This section needs to be updated to reflect 3.2 information.
+****
+
 Kubernetes, and therefore OpenShift has a logical limit to the number of nodes that can be provisioned in a single cluster (single OpenShift installation). We have seen test configurations of roughly 250 nodes. This is expected to increase with future releases (3.1, etc.).
 
 The logical limit for Nodes in a cluster might sway administrators of large clusters to increase node size in order to increase the total capacity a Cluster can support
@@ -146,7 +151,7 @@ Create the following partitions (disk partitions or LVMs) on the system disk ima
 
 ===== Docker Storage Config
 
-The OpenShift docs discuss link:https://docs.openshift.com/enterprise/3.0/install_config/install/prerequisites.html#configuring-docker-storage[three different options for configuring docker storage]. We consider options A and B to be "production ready".
+The OpenShift docs discuss link:https://docs.openshift.com/enterprise/3.2/install_config/install/prerequisites.html#configuring-docker-storage[three different options for configuring docker storage]. We consider options A and B to be "production ready".
 
 For option A: Attach an additional volume or block device to each node for Docker storage (20-50 GB)
 
@@ -299,7 +304,7 @@ docker-storage-setup
 
 == Host Preparation
 
-Official Documenation for link:https://docs.openshift.com/enterprise/3.0/admin_guide/install/prerequisites.html#host-preparation[Host Preparation].
+Official Documenation for link:https://docs.openshift.com/enterprise/3.2/install_config/install/prerequisites.html#host-preparation[Host Preparation].
 
 Overall requirements for Installing OpenShift are very simple:
 
@@ -311,26 +316,23 @@ Overall requirements for Installing OpenShift are very simple:
 ** rhel-7-server-rpms
 ** rhel-7-server-extras-rpms
 ** rhel-7-server-optional-rpms
-** rhel-7-server-ose-3.0-rpms
-* If you plan to Install HA Masters, an additional channel is needed on Master Nodes
-** rhel-7-for-ha-server-rpms
-* Remove all `NetworkManager*` packages
+** rhel-7-server-ose-3.2-rpms
 
-.Update Needed
-****
-Verify this step is still needed in the official documentation
-****
 * Install the following extra packages: `yum install wget git net-tools bind-utils iptables-services bridge-utils`
 * Optional: install the following diagnostic tools: `yum install lsof strace nc telnet`
 * Fully update all packages: `yum -y update`
 * Configure Storage according to <<storage-considerations>>
-* Sync SSH keys from masters to all nodes (HINT: Here's a script to do this: TODO)
+* Sync SSH keys from masters to all nodes. Here's a script to do this:
 
-NOTE: Installing High Availability Masters requires the _High Availability for RHEL 7 Add-on_. This is a separate subscription from RHEL 7 or OpenShift so make sure you have acquired the proper subscriptions ahead of time.
+[source, bash]
+----
+# nodes="ose-installer master00 master01 master02 infranode00 infranode01 nfs00 app-node00 app-node01 app-node02"
+# for node in $nodes; do ssh-copy-id $node; done
+---- 
 
 == Ansible Installer
 
-We highly recommend using the link:https://docs.openshift.com/enterprise/3.0/admin_guide/install/advanced_install.html#installing-ansible[Advanced Installation method using Ansible] for basically any multi-node installation. The OpenShift Quick Installer is available and useful for quick demos and short-lived installs, but does not support the customization needed to install in many real environments.
+We highly recommend using the link:https://docs.openshift.com/enterprise/3.2/install_config/install/advanced_install.html[Advanced Installation method using Ansible] for basically any multi-node installation. The OpenShift Quick Installer is available and useful for quick demos and short-lived installs, but does not support the customization needed to install in many real environments.
 
 The instructions in the Installer Guide will get you through most basic installs, but there are few additional things to know and be aware of to really understand the installer.
 
@@ -342,7 +344,7 @@ IMPORTANT: Our recommendation is to keep a copy of the installer you use to inst
 
 === The Ansible Hosts File
 
-While the Install Guide shows some basic examples for link:https://docs.openshift.com/enterprise/3.0/admin_guide/install/advanced_install.html#configuring-ansible[Configuring Ansible Hosts], there are many more options and variables that can be used to further customize your install. We attempt to break down a few of the common ones here.
+While the Install Guide shows some basic examples for link:https://docs.openshift.com/enterprise/3.2/install_config/install/advanced_install.html#configuring-ansible[Configuring Ansible Hosts], there are many more options and variables that can be used to further customize your install. We attempt to break down a few of the common ones here.
 
 ==== Explicitly Set Hostnames and IPs
 
@@ -351,6 +353,125 @@ In many cloud environments, it's common for you to assign hostnames to your host
 ----
 [masters]
 master.ose.example.com openshift_hostname=master.ose.example.com openshift_public_ip=10.3.4.5
+----
+
+==== Smart Start/HA Example Host File
+This host file contains a core set of options to get your HA build up and running with a local HA Proxy to mimic a load balancer. 
+----
+# Create an OSEv3 group that contains the master, nodes, etcd, and lb groups.
+# The lb group lets Ansible configure HAProxy as the load balancing solution.
+# Comment lb out if your load balancer is pre-configured.
+[OSEv3:children]
+masters
+nodes
+etcd
+lb
+
+# Set variables common for all OSEv3 hosts
+[OSEv3:vars]
+ansible_ssh_user=root
+deployment_type=openshift-enterprise
+
+# Uncomment the following to enable htpasswd authentication; defaults to
+# DenyAllPasswordIdentityProvider.
+#openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+
+# Native high availbility cluster method with optional load balancer.
+# If no lb group is defined installer assumes that a load balancer has
+# been preconfigured. For installation the value of
+# openshift_master_cluster_hostname must resolve to the load balancer
+# or to one or all of the masters defined in the inventory if no load
+# balancer is present.
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname=openshift-cluster.example.com
+openshift_master_cluster_public_hostname=openshift-cluster.example.com
+
+# override the default controller lease ttl
+#osm_controller_lease_ttl=30
+
+# host group for masters
+[masters]
+master1.example.com
+master2.example.com
+master3.example.com
+
+# host group for etcd
+[etcd]
+etcd1.example.com
+etcd2.example.com
+etcd3.example.com
+
+# Specify load balancer host
+[lb]
+lb.example.com
+
+# host group for nodes, includes region info
+[nodes]
+master[1:3].example.com openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+node1.example.com openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
+node2.example.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
+----
+
+In an effort to streamline the file or if you have a large number of nodes, another method of listing multiple nodes in a host file:
+
+----
+master1:3.example.com
+infranode1:2.example.com
+node1:3.example.com
+----
+
+===== DNS Subdomain
+----
+osm_default_subdomain=cloudapps.example.com
+----
+
+===== Custom Network Ranges
+----
+openshift_master_portal_net=172.X.X.0/20
+osm_cluster_network_cidr=172.X.Y.0/18
+----
+
+===== Node Labeling
+----
+infranode1:2.example.com openshift_node_labels="{'region':'infra','zone':'default'}"
+app-node1:3.example.com openshift_node_labels="{'region':'primary','zone':'default'}"
+----
+
+===== Master Scheduable Flag
+----
+master1:3.example.com openshift_node_labels="{'zone':'default'}" openshift_schedulable=false
+----
+
+===== Default Region
+----
+osm_default_node_selector='region=primary'
+----
+
+===== Port Designation
+----
+openshift_master_console_port=443
+openshift_master_api_port=443
+----
+
+===== Deploying Custom Certificates
+----
+openshift_hosted_router_certificates=[{"certfile": "/path/to/certs/splat.example.com.crt", "keyfile": "/path/to/certs/splat.example.com.key"}]
+----
+
+===== LDAP Identity Provider
+-----
+openshift_master_identity_providers=[{'name': 'OrgName_ldap', 'challenge': 'true', 'login': 'true', 'kind': 'LDAPPasswordIdentityProvider', 'attributes': {'id': ['sAMAccountName'], 'email': ['mail'], 'name': ['cn'], 'preferredUsername': ['sAMAccountName']}, 'bindDN': 'cn=LDAP_Account,ou=Resource,dc=example,dc=local', 'bindPassword': 'Ld@pP@$$w0rd', 'ca': 'org-ca.crt', 'insecure': 'false', 'url': 'ldaps://server_name.org_name.local:636/DC=org,DC=local?sAMAccountName?sub?(&(objectClass=user)(memberOf=CN=group_name,OU=Resource,DC=org_name,DC=local))'}]
+-----
+
+==== Registry hosted on Netapp Provided NFS
+----
+openshift_hosted_registry_storage_kind=nfs
+openshift_hosted_registry_storage_access_modes=['ReadWriteMany']
+openshift_hosted_registry_storage_volume_name=VolumeName
+openshift_hosted_registry_storage_host=FileServer.example.com
+openshift_hosted_registry_storage_nfs_options='*(rw,all_squash)'
+openshift_hosted_registry_storage_nfs_directory=/
+openshift_hosted_registry_storage_volume_size=95G
 ----
 
 .Feedback or Contribution Needed
