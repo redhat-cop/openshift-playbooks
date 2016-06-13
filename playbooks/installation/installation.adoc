@@ -481,6 +481,26 @@ Need to add DNS subdomain, node labeling, master schedulable flag
 
 == Automating the Install
 
+To launch the HA installer you will use an ansible playbook that will point to your custom hosts file that is tailored to your environment.
+
+----
+# ansible -i /path/to/hosts/file/HostFile --become /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
+----
+
+Here are some adhoc ansible commands that you can use to make configuring your environment easier:
+
+----
+# ansible -i /path/to/hosts/file/HostFile nodes --become -m copy -a "src=/path/to/file/to/copy/file.txt dest=/path/to/copy/location/"
+----
+
+----
+# ansible -i /path/to/hosts/file/HostFile nodes --become -m shell -a "subscription-manager status"
+----
+
+----
+# ansible -i /path/to/hosts/file/HostFile nodes --become -m shell -a "yum install docker"
+----
+
 .Feedback or Contribution Needed
 ****
 Things to talk about
