@@ -53,9 +53,8 @@ An additional minimum 15 GB unallocated space to be used for Docker’s storage 
 
 ==== Number of Nodes & Overall Environment Size
 
-The Smart Start Node configuration consists of 3 Masters, 2 Infrastructure Nodes, and 3 Application Nodes.
+When deciding how to size nodes, it’s helpful to have an idea of the final size of your environment. This is important because knowing the total amount of resources your workloads will consume will help to dictate the amount of capacity loss your environment can handle. This is especially relevant in smaller environments, where the loss of one node could have significant impact on the performance and capacity of your overall environment. It’s a good rule of thumb for environment sizing is to take the max expected total workload size and add 30% to that. This leaves about 10% for overhead on your nodes, plus 20% extra to account for node failure. The HA Smart Start Node configuration consists of 3 Masters, 2 Infrastructure Nodes, and 3 Application Nodes.
 
-When deciding how to size nodes, it's helpful to have an idea of the final size of your environment. This is important because knowing the total amount of resources your workloads will consume will help to dictate the amount of capacity loss your environment can handle. It's a good rule of thumb for environment sizing is to take the max expected total workload size and add 30% to that. This leaves about 10% for overhead on your nodes, plus 20% extra to account for node failure.
 
 NOTE: This applies to _real_ environments (i.e. _Dev_, _QA_, _Prod_) where we care about handling failure. Lab or sandbox environments will work just fine using the minimal recommendations.
 
