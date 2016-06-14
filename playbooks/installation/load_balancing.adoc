@@ -336,7 +336,10 @@ objects you can associate with a group of instances. They work by
 providing an enterprise-level load balancer that sits outside of 
 your instances. In this case, it would load balance across the OSE 
 masters. Theoretically, this should work
-seamlessly.
+seamlessly but in reality there are issues with how AWS handles load
+balancing. 
+
+CAUTION: This procedure will walk through the process of setting up the ELB but does not recommend it if you intend to rely on features in the dashboard such as remote console and logs.
 
 1. Create ELB and associate it with your instances. Follow the directions on Amazon to define and register your instances with the load balancer.
 
@@ -372,13 +375,12 @@ Follow the "Application-Controlled Session Stickiness" procedure in http://docs.
 
 +
 IMPORTANT: Configuring an ELB in this way makes general GUI and API usage
-work as expected for the user. Although, some of the more dynamic 
+work as expected for the user. Everything running inside of OSE, including applications
+should run seamlessly. Although, some of the more dynamic 
 features of the GUI do not load properly.
 Specifically, the pod logging, and remote console features do not
 work at all. This is because much of the asynchronous web-content
 used in the OSE dashboard uses web-sockets. At this time, it seems
  that AWS ELB does not currently support load-balancing websocket connections 
-at the session-layer. Until Amazon supports this common protocol, 
+at the session-layer. Until Amazon supports a more robust ELB, 
 we can only recommend using a HAProxy instance to do the load balancing.
-
-TIP: More information here https://medium.com/@Philmod/load-balancing-websockets-on-ec2-1da94584a5e9
