@@ -338,31 +338,40 @@ your instances. In this case, it would load balance across the OSE
 masters. Theoretically, this should work
 seamlessly.
 
+1. Create ELB and associate it with your instances. Follow the directions on Amazon to define and register your instances with the load balancer.
+
+  http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/elb-getting-started.html
++
 In a typical setup, you would configure an ELB with a public-facing interface.
 This generates a public DNS name that clients can see to send requests.
 
 2. Configure SSL/TLS termination at the ELB
 
++
 Because communication to the master and API takes place over secured port 8443, the ELB
 would need to be aware of this.
-
++
 NOTE: Because of the way ELB distributes loads, there is no guarentee of session persistance
 between masters. Every single web request can be re-directed to a different OSE master, completely
 destroying any stateful sessions. Because of this, you will need to configure TLS/SSL termination
 in the ELB
 
++
 The ELB needs to be aware of the of the SSL certificate in use by the OSE master in order to inspect
 the HTTP session for session persistance. Follow the instructions on http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/elb-update-ssl-cert.html to upload your OSE master certificate into AWS.
 
 3. Configure ELB for "sticky-sessions"
 
++
 We will need to configure AWS ELB to persist HTTPS sessions via the "ssn" cookie.
 See SessionName under master-config.yaml
-https://docs.openshift.com/enterprise/3.2/install_config/configuring_authentication.html
+  https://docs.openshift.com/enterprise/3.2/install_config/configuring_authentication.html
 
++
 Follow the "Application-Controlled Session Stickiness" procedure in http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/elb-sticky-sessions.html to set your ELB to be aware of the OpenShift session.
 
-NOTE: Configuring an ELB in this way makes general GUI and API usage
++
+IMPORTANT: Configuring an ELB in this way makes general GUI and API usage
 work as expected for the user. Although, some of the more dynamic 
 features of the GUI do not load properly.
 Specifically, the pod logging, and remote console features do not
@@ -372,4 +381,4 @@ used in the OSE dashboard uses web-sockets. At this time, it seems
 at the session-layer. Until Amazon supports this common protocol, 
 we can only recommend using a HAProxy instance to do the load balancing.
 
-INFO: More information here https://medium.com/@Philmod/load-balancing-websockets-on-ec2-1da94584a5e9
+TIP: More information here https://medium.com/@Philmod/load-balancing-websockets-on-ec2-1da94584a5e9
