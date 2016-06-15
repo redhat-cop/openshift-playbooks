@@ -27,7 +27,7 @@ If adding those entries is problematic, a quick DNS solution for OpenShift is to
 | Masters |
 Physical or virtual system, or an instance running on a public or private IaaS.
 
-Base OS: RHEL 7.2 or later with "Minimal" installation option, or RHEL Atomic Host 7.2.4 or later.
+Base OS: RHEL 7.1 or later with "Minimal" installation option, or RHEL Atomic Host 7.2.4 or later.
 
 2 vCPU.
 
@@ -38,7 +38,7 @@ Minimum 30 GB hard disk space for the file system containing /var/.
 | Nodes |
 Physical or virtual system, or an instance running on a public or private IaaS.
 
-Base OS: RHEL 7.2 or later with "Minimal" installation option, or RHEL Atomic Host 7.2.4 or later.
+Base OS: RHEL 7.1 or later with "Minimal" installation option, or RHEL Atomic Host 7.2.4 or later.
 
 NetworkManager 1.0 or later
 
@@ -307,7 +307,7 @@ Official Documenation for link:https://docs.openshift.com/enterprise/3.2/install
 
 Overall requirements for Installing OpenShift are very simple:
 
-* Install Red Hat provided Red Hat Enterprise Linux 7.2 image
+* Install Red Hat provided Red Hat Enterprise Linux 7.1 image
 ** If the environment uses a custom image, we recommend testing the OSE install with the Red Hat provided image first, then incrementally adding environment-specific image customizations with an eye toward the following:
 *** Assess whether the image customization is still appropriate and necessary (to avoid changes inherited from earlier circumstances that are no longer relevant)
 *** Test each customization to make sure it allows normal OSE operation and mitigate if necessary
@@ -317,7 +317,7 @@ Overall requirements for Installing OpenShift are very simple:
 ** rhel-7-server-optional-rpms
 ** rhel-7-server-ose-3.2-rpms
 
-* Install the following extra packages: `yum install wget git net-tools bind-utils iptables-services bridge-utils rpcbind nfs-utils`
+* Install the following extra packages: `yum install wget git net-tools bind-utils iptables-services bridge-utils`
 * Optional: install the following diagnostic tools: `yum install lsof strace nc telnet`
 * Fully update all packages: `yum -y update`
 * Configure Storage according to <<storage-considerations>>
@@ -462,7 +462,7 @@ openshift_hosted_router_certificate=[{"certfile": "/path/to/certs/splat.example.
 openshift_master_identity_providers=[{'name': 'OrgName_ldap', 'challenge': 'true', 'login': 'true', 'kind': 'LDAPPasswordIdentityProvider', 'attributes': {'id': ['sAMAccountName'], 'email': ['mail'], 'name': ['cn'], 'preferredUsername': ['sAMAccountName']}, 'bindDN': 'cn=LDAP_Account,ou=Resource,dc=example,dc=local', 'bindPassword': 'Ld@pP@$$w0rd', 'ca': 'org-ca.crt', 'insecure': 'false', 'url': 'ldaps://server_name.org_name.local:636/DC=org,DC=local?sAMAccountName?sub?(&(objectClass=user)(memberOf=CN=group_name,OU=Resource,DC=org_name,DC=local))'}]
 -----
 
-===== Registry hosted on Netapp Provided NFS
+==== Registry hosted on Netapp Provided NFS
 ----
 openshift_hosted_registry_storage_kind=nfs
 openshift_hosted_registry_storage_access_modes=['ReadWriteMany']
@@ -482,76 +482,25 @@ Need to add DNS subdomain, node labeling, master schedulable flag
 
 To launch the HA installer you will use an ansible playbook that will point to your custom hosts file that is tailored to your environment.
 
-[source, bash]
 ----
-ansible -i /path/to/hosts/file/HostFile --become /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
+# ansible -i /path/to/hosts/file/HostFile --become /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
 ----
 
 Here are some adhoc ansible commands that you can use to make configuring your environment easier:
 
-[source, bash]
 ----
-ansible -i /path/to/hosts/file/HostFile nodes --become -m copy -a "src=/path/to/file/to/copy/file.txt dest=/path/to/copy/location/"
-----
-
-[source, bash]
-----
-ansible -i /path/to/hosts/file/HostFile nodes --become -m shell -a "subscription-manager status"
+# ansible -i /path/to/hosts/file/HostFile nodes --become -m copy -a "src=/path/to/file/to/copy/file.txt dest=/path/to/copy/location/"
 ----
 
-[source, bash]
 ----
-ansible -i /path/to/hosts/file/HostFile nodes --become -m shell -a "yum install docker"
-----
-
-== Post Installation Openshift Configuration
-
-=== Isolating InfraNodes Regions
-
-[source, bash]
-----
-for n in $)( oc get namespace |grep -v NAME|awk {'print $1'});do
-oc annotate --overwrite namespace $n openshift.io/node-selector='region=infra'
-done
+# ansible -i /path/to/hosts/file/HostFile nodes --become -m shell -a "subscription-manager status"
 ----
 
-=== Deploying Router with Custom Certificates
-
-[source, bash]
 ----
-oc delete dc router
-oc delete svc router
-oadm router router \
-   --default-cert=/path/to/cert/splat.example.com.pem
-   --credentials=/etc/origin/master/openshift-router.kubeconfig \
-   --selector='region=infra' \
-   --replicas=2 \
-   --images='registry.access.redhat.com/openshift3/ose-${component}:${version}' \
-   --service-account=router
+# ansible -i /path/to/hosts/file/HostFile nodes --become -m shell -a "yum install docker"
 ----
 
-=== Group Access
-
-Creating a Group:
-[source, bash]
-----
-oadm groups new group-name
-----
-
-Adding users to a group:
-[source, bash]
-----
-oadm groups add-user group-name user1 user2 user3
-----
-
-=== Role Based Access Control
-
-Granting admin access to a user:
-[source, bash]
-----
-oc policy add-role-to-user admin username
-----
-
+<<<<<<< HEAD
 Granting a Role to a Group:
 [source, bash]
 ----
@@ -565,6 +514,8 @@ oadm policy add-role-to-group view group-name -n project-name
 ----
 
 
+=======
+>>>>>>> parent of e574afe... Added section Post Installl Config & subsections with more configurations
 .Feedback or Contribution Needed
 ****
 Things to talk about
