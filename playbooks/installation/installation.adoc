@@ -325,8 +325,9 @@ Overall requirements for Installing OpenShift are very simple:
 
 [source, bash]
 ----
-# nodes="ose-installer master00 master01 master02 infranode00 infranode01 nfs00 app-node00 app-node01 app-node02"
-# for node in $nodes; do ssh-copy-id $node; done
+nodes="ose-installer master00 master01 master02 infranode00 infranode01 nfs00 app-node00 app-node01 app-node02"
+
+for node in $nodes; do ssh-copy-id $node; done
 ---- 
 
 == Ansible Installer
@@ -483,23 +484,24 @@ Need to add DNS subdomain, node labeling, master schedulable flag
 To launch the HA installer you will use an ansible playbook that will point to your custom hosts file that is tailored to your environment.
 
 ----
-# ansible -i /path/to/hosts/file/HostFile --become /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
+ansible -i /path/to/hosts/file/HostFile --become /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
 ----
 
 Here are some adhoc ansible commands that you can use to make configuring your environment easier:
 
 ----
-# ansible -i /path/to/hosts/file/HostFile nodes --become -m copy -a "src=/path/to/file/to/copy/file.txt dest=/path/to/copy/location/"
+ansible -i /path/to/hosts/file/HostFile nodes --become -m copy -a "src=/path/to/file/to/copy/file.txt dest=/path/to/copy/location/"
 ----
 
 ----
-# ansible -i /path/to/hosts/file/HostFile nodes --become -m shell -a "subscription-manager status"
+ansible -i /path/to/hosts/file/HostFile nodes --become -m shell -a "subscription-manager status"
 ----
 
 ----
-# ansible -i /path/to/hosts/file/HostFile nodes --become -m shell -a "yum install docker"
+ansible -i /path/to/hosts/file/HostFile nodes --become -m shell -a "yum install docker"
 ----
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 Granting a Role to a Group:
 [source, bash]
@@ -514,6 +516,8 @@ oadm policy add-role-to-group view group-name -n project-name
 ----
 
 
+=======
+>>>>>>> parent of e574afe... Added section Post Installl Config & subsections with more configurations
 =======
 >>>>>>> parent of e574afe... Added section Post Installl Config & subsections with more configurations
 .Feedback or Contribution Needed
