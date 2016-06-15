@@ -454,7 +454,7 @@ openshift_master_api_port=443
 
 ===== Deploying Custom Certificates
 ----
-openshift_hosted_router_certificates=[{"certfile": "/path/to/certs/splat.example.com.crt", "keyfile": "/path/to/certs/splat.example.com.key"}]
+openshift_hosted_router_certificate=[{"certfile": "/path/to/certs/splat.example.com.crt", "keyfile": "/path/to/certs/splat.example.com.key"}]
 ----
 
 ===== LDAP Identity Provider
@@ -555,7 +555,7 @@ oc policy add-role-to-user admin username
 Granting a Role to a Group:
 [source, bash]
 ----
-oadm add-role-togroup view group-name
+oadm add-role-to-group view group-name
 ----
 
 Granting a Role to a Group in a Project:
