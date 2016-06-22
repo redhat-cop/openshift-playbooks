@@ -306,7 +306,7 @@ The JBoss EAP image for OpenShift includes S2I scripts located in the `/usr/loca
 
 The best way to learn how the JBoss S2I builder works is to investigate the builder itself. Run the following command to start a container containing the builder image
 
-   docker run -it --rm --entrypoint=/bin/bash registry.access.redhat.com/jboss-eap-6/eap-openshift
+   docker run -it --rm --entrypoint=/bin/bash registry.access.redhat.com/jboss-eap-6/eap64-openshift
 
 *Note:* the `--entrypoint` option is used to override the default functionality to start the JBoss server
 
