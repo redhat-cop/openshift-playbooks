@@ -74,10 +74,10 @@ oc get images | grep redis
 3.1) Create two NFS directories for Redis and Sentinel Containers in the NFS Server:
 
 ```
-mkdir /opt/nfs/red
-chown nfsnobody.nfsnobody /opt/nfs/red
-chown -R nfsnobody.nfsnobody /opt/nfs/red
-chmod 775 /opt/nfs/red
+mkdir /opt/nfs/redis
+chown nfsnobody.nfsnobody /opt/nfs/redis
+chown -R nfsnobody.nfsnobody /opt/nfs/redis
+chmod 775 /opt/nfs/redis
 
 mkdir /opt/nfs/redis-sentinel
 chown nfsnobody.nfsnobody /opt/nfs/redis-sentinel
@@ -88,8 +88,8 @@ chmod 775 /opt/nfs/redis-sentinel
 
 ```
 (In /etc/exports)
-/opt/nfs/red node00-640a.oslab.opentlc.com(all_squash,rw,sync) node01-640a.oslab.opentlc.com(all_squash,rw,sync)
-/opt/nfs/redis-sentinel node00-640a.oslab.opentlc.com(all_squash,rw,sync) node01-640a.oslab.opentlc.com(all_squash,rw,sync)
+/opt/nfs/redis node00.example.com(all_squash,rw,sync) node01.example.com(all_squash,rw,sync)
+/opt/nfs/redis-sentinel node00.example.com(all_squash,rw,sync) node01.example.com(all_squash,rw,sync)
 
 exportfs -a
 ```
@@ -114,7 +114,7 @@ oc create -f deploymentconfig-new.json
 oc login -u system:admin
 oc create -f volume_red.yaml
 oc create -f claim_red.yaml
-oc volume deploymentconfigs/redis --add --overwrite --name=myclaim2 --mount-path=/redis-master-data --source='{"nfs": { "server": "nfs00-640a", "path": "/opt/nfs/red" }}'
+oc volume deploymentconfigs/redis --add --overwrite --name=myclaim2 --mount-path=/redis-master-data --source='{"nfs": { "server": "nfs00-640a", "path": "/opt/nfs/redis" }}'
 
 oc create -f volume_redis-sentinel.yaml
 oc create -f claim_redis-sentinel.yaml
