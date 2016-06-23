@@ -10,5 +10,5 @@ spec:
    - "ReadWriteOnce"
  nfs:
    path: "/opt/nfs/redis-sentinel"
-   server: "nfs00-640a"
+   server: "nfs00.example.com"
  persistentVolumeReclaimPolicy: "Retain"
