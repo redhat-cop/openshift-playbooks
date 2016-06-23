@@ -127,6 +127,6 @@ oc scale rc redis --replicas=3
 oc scale rc redis-sentinel --replicas=3
 ```
 
-**Now applications can be connected using rediss-setinel Cluster IP. (oc get service redis-sentinel)**
+**Now applications can be connected using redis-setinel Cluster IP. (oc get service redis-sentinel)**
 
 [Wiki Link](https://github.com/shah-zobair/redis-sentinel/wiki/Redis-Cluster-on-OpenShift-3.1)
