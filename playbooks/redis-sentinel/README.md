@@ -4,10 +4,10 @@
 This repository will containerize Redis and Sentinel to run Redis Cluster on OpenShift 3. Each Pod will have two containers (Redis and Sentinel) and can be easily scaled up/down as required.
 
 ## Bill of Materials
-* **Environment:** It has been built and ran on OpenShift 3.1
+* **Environment:** It was built and ran on the OpenShift 3.1
 * **Template files:** None at this moment
 * **Config files:** Individual files has been prepared and can be cloned
-* **External Source Code repos:** Any application can be integrated with Redis Cluster
+* **External Source Code repos:** None
 
 ## Setup Instructions
 Please follow the steps to build a Redis Cluster:
@@ -17,7 +17,7 @@ Please follow the steps to build a Redis Cluster:
 
 ````
     mkdir ~/redis-sentinel; cd ~/redis-sentinel/
-    git clone https://github.com/shah-zobair/redis-sentinel.git
+    git clone https://github.com/rhtconsulting/redis-sentinel.git
 ```
 
 1.2) Prepare the Docker image:
