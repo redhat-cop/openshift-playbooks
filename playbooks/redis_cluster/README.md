@@ -1,13 +1,13 @@
-# Running Redis Cluster on OpenShift 3.1
+# Running Redis Cluster on OpenShift 3.X
 
 ## Overview
 This repository will containerize Redis and Sentinel to run Redis Cluster on OpenShift 3. Each Pod will have two containers (Redis and Sentinel) and can be easily scaled up/down as required.
 
 ## Bill of Materials
-* **Environment:** It has been built and ran on OpenShift 3.1
+* **Environment:** It was built and ran on OpenShift 3.1
 * **Template files:** None at this moment
 * **Config files:** Individual files has been prepared and can be cloned
-* **External Source Code repos:** Any application can be integrated with Redis Cluster
+* **External Source Code repos:** None
 
 ## Setup Instructions
 Please follow the steps to build a Redis Cluster:
@@ -17,7 +17,7 @@ Please follow the steps to build a Redis Cluster:
 
 ````
     mkdir ~/redis-sentinel; cd ~/redis-sentinel/
-    git clone https://github.com/shah-zobair/redis-sentinel.git
+    git clone https://github.com/rhtconsulting/redis-sentinel.git
 ```
 
 1.2) Prepare the Docker image:
@@ -25,7 +25,7 @@ Please follow the steps to build a Redis Cluster:
 ```
     cd image/
     chmod 777 run.sh
-    docker build -t redis2 .
+    docker build -t redis .
     docker build -t redis-sentinel .
 ````
 
@@ -42,7 +42,7 @@ Please follow the steps to build a Redis Cluster:
 2.2) Tag the Docker images and Create new Image Streams for both images: 
 
 ```
-   docker tag redis2 <Registry_IP>:<Registry_Port>/openshift/redis2
+   docker tag redis <Registry_IP>:<Registry_Port>/openshift/redis
    docker tag redis-sentinel <Registry_IP>:<Registry_Port>/openshift/redis-sentinel
    oc create -f image_stream.json -n openshift
    oc create -f image_stream-sentinel.json -n openshift
@@ -60,7 +60,7 @@ oadm policy add-role-to-user system:deployer <Regular_Username> -n openshift
 oc login -u <Regular_Username>
 oc whoami -t **(Note the generated Token)**
 docker login -u <Regular_Username> -e a@b.com -p <generated_Token> <Registry_IP>:<Registry_Port>
-docker push <Registry_IP>:<Registry_Port>/openshift/redis2
+docker push <Registry_IP>:<Registry_Port>/openshift/redis
 docker push <Registry_IP>:<Registry_Port>/openshift/redis-sentinel
 ```
 
@@ -74,10 +74,10 @@ oc get images | grep redis
 3.1) Create two NFS directories for Redis and Sentinel Containers in the NFS Server:
 
 ```
-mkdir /opt/nfs/red
-chown nfsnobody.nfsnobody /opt/nfs/red
-chown -R nfsnobody.nfsnobody /opt/nfs/red
-chmod 775 /opt/nfs/red
+mkdir /opt/nfs/redis
+chown nfsnobody.nfsnobody /opt/nfs/redis
+chown -R nfsnobody.nfsnobody /opt/nfs/redis
+chmod 775 /opt/nfs/redis
 
 mkdir /opt/nfs/redis-sentinel
 chown nfsnobody.nfsnobody /opt/nfs/redis-sentinel
@@ -88,8 +88,8 @@ chmod 775 /opt/nfs/redis-sentinel
 
 ```
 (In /etc/exports)
-/opt/nfs/red node00-640a.oslab.opentlc.com(all_squash,rw,sync) node01-640a.oslab.opentlc.com(all_squash,rw,sync)
-/opt/nfs/redis-sentinel node00-640a.oslab.opentlc.com(all_squash,rw,sync) node01-640a.oslab.opentlc.com(all_squash,rw,sync)
+/opt/nfs/redis node00.example.com(all_squash,rw,sync) node01.example.com(all_squash,rw,sync)
+/opt/nfs/redis-sentinel node00.example.com(all_squash,rw,sync) node01.example.com(all_squash,rw,sync)
 
 exportfs -a
 ```
@@ -100,25 +100,25 @@ exportfs -a
 ```
 oc new-project redis --display-name="Redis Sentinal Cluster" --description="This is the project of Redis Assignment"
 
-oc create -f redis-master-new.yaml
+oc create -f redis-master.yaml
 oc create -f redis-sentinel-service.yaml
 oc create -f redis-service.yaml
-oc create -f redis-controller-new.yaml
-oc create -f redis-sentinel-controller-new.yaml
-oc create -f deploymentconfig-new.json
+oc create -f redis-controller.yaml
+oc create -f redis-sentinel-controller.yaml
+oc create -f deploymentconfig.json
 ```
 
 4.2) Create Persistent Volume for the Pods:
 
 ```
 oc login -u system:admin
-oc create -f volume_red.yaml
-oc create -f claim_red.yaml
-oc volume deploymentconfigs/redis --add --overwrite --name=myclaim2 --mount-path=/redis-master-data --source='{"nfs": { "server": "nfs00-640a", "path": "/opt/nfs/red" }}'
+oc create -f volume_redis.yaml
+oc create -f volume_claim_redis.yaml
+oc volume deploymentconfigs/redis --add --overwrite --name=myclaim2 --mount-path=/redis-master-data --source='{"nfs": { "server": "nfs00.example.com", "path": "/opt/nfs/redis" }}'
 
 oc create -f volume_redis-sentinel.yaml
-oc create -f claim_redis-sentinel.yaml
-oc volume deploymentconfigs/redis --add --overwrite --name=myclaim3 --mount-path=/redis-sentinel-data --source='{"nfs": { "server": "nfs00-640a", "path": "/opt/nfs/redis-sentinel" }}'
+oc create -f volume_claim_redis-sentinel.yaml
+oc volume deploymentconfigs/redis --add --overwrite --name=myclaim3 --mount-path=/redis-sentinel-data --source='{"nfs": { "server": "nfs00.example.com", "path": "/opt/nfs/redis-sentinel" }}'
 ```
 4.3) Scale up to test:
 
