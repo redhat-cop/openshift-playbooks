@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: sentinel
-        image: 172.30.162.176:5000/openshift/redis-sentinel:latest
+        image: 172.30.176.178:5000/openshift/redis-sentinel_rhel:latest
         env:
           - name: SENTINEL
             value: "true"

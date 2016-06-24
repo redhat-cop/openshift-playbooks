@@ -15,7 +15,7 @@
         "containers": [
           {
             "name": "redis",
-            "image": "172.30.162.176:5000/openshift/redis2:latest",
+            "image": "172.30.176.178:5000/openshift/redis_rhel:latest",
             "ports": [
               {
                 "containerPort": 6379,
@@ -25,7 +25,7 @@
           },
 	  {
             "name": "redis-sentinel",
-            "image": "172.30.162.176:5000/openshift/redis-sentinel:latest",
+            "image": "172.30.176.178:5000/openshift/redis-sentinel_rhel:latest",
             "ports": [
               {
                 "containerPort": 26379,
