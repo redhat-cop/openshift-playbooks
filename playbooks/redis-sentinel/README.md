@@ -4,10 +4,10 @@
 This repository will containerize Redis and Sentinel to run Redis Cluster on OpenShift 3. Each Pod will have two containers (Redis and Sentinel) and can be easily scaled up/down as required.
 
 ## Bill of Materials
-* **Environment:** It has been built and ran on OpenShift 3.1
+* **Environment:** It was built and ran on the OpenShift 3.1
 * **Template files:** None at this moment
 * **Config files:** Individual files has been prepared and can be cloned
-* **External Source Code repos:** Any application can be integrated with Redis Cluster
+* **External Source Code repos:** None
 
 ## Setup Instructions
 Please follow the steps to build a Redis Cluster:
@@ -17,7 +17,7 @@ Please follow the steps to build a Redis Cluster:
 
 ````
     mkdir ~/redis-sentinel; cd ~/redis-sentinel/
-    git clone https://github.com/shah-zobair/redis-sentinel.git
+    git clone https://github.com/rhtconsulting/redis-sentinel.git
 ```
 
 1.2) Prepare the Docker image:
@@ -74,10 +74,10 @@ oc get images | grep redis
 3.1) Create two NFS directories for Redis and Sentinel Containers in the NFS Server:
 
 ```
-mkdir /opt/nfs/red
-chown nfsnobody.nfsnobody /opt/nfs/red
-chown -R nfsnobody.nfsnobody /opt/nfs/red
-chmod 775 /opt/nfs/red
+mkdir /opt/nfs/redis
+chown nfsnobody.nfsnobody /opt/nfs/redis
+chown -R nfsnobody.nfsnobody /opt/nfs/redis
+chmod 775 /opt/nfs/redis
 
 mkdir /opt/nfs/redis-sentinel
 chown nfsnobody.nfsnobody /opt/nfs/redis-sentinel
@@ -88,8 +88,8 @@ chmod 775 /opt/nfs/redis-sentinel
 
 ```
 (In /etc/exports)
-/opt/nfs/red node00-640a.oslab.opentlc.com(all_squash,rw,sync) node01-640a.oslab.opentlc.com(all_squash,rw,sync)
-/opt/nfs/redis-sentinel node00-640a.oslab.opentlc.com(all_squash,rw,sync) node01-640a.oslab.opentlc.com(all_squash,rw,sync)
+/opt/nfs/redis node00.example.com(all_squash,rw,sync) node01.example.com(all_squash,rw,sync)
+/opt/nfs/redis-sentinel node00.example.com(all_squash,rw,sync) node01.example.com(all_squash,rw,sync)
 
 exportfs -a
 ```
@@ -114,7 +114,7 @@ oc create -f deploymentconfig-new.json
 oc login -u system:admin
 oc create -f volume_red.yaml
 oc create -f claim_red.yaml
-oc volume deploymentconfigs/redis --add --overwrite --name=myclaim2 --mount-path=/redis-master-data --source='{"nfs": { "server": "nfs00-640a", "path": "/opt/nfs/red" }}'
+oc volume deploymentconfigs/redis --add --overwrite --name=myclaim2 --mount-path=/redis-master-data --source='{"nfs": { "server": "nfs00-640a", "path": "/opt/nfs/redis" }}'
 
 oc create -f volume_redis-sentinel.yaml
 oc create -f claim_redis-sentinel.yaml
@@ -127,6 +127,6 @@ oc scale rc redis --replicas=3
 oc scale rc redis-sentinel --replicas=3
 ```
 
-**Now applications can be connected using rediss-setinel Cluster IP. (oc get service redis-sentinel)**
+**Now applications can be connected using redis-setinel Cluster IP. (oc get service redis-sentinel)**
 
 [Wiki Link](https://github.com/shah-zobair/redis-sentinel/wiki/Redis-Cluster-on-OpenShift-3.1)
