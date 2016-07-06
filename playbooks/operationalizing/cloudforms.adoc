@@ -186,11 +186,32 @@ NOTE: If an all in one deployment of CloudForms is being utilized, all roles can
 
 === Configure the OpenShift CloudForms Provider
 
+CloudForms 4.0:
+
 In the CloudForms web console, select the *Containers* tab and then select *Providers*.
 
-Select the *Configuration* button and then *Add a New Containers Provider*
+Select the *Configuration* button and then *Add a New Containers Provider*.
 
-Enter a name for the provider, select *OpenShift Enterprise* in the type, the address of the master and then the token retrieved earlier into the *Token* field. Click *Validate* to confirm connectivity. Hit *Add* to add the container provider.
+Enter a name for the provider, select *OpenShift Enterprise* in the type, enter the address of the master and then the token retrieved earlier into the *Token* field. Click *Validate* to confirm connectivity. 
+
+Click *Add* to add the container provider.
+
+CloudForms 4.1:
+
+In the CloudForms web console, hover over *Compute* in the menu on the left, then *Containers*, then select *Providers*.
+
+Select the *Configuration* button and then *Add a New Containers Provider*.
+
+Enter a name for the provider and select *OpenShift Enterprise* in the type (ignore the zone, this will populate on its own). 
+
+Under *Endpoints*, in the *Default* tab, enter the hostname or address of the HAProxy server (or the master in a single master setup) into the *Hostname* field and enter the token retrieved earlier into the *Token* and *Confirm Token* fields. Click *Validate* to confirm connectivity.
+
+Under *Endpoints*, select the *Hawkular* tab and enter the hawkular-metrics hostname into the *Hostname* field. 
+    *Note* Adding the hawkular-metrics hostname in this field eliminates the need for any special routing to connect CloudForms to Hawkular Metrics.
+
+Click *Add* to add the container provider.
+
+=== Verify data collection
 
 After a minute or two, click the *Overview* tab to view the data collected
 
@@ -200,7 +221,7 @@ The metrics from specific pods and containers is also also available by navigati
 
 image::images/cf-pod-metrics.png[title=Pod Metrics]
 
-A full overview of steps necessary to integrate CloudForms with OpenShift including the enablement of cluster metrics can be found in the https://access.redhat.com/solutions/2137531[How to configure environments to see metrics of Openshift in Cloudforms] solutions article.
+A full overview of steps necessary to integrate CloudForms with OpenShift including the enablement of cluster metrics can be found in the https://access.redhat.com/solutions/2137531[How to configure environments to see metrics of Openshift in Cloudforms] solutions article. *Note* Step 6, configuring a router on a master node, is not necessary when using CloudForms 4.1.
 
 == SmartState Analysis
 
