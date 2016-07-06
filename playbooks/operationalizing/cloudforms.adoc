@@ -186,7 +186,7 @@ NOTE: If an all in one deployment of CloudForms is being utilized, all roles can
 
 === Configure the OpenShift CloudForms Provider
 
-CloudForms 4.0:
+==== CloudForms 4.0:
 
 In the CloudForms web console, select the *Containers* tab and then select *Providers*.
 
@@ -196,7 +196,7 @@ Enter a name for the provider, select *OpenShift Enterprise* in the type, enter 
 
 Click *Add* to add the container provider.
 
-CloudForms 4.1:
+==== CloudForms 4.1:
 
 In the CloudForms web console, hover over *Compute* in the menu on the left, then *Containers*, then select *Providers*.
 
