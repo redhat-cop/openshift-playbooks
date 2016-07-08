@@ -273,7 +273,7 @@ Finally, provide the generated `internal-vip.crt` and `internal-vip.key` to the 
 
 ===== 2. Setup the Installer
 
-Before running the installer, you'll need to be provided the certificate and keyfile that will be hosted on the External VIP, so that they can be added to OpenShift's trust. Those files must be placed somewhere on the host that will run the installer.
+To set up the install, we need to create a host inventory file for the ansible-based installer.
 
 [source,bash]
 ----
