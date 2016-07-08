@@ -328,9 +328,9 @@ node02.myorg.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
 
 Run the installer per the instructions in the link:https://docs.openshift.com/enterprise/3.1/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Installation Guide]
 
-=== Guides for Specific Load Balancer Implementations
+== Guides for Specific Load Balancer Implementations
 
-===== 1. Load Balancing in Amazon Web Services
+=== 1. Load Balancing in Amazon Web Services
 
 When deploying your HA OpenShift cluster into AWS, there are a couple
 of things to consider. Amazon provides its own Elastic Load Balancer
