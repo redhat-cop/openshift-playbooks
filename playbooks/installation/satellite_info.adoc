@@ -1,7 +1,7 @@
 ---
 = Satellite info for consuming OpenShift socket-based subscriptions
 
-When you purchase the OpenShift socket-based subscriptions, you can use each subscription in one of two ways.
+When you purchase the OpenShift socket-based subscriptions, you can use each subscription in one of two ways:
 
 - You can put the subscription on a hardware which is running OpenShift directly and create as many containers and applications as you like.
 - You can put the subscripiton on hardware (like above) but instead of running OpenShift directly on the hardware, you can create any number
