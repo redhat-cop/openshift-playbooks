@@ -25,7 +25,7 @@ Here I have a local directory called `warfile-demo` that just contains my warfil
 ticket-monster.war
 ----
 
-This war file is a jboss-demo sample app we like to use a lot. It would pulled and build from link:https://github.com/jboss-developer/ticket-monster[GitHub].
+This war file is a jboss-demo sample app we like to use a lot. It would pulled and built from link:https://github.com/jboss-developer/ticket-monster[GitHub].
 
 In order to simplify the URL structure for my application, I'm going to rename my warfile to `ROOT.war`.
 
@@ -64,7 +64,7 @@ You have access to the following projects and can switch between them with 'oc p
 
   * validate (current)
 
-Using project "default".
+Using project "validate".
 [esauer@localhost warfile-demo]$ oc new-project warfile-demo
 Now using project "warfile-demo" on server "https://master.d2.rhc-ose.labs.redhat.com:8443".
 
@@ -121,10 +121,10 @@ Now I can take that ImageStream name and plug it into a new build. I'm going to 
 
 Notice what OpenShift did with my request... It created me an `imagestream` and a `buildconfig` object, both named `ticket-monster`. The `imagestream` will track the new images that get built as part of this new build process, and the `buildconfig` contains all the instructions that tell OpenShift how to build my app.
 
-Now I can kick off my build by pointing the `oc` client at my local project directory. The command to do that is `oc start-build <buildconfig-name> --from-file=<file-path>`. Before I run it though, I want to walk through a few parameters I'm going to use. First off, I know that my `<buildconfig-name>` will be `ticket-monster` and the `<file-path>` will be my current `warfile-demo` directory. If I run that command as-is (i.e. `oc start-build ticket-monster --from-file=.`) then a build will kick-off, the command will exit, and the build will run in the background. However, in this instance, I would prefer to actually follow the status of the build. To do that, I'm going to add the `--follow=true` (follow the logs of the build) and `--wait=true` (wait until the build completes to return an exit code).
+Now I can kick off my build by pointing the `oc` client at my local project directory. The command to do that is `oc start-build <buildconfig-name> --from-dir=<dir-path>`. Before I run it though, I want to walk through a few parameters I'm going to use. First off, I know that my `<buildconfig-name>` will be `ticket-monster` and the `<file-path>` will be my current `warfile-demo` directory. If I run that command as-is (i.e. `oc start-build ticket-monster --from-dir=.`) then a build will kick-off, the command will exit, and the build will run in the background. However, in this instance, I would prefer to actually follow the status of the build. To do that, I'm going to add the `--follow=true` (follow the logs of the build) and `--wait=true` (wait until the build completes to return an exit code).
 
 ----
-[esauer@localhost warfile-demo]$ oc start-build ticket-monster --from-file=. --follow=true --wait=true
+[esauer@localhost warfile-demo]$ oc start-build ticket-monster --from-dir=. --follow=true --wait=true
 Uploading "." at commit "HEAD" as binary input for the build ...
 Uploading directory "." as binary input for the build ...
 ticket-monster-1
