@@ -195,3 +195,7 @@ ticket-monster   ticket-monster-warfile-demo.apps.d2.rhc-ose.labs.redhat.com ...
 ----
 
 As you can see here, the `oc expose` command creates me a route with a hostname. This hostname is resolvable and accessible to me which means that I can now pull up `http://ticket-monster-warfile-demo.apps.d2.rhc-ose.labs.redhat.com` in my browser.
+
+== What's Next?
+
+For a more in-depth look at how this stuff works, check out our link:builds{outfilesuffix}[Deep Dive on Builds in OpenShift]
