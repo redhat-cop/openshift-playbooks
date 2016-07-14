@@ -7,3 +7,4 @@ The OpenShift Enterprise 3 Application Development playbook provides guidance on
 Completed sections:
 
 * link:builds{outfilesuffix}[Builds]
+* link:binary_deployment_howto{outfilesuffix}[Tutorial: Binary Deployments to Tomcat in OpenShift]
