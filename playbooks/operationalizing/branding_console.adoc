@@ -1,3 +1,5 @@
+---
+---
 = Branding the OpenShift Web Console 
 Jooho Lee <jlee@redhat.com>
 v1.0, 2016-03-16
