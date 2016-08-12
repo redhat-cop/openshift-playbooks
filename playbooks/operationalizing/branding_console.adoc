@@ -1,0 +1,289 @@
+---
+---
+= Branding the OpenShift Web Console 
+Jooho Lee <jlee@redhat.com>
+v1.0, 2016-03-16
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+
+
+
+toc::[]
+
+This document provides the ways to change brand images on web console, login page and template. From time to time, using
+own brand on OSE is one of usual requirements. It is out of the scope of smart start but you set it up easily and
+quickly because this document will contains ansible playbooks.[TBD]  Hence, this would be suggested to configure it on master servers after Openshift installed. 
+
+
+== Prerequisites
+
+The majority of the work involves on CSS, images. To achieve it, you need to prepare right size of images but the size of image should be different for each page. It is recommended to follow the image size which is provided by default. Moreover, the background color should be transparent.
+
+* Size
+** login page logo :  193px **x** 44px
+** web console logo :  193px **x** 44px
+** template icon :  37px **x** 33px
+
+TIP: ImageMagick program help resize image easily.
+This playbook also contains it for your convenience.
+
+== Manual configuration
+
+=== Login page logo
+The login page of openshift is using base64 unicode for all images, which means it is not allowed to change it by CSS. In order to change the logo, you should create a new login html file by using `oadm` command but the page contains only `ID/PASSWORD` fields on white background. Sometimes, the page is developed by client so the white page can be acceptable. However, if client wants to change just the logo, the page does not fit them. Thus, it explains how to change only the logo image on login page.
+
+*  **Create a new template login html file**
+```
+# cd /etc/origin/master/
+
+# oadm create-login-template > login-template.html
+```
+
+*  **Download default log page**
+```
+curl -k https://{MASTER_IP or LB}:8443/login > new-login.html
+
+# curl -k https://master.example.com:8443/login > new-login.html
+```
+
+* **Copy error html tag (`2305-2307`) into 2305 line of new-login.html**
+
+.new-login.html
+[source,html]
+----
+...
+2303           </div>
+2304
+2305         {{ if .Error }}
+2306           <div class="error">{{ .Error }}</div>
+2307         {{ end }}
+2308         </div>
+2309         <div class="col-sm-7 col-md-6 col-lg-5 login">
+...
+----
+
+* *Change hidden value*
+
+
+.As-Is
+[source,html]
+----
+<form class="form-horizontal" role="form" action="/login" method="POST">
+<input type="hidden" name="then" value="">
+<input type="hidden" name="csrf" value="ed18e4b9-ebd8-11e5-bf88-525400a40b1b">
+----
+
+.To-Be
+[source,html]
+----
+<form class="form-horizontal" role="form" action="{{ .Action}}" method="POST"> ;; <1>
+<input type="hidden" name="{{ .Names.Then }}" value="{{ .Values.Then }}"> ;;<2>
+<input type="hidden" name="{{ .Names.CSRF }}" value="{{ .Values.CSRF }}"> ;;<3>
+----
+<1> action is changed.
+<2> name, action is changed.
+<3> name, action is changed.
+
+[]
+
+* *Change ID/PASSWD value*
+
+.As-Is
+[source, html]
+----
+<input type="text" class="form-control" id="inputUsername" placeholder="" tabindex="1" autofocus="autofocus" type="text" name="username" value="">
+
+..
+
+<input type="password" class="form-control" id="inputPassword" placeholder="" tabindex="2" type="password" name="password" value="">
+----
+
+.To-Be
+[source, html]
+----
+<input type="text" class="form-control" id="inputUsername" placeholder="" tabindex="1" autofocus="autofocus" type="text" name="{{ .Names.Username}}" value="{{ .Values.Username }}"> ;; <1>
+
+..
+
+ <input type="password" class="form-control" id="inputPassword" placeholder="" tabindex="2" type="password"  name="{{ .Names.Password }}"  value=""> ;; <2>
+----
+<1> name, value are changed
+<2> name is changed
+
+[]
+* *Change copy right*
+
+.As-Is
+[source,html]
+----
+<p><strong>Welcome to Red Hat&reg; OpenShift Enterprise.</strong>
+----
+
+.To-Be
+[source,html]
+----
+<p><strong>Welcome to YOUR LOGO&reg; OpenShift Enterprise.</strong>
+----
+
+** Convert image to base64 unicode and replace default.
+(execute replace_login_logo.sh)
+
+.replace_login_logo.sh
+```
+span_badge_line=$(grep -n "span id=\"badge\"" ./new-login.html |cut -d: -f1) ;; <1>
+img_line=$(( $span_badge_line + 1 ))
+
+base64_img="<img src=\"$(echo "data:image/png;base64,$(base64 -w 0 login_logo.png)")\" alt=\"new logo\"/>" ;; <2>
+
+sed -e "$img_line,1d" -i new-login.html ;;<3>
+sed -e "$img_line i $base64_img" -i new-login.html ;;<4>
+```
+<1> Find the line of badge class.
+<2> Convert image(login_logo.png) to base64 unicode. `alt` can be modified.
+<3> Delete the default logo
+<4> Insert the new logo
+
+[]
+* *Configure master-config.yaml for new login page.*
+
+.master-config.yaml
+----
+...
+oauthConfig:
+  templates:
+    login: /etc/origin/master/new-login.html
+...
+----
+
+NOTE: The indent space is remarkably important. Sometimes, master server can not load it because of different space length.
+
+* *Now restart atomic-o penshift-master service*
+```
+# systemctl atomic-openshift-master restart
+```
+
+=== Web console logo
+After login, it is allowed to modify anything on console style using extended `css/javascrpt/images`. https://docs.openshift.com/enterprise/3.1/install_config/web_console_customization.html[The official document] explain it in detail but it could take a little bit long time to configure due to yaml syntax of master-config.xml. Hence, I recommand to follow this chapter exactly, then you can see brand new logo without trial and error.
+
+.Workflow
+. Create CSS/Image folder
+. Create css file and copy web console logo under the folders
+. Configure master-config.yaml
+
+
+
+.Steps
+Create CSS/Image folder::
+----
+# mkdir -p /etc/origin/master/stylesheet/{css,images}
+----
+
+Create css file and copy web console logo under the folders::
+[]
+.extension.css
+[source,css]
+----
+#header-logo {
+   background: url("../extensions/images/webconsole-logo.png");
+   width: 193px;
+   height: 41px;
+   margin-top: -3px;
+}
+
+#openshift-logo.navbar-brand{
+   width: 193px;
+   height: 42px;
+   padding-left: 20px;
+   padding-top: 1px;
+}
+----
+
+.Check image files
+[source,bash]
+----
+# ls -al /etc/origin/master/stylesheet/images
+webconsole-logo.png
+----
+
+Configure master-config.yaml::
+[]
+.master-config.yaml
+[source,yaml]
+----
+...
+assetConfig:
+  extensions:
+    - name: images
+      sourceDirectory:  
+          /etc/origin/master/stylesheet/images
+      extensionDevelopment: true
+      extensionStylesheets:
+        - /etc/origin/master/stylesheet/css/extension.css
+  logoutURL: ""
+...
+----
+
+[]
+
+=== Template logo
+Creating new template is usual in Openshift for other team. In addition, application architect would try to create a global template in openshift project and want to use special image to distinguish well. Using specific icon is really good idea to recognize each different template. 
+
+.Workflow
+. Copy icon image under images folder
+. Add css class for icon.
+. Use the css class in a template
+
+.Steps
+Copy icon image under images::
+----
+# cp new-icon.png /etc/origin/master/stylesheet/images/.
+----
+Add css element for icon::
+[]
+.extension.css
+----
+.icon-test {
+   background-image: url("../extensions/images/new-icon.png");
+   width: 36px;
+   height: 33px;
+}
+----
+
+Use the css class in a template::
+[]
+.test-template.yaml
+[source,yaml]
+----
+{
+    "kind": "Template",
+    "apiVersion": "v1",
+    "metadata": {
+       "annotations": {
+         "name": "test-tomcat8-jre8-1.0.0",
+         "description": "test 1.0.0.",
+         "tags": "test-apps",
+         "iconClass": "icon-test"  ;;<1>
+       },
+       "name": "test-tomcat8-jre8-1.0.0"
+       ...
+
+----
+<1> This value must be same as the css style in extension.css
+
+[]
+== Ansible Playbook
+This ansible playbook contains 4 roles : resize_image, configure_login_logo, configure_webconsole_logo, demo_template_icon_change.
+Those roles can be executed by 1 playbook or each role can be executed. This chapter will explain how to configure "Branding console" with ansible playbook.
+
+
+=== Ansible role
+- resize_image
+- configure_login_logo
+- configure_webconsole_logo
+- demo_template_icon_change
+
+=== Usage
+TBD
+
