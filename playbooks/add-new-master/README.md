@@ -1,24 +1,25 @@
-# Add a New Master Node to OSCP Cluster with embedded ETCD
+# Add/Replace a New Master Node to OSCP Cluster with embedded ETCD
 
 ## Overview
+A previous backup of certificate files and configuration files are needed to replace a Master VM.
+
 To add a new Master node with Embedded ETCD Cluster, follow the steps below:
 
-* Take Backup of the ETCD from a working Master Node.
 * Remove the faulty Master data from OSCP Cluster.
 * Remove the faulty Master from ETCD Cluster.
 * Prepare a Fresh VM to install OSCP packages, Docker, Disks etc.
 * Run the installation playbook (byo/config.yaml) with New Master host data in the ansible host file (It will fail but install required components on new Master node).
-* Remove or rename ETCD CA Certs from the New Master and from Existing Masters to generate a new set of certificate for the whole ETCD cluster.
+* Copy all the backup files to the newly installed Master node.
 * Rerun the installation playbook (byo/config.yaml) again.
-* Stop the ETCD service from New Master Node.
+* Stop ETCD, openshift-api and openshift-controllers services from New Master Node.
 * Add the New Master Node information into existing ETCD Cluster.
 * Change the parameters in New Master’s /etc/etcd.conf to be part of the existing etcd cluster.
-* Remove /var/lib/etcd/ contents from New Master node.
-* Start the ETCD service of the New Master node.
+* Remove /var/lib/etcd/ contents from New Master node. Also replace the etcd certs from backup.
+* Start the ETCD, openshift-controllers and openshift-api services of the New Master node.
 
 ## Detail Steps
 
-**Assumption:** It is a 3 Master OSCP cluster. “master-01.example.com” is faulty and needs to be added again on a newly installed VM.
+**Assumption:** It is a 3 Master OSCP cluster. “master-01.example.com” is faulty and needs to be replaced on a newly installed VM.
 
 **Take Backup of the ETCD from a working Master Node.**
 From master-02 or master-03
@@ -58,17 +59,12 @@ ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
 ```
 
 
-**Remove or rename ETCD Client Certs from the New Master and from Existing Masters to generate a new set of certificate for the whole ETCD cluster.**
+**Copy all the backup files to the newly installed Master node.**
 On master-01, master-02 and master-03
 ```
-mv /etc/origin/master/master.etcd-ca.crt /etc/origin/master/master.etcd-ca.crt_original
-mv /etc/origin/master/master.etcd-client.crt /etc/origin/master/master.etcd-client.crt_original
-mv /etc/origin/master/master.etcd-client.csr /etc/origin/master/master.etcd-client.csr_original
-mv /etc/origin/master/master.etcd-client.key /etc/origin/master/master.etcd-client.key_original
-
-mv /etc/etcd/peer.crt /etc/etcd/peer.crt_original
-mv /etc/etcd/peer.csr /etc/etcd/peer.csr_original
-mv /etc/etcd/peer.key /etc/etcd/peer.key_original
+\cp -rf master/* /etc/origin/master/
+\cp -rf node/* /etc/origin/node/
+\cp -rf etcd /etc/etcd
 ```
 
 **Rerun the installation playbook (byo/config.yaml) again.**
@@ -77,10 +73,12 @@ From master-02 or master-03
 ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
 ```
 
-**Stop the ETCD service from New Master Node.**
+**Stop the ETCD, openshift-api and openshift-controllers services from New Master Node.**
 On master-01
 ```
 systemctl stop etcd
+systemctl stop atomic-openshift-master-controllers
+systemctl stop atomic-openshift-master-api
 ```
 
 **Add the New Master Node information into existing ETCD Cluster.**
@@ -130,16 +128,19 @@ ETCD_PEER_KEY_FILE=/etc/etcd/peer.key
 ```
 
 
-**Remove /var/lib/etcd/ contents from New Master node.**
+**Remove /var/lib/etcd/ contents from New Master node. Also replace the etcd certs from backup.**
 On master-01
 ```
 rm -fr /var/lib/etcd/*
+\cp -rf etcd /etc/etcd
 ```
 
-**Start the ETCD service of the New Master node.**
+**Start the ETCD, openshift-controllers and openshift-api services of the New Master node.**
 On master-01
 ```
 systemctl start etcd
+systemctl start atomic-openshift-master-controllers
+systemctl start atomic-openshift-master-api
 ```
 
 ## Testing
@@ -160,4 +161,34 @@ etcdctl -C https://master-03.example.com:2379 --ca-file=/etc/origin/master/maste
 From master-01 or master-02 or master-03
 ```
 oc get nodes --show-labels
+```
+
+## Qucik Master node backup script
+
+Run the script on each master node to take necessary files backup for restoration.
+```
+#!/bin/bash
+
+#Master Node Backup Script
+
+#By Shah Zobair (szobair@redhat.com) on 11th Aug 2016
+
+
+DIR=/root/backup_`hostname`
+
+mkdir $DIR
+
+\cp -r /etc/origin/master $DIR
+\cp -r /etc/origin/node $DIR
+\cp -r /etc/etcd $DIR
+
+mkdir $DIR/sysconfig
+cp /etc/sysconfig/atomic-openshift-* $DIR/sysconfig/
+
+cp /etc/ansible/hosts $DIR
+cp /etc/dnsmasq.conf $DIR
+cp /etc/sysconfig/docker $DIR
+cp /etc/sysconfig/docker-storage-setup $DIR
+
+etcdctl backup --data-dir=/var/lib/etcd --backup-dir=$DIR/etcd_backup
 ```
