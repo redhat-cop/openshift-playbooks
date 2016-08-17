@@ -9,3 +9,4 @@ The Operationalizing OpenShift Enterprise 3 playbook provides guidance on enviro
 * link:./cloudforms{outfilesuffix}[CloudForms Integration with OpenShift Enterprise v3]
 ** link:./cloudforms_networking{outfilesuffix}[Network Integration for OpenShift v3 and Red Hat CloudForms]
 * link:./expose_docker_registry{outfilesuffix}[Exposing & Securing the OpenShift Docker Registry]
+* link:./branding_console{outfilesuffix}[Branding the OpenShift Web Console]
