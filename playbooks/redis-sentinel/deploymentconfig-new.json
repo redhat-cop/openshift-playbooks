@@ -1,0 +1,65 @@
+{
+  "kind": "DeploymentConfig",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "redis"
+  },
+  "spec": {
+    "template": { 
+      "metadata": {
+        "labels": {
+          "name": "redis"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "redis",
+            "image": "172.30.176.178:5000/openshift/redis_rhel:latest",
+            "ports": [
+              {
+                "containerPort": 6379,
+                "protocol": "TCP"
+              }
+            ]
+          },
+	  {
+            "name": "redis-sentinel",
+            "image": "172.30.176.178:5000/openshift/redis-sentinel_rhel:latest",
+            "ports": [
+              {
+                "containerPort": 26379,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "replicas": 1, 
+    "selector": {
+      "name": "redis"
+    },
+    "triggers": [
+      {
+        "type": "ConfigChange" 
+      },
+      {
+        "type": "ImageChange", 
+        "imageChangeParams": {
+          "automatic": true,
+          "containerNames": [
+            "redis"
+          ],
+          "from": {
+            "kind": "ImageStreamTag",
+            "name": "redis:v1"
+          }
+        }
+      }
+    ],
+    "strategy": { 
+      "type": "Rolling"
+    }
+  }
+}

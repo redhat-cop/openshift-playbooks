@@ -1,0 +1,14 @@
+volume:
+apiVersion: "v1"
+kind: "PersistentVolume"
+metadata:
+ name: "redis"
+spec:
+ capacity:
+   storage: "5Gi"
+ accessModes:
+   - "ReadWriteOnce"
+ nfs:
+   path: "/opt/nfs/red"
+   server: "nfs00-640a"
+ persistentVolumeReclaimPolicy: "Retain"
