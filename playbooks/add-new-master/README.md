@@ -17,7 +17,7 @@ To add a new Master node with Embedded ETCD Cluster, follow the steps below:
 * Remove /var/lib/etcd/ contents from New Master node. Also replace the etcd certs from backup.
 * Start the ETCD, openshift-controllers and openshift-api services of the New Master node.
 
-## Detail Steps
+## Detailed Steps
 
 **Assumption:** It is a 3 Master OSCP cluster. “master-01.example.com” is faulty and needs to be replaced on a newly installed VM.
 
