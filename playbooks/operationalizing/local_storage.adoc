@@ -1,0 +1,211 @@
+---
+---
+= Considerations for Configuring Local Storage on OpenShift Hosts
+Eric Sauer <esauer@redhat.com>
+v1.0, 2016-08-18
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+toc::[]
+
+
+== Overview
+
+Without the proper protections in place (through either Disk partitioning or volume groups), we leave ourselves at risk that a component or service running on the host OS could potentially fill the disk, preventing either of these from writing to disk and corrupting the OSE install.
+
+=== OpenShift Storage Requirements
+
+There are two main components of OpenShift that require specialized storage considerations to ensure environment stability. These components are the OpenShift DataStore (etcd) and the Container Platform (Docker).
+
+==== DataStore (etcd)
+
+OpenShift uses a key-value pair datastore called etcd to manage environment state. Etcd writes this data to `/var/lib/openshift`. While the data needs of the datastore are by no means large, it is important that it be given dedicated storage in order to protect it from other items (especially logs) filling up the disk, which could cause corruption of the etcd data.
+
+IMPORTANT: When running multiple instances of etcd in a cluster configuration, etcd runs as a standalone process, rather than being embedded in the `openshift-master` service. When this is the case, etcd writes to `/var/lib/etcd` rather than `/var/lib/openshift`, and therefore the configurations should be adjusted accordingly.
+
+The size of the partition can be relatively small. For a lab or sandbox environment, 2GB should be plenty of disk. For larger, more permanent environments which will support multiple teams/users, 5 - 10GB may be needed.
+
+===== Backups, Shared Storage & Replication
+
+Etcd datastores can be clustered in order to prevent loss of data in the event of a failure. In this case etcd handles its own data replication, so there is no need for shared storage or external data replication. Standard backup practices can and should be observed here, but nothing more is needed.
+
+==== Container Platform (Docker)
+
+Docker is the current container platform used by OpenShift. Docker uses local storage on each node to store images and active containers. The amount of storage needed depends on the size of the node and the number and size of the containers expected to be supported by each node. It would not be uncommon for Nodes to support anywhere from 20 - 100 containers depending on the environment, and container images can be sizeable. We recommend planning for a reasonably large image size of 500mb. That means a partition or volume size of 20 - 50GB is required per node.
+
+Docker's data directories live in `/var/lib/docker`, so the disk space should be allocated to that mount point. As with the OpenShift DataStore, it is highly recommended to give Docker a dedicated partition or volume so as to protect it from over-crowding by logging or other administrative services.
+
+NOTE: This section is referring to local storage used by Docker to run containers on a host. This *DOES NOT* refer to running a Docker registry.
+
+===== Backups, Shared Storage & Replication
+
+Nodes are considered stateless in a Kubernetes architecture, meaning that in the event of a loss of a Node, the Scheduler will immediately replace lost containers elsewhere in the environment. Therefore, no specialized sharing or replication is required at the node level to account for loss.
+
+===== Configuration Considerations
+
+The `docker` package ships with a command for setting up docker storage, `docker-storage-setup`. This script expects us to create a volume group for it in order to point it to the storage we've allocated.
+
+=== Storage Configuration Implementation
+
+==== Local Disk Config
+
+Create the following partitions (disk partitions or LVMs) on the system disk image:
+
+* Boot partition (`/boot`)
+* OS Root (`/`)
+* etcd storage (`/var/lib/openshift` or `/var/lib/etcd`)
+* Log storage (`/var/log`) - Optional, but recommended
+
+==== Docker Storage Config
+
+The OpenShift docs discuss link:https://docs.openshift.com/enterprise/3.0/install_config/install/prerequisites.html#configuring-docker-storage[three different options for configuring docker storage]. We consider options A and B to be "production ready".
+
+For option A: Attach an additional volume or block device to each node for Docker storage (20-50 GB)
+
+For option B: Leave unallocated space (20 - 50 GB) on your local disk. From the unallocated space, create the following volume group:
+
+* `docker-vg`
+
+TIP: For more information and examples about docker-storage-setup options, see link:https://access.redhat.com/articles/1492923[Managing Storage with Docker Formatted Containers on Red Hat Enterprise Linux and Red Hat Enterprise Linux Atomic Host] in the Red Hat Knowledge Base
+
+==== Example: Configuring Host Storage with Docker Storage Option A
+
+To account for the above DataStore & Container storage needs, we are going to attach a single 25 GB volume and partition it to accommodate our needs. Here is a sample vdb layout for the disk:
+
+NOTE: The following must be done on ALL NODES, including the Master. However, if you are not going to be using the master as a node, then a minimal volume size can be used, as no containers will be hosted. Also, for NODES that are NOT MASTERS, the second DataStore partition is not needed.
+
+[source,bash]
+----
+# NOTE: actual numeric values will be different for each running system, but the steps outlined should be the same for all
+
+>> fdisk /dev/vdb
+
+Command (m for help): n <enter>
+Partition type:
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended
+Select (default p): p <enter>
+Partition number (1-4, default 1):  <enter>
+First sector (2048-16777215, default 2048): <enter>
+Using default value 2048
+Last sector, +sectors or +size{K,M,G} (2048-16777215, default 16777215): +20G <enter>
+Partition 1 of type Linux and of size 20 GiB is set
+
+Command (m for help): n <enter>
+Partition type:
+   p   primary (1 primary, 0 extended, 3 free)
+   e   extended
+Select (default p): p <enter>
+Partition number (2-4, default 2): <enter>
+First sector (12584960-16777215, default 12584960): <enter>
+Using default value 12584960
+Last sector, +sectors or +size{K,M,G} (12584960-16777215, default 16777215): +2G <enter>
+Partition 2 of type Linux and of size 2 GiB is set
+
+Command (m for help): t <enter>
+Partition number (1,2, default 2): 1 <enter>
+Hex code (type L to list all codes): 8e <enter>
+Changed type of partition 'Linux' to 'Linux LVM'
+
+Command (m for help): t <enter>
+Partition number (1,2, default 2): 2 <enter>
+Hex code (type L to list all codes): 8e <enter>
+Changed type of partition 'Linux' to 'Linux LVM'
+
+Command (m for help): w <enter>
+The partition table has been altered!
+
+Calling ioctl() to re-read partition table.
+Syncing disks.
+----
+
+We then create the volume group, install docker, and run `docker-storage-setup`.
+
+[source,bash]
+----
+pvcreate /dev/vdb1
+vgcreate vg-docker /dev/vdb1
+
+cat << EOF > /etc/sysconfig/docker-storage-setup
+VG=vg-docker
+SETUP_LVM_THIN_POOL=yes
+EOF
+
+# Let docker setup the storage based on the above config file
+docker-storage-setup
+----
+
+Finally, the DataStore, we setup the volume group, create data directory, and mount it.
+[source,bash]
+----
+pvcreate /dev/vdb2
+vgcreate vg-openshift /dev/vdb2
+lvcreate -l 100%FREE -n lv-ose vg-openshift
+
+mkfs.xfs -q -f /dev/vg-openshift/lv-ose
+
+mkdir -p /var/lib/openshift
+echo "/dev/vg-openshift/lv-ose        /var/lib/openshift              xfs defaults 0 0" >> /etc/fstab
+
+mount -a
+----
+
+==== Example: Configuring Host Storage with Docker Storage Option B
+
+In this example, we have a device (vdc) with available space that we will dedicate to vg-docker which will be used by docker-storage-setup (identified in /etc/
+sysconfig/docker-storage-setup)
+
+First, review the current configuration of the device
+[source,bash]
+----
+parted /dev/vdc print
+Model: Virtio Block Device (virtblk)
+Disk /dev/vdc: 21.5GB
+Sector size (logical/physical): 512B/512B
+Partition Table: gpt
+Disk Flags:
+
+Number  Start   End     Size    File system  Name     Flags
+ 1      1049kB  10.0GB  9999MB               primary  lvm
+----
+
+Add a partition, using the remainder of the device.
+[source,bash]
+----
+
+parted /dev/vdc mkpart primary ext3 10g 100% set 2 lvm on
+Information: You may need to update /etc/fstab.
+
+parted /dev/vdc print
+Model: Virtio Block Device (virtblk)
+Disk /dev/vdc: 21.5GB
+Sector size (logical/physical): 512B/512B
+Partition Table: gpt
+Disk Flags:
+
+Number  Start   End     Size    File system  Name     Flags
+ 1      1049kB  10.0GB  9999MB               primary  lvm
+ 2      10.0GB  21.5GB  11.5GB               primary  lvm
+----
+
+Create the PV and a VG using that PV.
+[source,bash]
+----
+pvcreate /dev/vdc2
+  Physical volume "/dev/vdc2" successfully created
+vgcreate vg-docker /dev/vdc2
+  Volume group "vg-docker" successfully created
+----
+
+Update the docker-storage-setup file that is used as a guideline and run the docker-storage-setup command.
+[source,bash]
+----
+cat << EOF > /etc/sysconfig/docker-storage-setup
+VG=vg-docker
+SETUP_LVM_THIN_POOL=yes
+EOF
+
+# Let docker setup the storage based on the above config file
+docker-storage-setup
+----

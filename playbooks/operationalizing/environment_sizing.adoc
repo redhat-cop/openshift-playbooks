@@ -1,0 +1,40 @@
+---
+---
+= OpenShift Container Platform Smart Start Installation
+Eric Sauer <esauer@redhat.com>
+v2.0, 2016-08-18
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+toc::[]
+
+
+== Sizing for App Nodes
+
+The Offcial Documentation lists some link:https://docs.openshift.com/enterprise/latest/install_config/install/prerequisites.html#system-requirements[minimal system requirements] for OpenShift masters and nodes. Beyond that, there are several things to consider when deciding on the sizing for your nodes.
+
+=== Number of Nodes & Overall Environment Size
+
+When deciding how to size nodes, it's helpful to have an idea of the final size of your environment. This is important because knowing the total amount of resources your workloads will consume will help to dictate the amount of capacity loss your environment can handle. This is especially relevant in smaller environments, where the loss of one node could have significant impact on the performance and capacity of your overall environment. It's a good rule of thumb for environment sizing is to take the max expected total workload size and add 30% to that. This leaves about 10% for overhead on your nodes, plus 20% extra to account for node failure.
+
+NOTE: This applies to _real_ environments (i.e. _Dev_, _QA_, _Prod_) where we care about handling failure. Lab or sandbox environments will work just fine using the minimal recommendations.
+
+=== Type of Workload
+
+Depending on the types of Workloads you expect to run in OpenShift, you may want to cater certain nodes to certain workload types. For example, computational workloads may want to run on nodes that have a higher CPU-to-Memory ratio (say 1 Core to 2 GB), while legacy Java applications that have a large starting memory footprint but low transactions may be more efficiently run with higher memory and low CPU counts. Nodes in OpenShift do not all need to be the same size, and using Topology Rules within the Scheduler, you can create separate groups of Nodes catered to different workload profiles.
+
+If you expect to support a healthy mix of different workload types and sizes, then its most likely going to be best to pick a balanced middle ground and allow the Scheduler to fit workloads where they will be most appropriate.
+
+=== Node Limit
+
+Kubernetes, and therefore OpenShift has a logical limit to the number of nodes that can be provisioned in a single cluster (single OpenShift installation). We have seen test configurations of roughly 250 nodes. This is expected to increase with future releases (3.1, etc.).
+
+The logical limit for Nodes in a cluster might sway administrators of large clusters to increase node size in order to increase the total capacity a Cluster can support
+
+=== Questions to Ask
+
+. What is the total workload landscape?
+. What is the CPU and memory footprint of to-be-migrated workloads?
+. What is the platform type (bare metal, virtualized, IaaS)? (Failure is more difficult to handle in bare metal circumstances and may require more nodes)
+. Can all workloads run on the same nodes or do you require segregation?
