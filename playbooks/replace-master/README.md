@@ -1,7 +1,7 @@
 # Add/Replace a New Master Node to OSCP Cluster with embedded ETCD
 
 ## Overview
-A previous backup of certificate files and configuration files are needed to replace a Master VM.
+A previous backup of certificate files and configuration files are needed to replace a Master VM. A sample script is provided below.
 
 To add a new Master node with Embedded ETCD Cluster, follow the steps below:
 
@@ -22,6 +22,7 @@ To add a new Master node with Embedded ETCD Cluster, follow the steps below:
 **Assumption:** It is a 3 Master OSCP cluster. “master-01.example.com” is faulty and needs to be replaced on a newly installed VM.
 
 **Take Backup of the ETCD from a working Master Node.**
+
 From master-02 or master-03
 ```
 etcdctl backup --data-dir=/var/lib/etcd --backup-dir=/tmp/etcd_backup
@@ -29,6 +30,7 @@ etcdctl backup --data-dir=/var/lib/etcd --backup-dir=/tmp/etcd_backup
 
 
 **Remove the faulty Master data from OSCP Cluster.**
+
 From master-02 or master-03
 ```
 oc get nodes
@@ -37,6 +39,7 @@ oc delete node master-01.example.com
 
 
 **Remove the faulty Master from ETCD Cluster.**
+
 From master-02 or master-03
 ```
 etcdctl -C https://master-02.example.com:2379 --ca-file=/etc/origin/master/master.etcd-ca.crt --cert-file=/etc/origin/master/master.etcd-client.crt --key-file=/etc/origin/master/master.etcd-client.key member list
@@ -45,6 +48,7 @@ etcdctl -C https://master-02.example.com:2379 --ca-file=/etc/origin/master/maste
 
 
 **Prepare a Fresh VM to install OSCP packages, Docker, Disks etc.**
+
 On master-01
 * Subscribe the Node to openshift broker entitlement 
 * Exclude/select proper docker version in /etc/yum.conf and update the node
@@ -53,6 +57,7 @@ On master-01
 
 
 **Run the installation playbook (byo/config.yaml) with New Master host data in the ansible host file (It will fail but install required components on new Master node).**
+
 From master-02 or master-03
 ```
 ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
@@ -60,6 +65,7 @@ ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
 
 
 **Copy all the backup files to the newly installed Master node.**
+
 On master-01, master-02 and master-03
 ```
 \cp -rf master/* /etc/origin/master/
@@ -68,12 +74,14 @@ On master-01, master-02 and master-03
 ```
 
 **Rerun the installation playbook (byo/config.yaml) again.**
+
 From master-02 or master-03
 ```
 ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
 ```
 
 **Stop the ETCD, openshift-api and openshift-controllers services from New Master Node.**
+
 On master-01
 ```
 systemctl stop etcd
@@ -82,6 +90,7 @@ systemctl stop atomic-openshift-master-api
 ```
 
 **Add the New Master Node information into existing ETCD Cluster.**
+
 From master-02 or master-03
 ```
 etcdctl -C https://master-02.example.com:2379 --ca-file=/etc/origin/master/master.etcd-ca.crt --cert-file=/etc/origin/master/master.etcd-client.crt --key-file=/etc/origin/master/master.etcd-client.key member add master-01.example.com https://master-01.example.com:2379
@@ -89,6 +98,7 @@ etcdctl -C https://master-02.example.com:2379 --ca-file=/etc/origin/master/maste
 
 
 **Change the [cluster] parameters in New Master’s /etc/etcd/etcd.conf to be part of the existing etcd cluster. Only “ETCD_INITIAL_CLUSTER” and “ETCD_INITIAL_CLUSTER_STATE” need to be changed.**
+
 On master-01
 ```
 vi /etc/etcd/etcd.conf
@@ -129,6 +139,7 @@ ETCD_PEER_KEY_FILE=/etc/etcd/peer.key
 
 
 **Remove /var/lib/etcd/ contents from New Master node. Also replace the etcd certs from backup.**
+
 On master-01
 ```
 rm -fr /var/lib/etcd/*
@@ -136,6 +147,7 @@ rm -fr /var/lib/etcd/*
 ```
 
 **Start the ETCD, openshift-controllers and openshift-api services of the New Master node.**
+
 On master-01
 ```
 systemctl start etcd
