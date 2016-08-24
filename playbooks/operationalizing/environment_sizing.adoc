@@ -1,6 +1,6 @@
 ---
 ---
-= OpenShift Container Platform Smart Start Installation
+= Environment Sizing for Production
 Eric Sauer <esauer@redhat.com>
 v2.0, 2016-08-18
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
@@ -9,6 +9,9 @@ v2.0, 2016-08-18
 
 toc::[]
 
+== Sizing for Masters
+
+Sizing for Master nodes is calculated based on the number of pods the cluster is expected to host. The calculation guidelines can be found in the link:https://docs.openshift.com/enterprise/latest/install_config/install/prerequisites.html#host-recommendations[Host Recommendations section in the install guide].
 
 == Sizing for App Nodes
 

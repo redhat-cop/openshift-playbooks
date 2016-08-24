@@ -23,6 +23,27 @@ NOTE: For more information on these concepts and components, see our link:/playb
 
 == Before You Begin
 
+Before jumping into an install of OpenShift, there are a few Architectural decisions and planning steps to go through. We attempt to outline them here.
+
+=== Decide on Load Balancing Approach
+
+In order to run a fully HA OpenShift cluster, load balancing will be required between both the 3 master hosts, and the 2 infrastructure node hosts. We recommend choosing one of the following options:
+
+==== Option 1: Integrate with an External Loadbalancer (Recommended)
+
+Even if you don't go this route initially, we highly recommend you plan to eventually bring an Enterprise-grade load balancer into your OpenShift environment. The primary reason we recommend this is for failover. Most Enterprise load balancers have built-in, proven capabilities to fail over a single VIP between two or more physical or virtual appliances. While this _can_ be done with software load balancers, like HAProxy, the resiliency and management simplicity just isn't quite the same.
+
+To integrate with an external load balancer, at minimum, you'll need to create:
+
+* A passthrough VIP and back-end pool for the Master hosts
+* A passthrough VIP and back-end pool for the Infrastructure hosts
+
+See our link:/playbooks/installation/load_balancing{outfilesuffix}[Integrating External Loadbalancers] guide for more details on this.
+
+==== Option 2: Use the Integrated HAProxy Balancer
+
+The OpenShift installer has the ability to configure a Linux host has a load balancer for your master servers. This has the disadvantage of being a single point of failure out of the box, and also doesn't meet the need for loadbalancing the infrastructure nodes. Additional, manual work will be needed post-install to rectify these shortcomings. Again, ultimately we recommend you go with Option 1, but this is a reasonable workaround so that you can continue with the install.
+
 === Provision Servers
 
 The Smart Start architecture requires the following Servers(VMs) be provisioned:
@@ -46,8 +67,14 @@ The Smart Start architecture requires the following Servers(VMs) be provisioned:
   ** 30 GB Root Drive
   ** An additional 20 GB disk or partition mounted at /var/lib/origin
   ** An additional 50 GB disk, unformatted and unmounted
+* (Optional) A Load Balancer host, if you plan to use Option 2 for Load Balancing, per the above section
+  ** 2 cores
+  ** 4 GB Memory
+  ** 10 GB Root Drive
 
-NOTE: We recommend segregating local disks this way in order to provide more stability to the separate components that will write to these locations. For more information about why we configure local storage this way, read link:/playbooks/operationalization/local_storage{outfilesuffix}[Considerations for Configuring Local Storage on OpenShift Hosts]
+NOTE: We chose the resource sizing above based on some reasonable starting sizes for hosts based on our experiences in the field. Before building further environments, it is important to go through a real production sizing exercise. For more information on how we recommend going about this, see our link:/playbooks/operationalizing/environment_sizing{outfilesuffix}[Environment Sizing Guide].
+
+NOTE: We recommend segregating local disks this way in order to provide more stability to the separate components that will write to these locations. For more information about why we configure local storage this way, read link:/playbooks/operationalizing/local_storage{outfilesuffix}[Considerations for Configuring Local Storage on OpenShift Hosts]
 
 Additionally, the following is assumed about the environment OpenShift is being installed into:
 
@@ -89,7 +116,6 @@ Overall requirements for Installing OpenShift are very simple:
 * Install the following extra packages: `yum install wget git net-tools bind-utils iptables-services bridge-utils`
 * Optional: install the following diagnostic tools: `yum install lsof strace nc telnet`
 * Fully update all packages: `yum -y update`
-* Configure Storage according to <<storage-considerations>>
 * Sync SSH keys from masters to all nodes (HINT: Here's a script to do this: TODO)
 
 NOTE: For more information, see the link:https://docs.openshift.com/enterprise/latest/install_config/install/prerequisites.html#host-preparation[Official Documenation for Host Preparation].
