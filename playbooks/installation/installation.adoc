@@ -116,7 +116,7 @@ Overall requirements for Installing OpenShift are very simple:
 * Install the following extra packages: `yum install wget git net-tools bind-utils iptables-services bridge-utils`
 * Optional: install the following diagnostic tools: `yum install lsof strace nc telnet`
 * Fully update all packages: `yum -y update`
-* Sync SSH keys from masters to all nodes (HINT: Here's a script to do this: TODO)
+* Sync SSH keys from masters to all nodes (Here's how: https://docs.openshift.com/enterprise/latest/install_config/install/prerequisites.html#ensuring-host-access)
 
 NOTE: For more information, see the link:https://docs.openshift.com/enterprise/latest/install_config/install/prerequisites.html#host-preparation[Official Documenation for Host Preparation].
 
