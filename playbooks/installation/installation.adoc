@@ -86,7 +86,7 @@ NOTE: For more information, see the link:https://docs.openshift.com/enterprise/l
 
 === Configure DNS
 
-OpenShift expects properly configured DNS in order to work properly. The assumption of this document is that you will be using some external DNS system (Corporate DNS) to do this. If you don't have en existing DNS system or don't with to use it for the purpose of this setup, then you will have to create one. We recommend creating a bind server if this will be a permanent setup, or using DNSMasq as a temporary workaround if you plan to ultimately tie into a Corporate DNS in the future.
+OpenShift expects properly configured DNS in order to work properly. The assumption of this document is that you will be using some external DNS system (Corporate DNS) to do this. If you don't have an existing DNS system or don't plan to use it for the purpose of this setup, then you will have to create one. We recommend creating a bind server if this will be a permanent setup, or using DNSMasq as a temporary workaround if you plan to ultimately tie into a Corporate DNS in the future.
 
 At a minimum the following needs to be true for all OpenShift hosts:
 
@@ -102,7 +102,7 @@ NOTE: For more information, see the link:https://docs.openshift.com/enterprise/l
 
 Overall requirements for Installing OpenShift are very simple:
 
-* Install Red Hat provided Red Hat Enterprise Linux 7. image
+* Install Red Hat provided Red Hat Enterprise Linux 7.x image
 ** If the environment uses a custom image, we recommend testing the OSE install with the Red Hat provided image first, then incrementally adding environment-specific image customizations with an eye toward the following:
 *** Assess whether the image customization is still appropriate and necessary (to avoid changes inherited from earlier circumstances that are no longer relevant)
 *** Test each customization to make sure it allows normal OSE operation and mitigate if necessary
@@ -110,7 +110,7 @@ Overall requirements for Installing OpenShift are very simple:
 ** rhel-7-server-rpms
 ** rhel-7-server-extras-rpms
 ** rhel-7-server-optional-rpms
-** rhel-7-server-ose-3.0-rpms
+** rhel-7-server-ose-3.x-rpms
 * If you plan to Install HA Masters, an additional channel is needed on Master Nodes
 ** rhel-7-for-ha-server-rpms
 * Install the following extra packages: `yum install wget git net-tools bind-utils iptables-services bridge-utils`
