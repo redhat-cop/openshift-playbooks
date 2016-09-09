@@ -47,3 +47,86 @@ link:./logging_with_fluentd{outfilesuffix}[Using Fluentd to Centralize Container
 ****
 Need to add discussions about collecting systemlogs for OpenShift
 ****
+
+==== OpenShift API Event Logging Through HAProxy
+
+----
+global
+  chroot  /var/lib/haproxy
+  pidfile /var/run/haproxy.pid
+  maxconn 20000
+  user    haproxy
+  group   haproxy
+  daemon
+  log     127.0.0.1 local1
+  tune.ssl.default-dh-param 2048
+  
+  # turn on stats unix socket
+  stats socket /var/lib/haproxy/stats
+  
+defaults
+  mode  tcp
+  log   global
+  option dontlognull
+  option http-server-close
+  option forwardfor except 127.0.0.0/8
+  option redispatch
+  retries 3
+  timeout http-request 10s
+  timeout queue 1m
+  timeout connect 10s
+  timeout client 300s
+  timeout server 300s
+  timeout http-keep-alive 10s
+  timeout check 10s
+  maxconn 20000
+  
+listen stats :9000
+  mode http
+  stats enable
+  stats uri /
+  
+frontend front_route
+  bind *:8443
+  mode tcp
+  
+  tcp-request inspect-delay 5s
+  tcp-request content accept if { req_ssl_hello_type 1 }
+  
+  acl subdomain_is_private req_ssl_sni -i <PRIVATE_MASTER_HOSTNAME>
+  acl subdomain_is_public req_ssl_sni -i <PUBLIC_MASTER_HOSTNAME>
+  
+  use_backend atomic-openshift-api-private if subdomain_is_private
+  use_backend back_external if subdomain_is_public
+  
+backend back_external
+  mode tcp
+  server public 127.0.0.1:9003
+  
+frontend atomic-openshift-api-public
+  bind *:9003 ssl cert /etc/pki/tls/certs/master-server.pem ca-file /etc/pki/tls/certs/ca.pem
+  http-response add-header Client-Cert %{ssl_f_der,base64}
+  default_backend atomic-openshift-api-public
+  mode http
+  log global
+  option httplog
+  
+  capture request header X-Remote-User len 15
+  capture request header Authorization len 15
+  capture cookie ssn len 25
+  
+backend atomic-openshift-api-public
+  balance source
+  mode http
+  server master0 <MASTER1_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ca.pem
+  server master1 <MASTER2_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ca.pem
+  server master2 <MASTER3_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ca.pem
+  
+backend atomic-openshift-api-private
+  balance source
+  mode tcp
+  server master0 <MASTER1_IP>:8443 ssl check
+  server master1 <MASTER2_IP>:8443 ssl check
+  server master2 <MASTER3_IP>:8443 ssl check
+
+----
