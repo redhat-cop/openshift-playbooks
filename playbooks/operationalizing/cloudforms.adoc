@@ -20,16 +20,24 @@ Red Hat CloudForms provides a singular monitoring and reporting tool over an ent
 
 This section describes the steps necessary to prepare OpenShift for CloudForms integration.
 
-=== API Communication
+=== OpenShift Container Platform Managment Infrastrcture Service Account
 
 Core environment statistics, such as nodes, images and pods, from OpenShift are accessed by CloudForms by communicating with the OpenShift API. This communication is negotiated with the help of an OpenShift service account explicitly configured for use by CloudForms. In OpenShift version 3.1, a new built-in project called _management-infra_ is available to allow integration with third party tools, such as CloudForms. This project provides a management service account named _management-admin_ which can be used to facilitate communication with OpenShift. 
 
 The steps described below are also found in the link:https://access.redhat.com/documentation/en/red-hat-cloudforms/version-4.0/managing-providers/#containers_providers[Container Providers] section of the OpenShift documentation.
 
-NOTE: Newer versions of the https://github.com/openshift/openshift-ansible[openshift-ansible] playbooks configure the _management-infra_ project automatically. Otherwise, please consult the aforementioned documentation to setup the project. 
+NOTE: Newer versions of the https://github.com/openshift/openshift-ansible[openshift-ansible] playbooks configure the _management-infra_ project automatically if the `openshift_hosted_metrics_deploy` flag is set to `true` in your OpenShift Ansible inventory/hosts file. Otherwise, please consult the aforementioned documentation to setup the project. 
 
 Execute the following commands in the OpenShift environment to retrieve the service account token which will be used to communicate with OpenShift from CloudForms.
 
+==== OpenShift Container Platform 3.2 / 3.3
+[source]
+----
+# oc sa get-token -n management-infra management-admin
+eyJhbGciOiJSUzI1NiI...
+----
+
+==== OpenShift Container Platform 3.1
 [source]
 ----
 # oc get -n management-infra sa/management-admin --template='{% raw %}{{range .secrets}}{{printf "%s\n" .name}}{{end}}{% endraw %}'
@@ -45,11 +53,15 @@ eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW5
 <1> This is the name of the secret containing the token
 <2> The token that will be used to communicate between CloudForms and OpenShift
 
-=== Metrics Collections
+=== OpenShift Container Platform API Access
 
-For CloudForms to display metrics from the OpenShift environment, CloudForms leans heavily on the cluster metrics functionality within OpenShift 
+==== CloudForms Managment Engine 4.1 and above
 
-IMPORTANT: In CloudForms 4.0, due to a limitation within the product, only a single hostname can be used to communicate with OpenShift.  As previously mentioned, CloudForms communicates with OpenShift via the API to retrieve basic environment information, but it also needs to communicate over port 5000 to retrieve cluster metrics from Hawkular. This requires a deployment of an additional router on the OpenShift master to access the SDN to communicate with Hawkular. An alternate solution is available where a Virtual IP Address (VIP) is used to provide a single destination for CloudForms, but to provide the appropriate logic necessary to route the traffic accordingly depending on the request. Please see the link:/playbooks/operationalizing/cloudforms_networking{outfilesuffix}[Network Integration for OpenShift v3 and Red Hat CloudForms] document for more information. *This section can be skipped if the implementation covered in the aforementioned documentation is adhered to, or if CloudForms 4.1 or later is used.*
+In CloudForms Managment Engine 4.1 and above CloudForms can use the OpenShift public hostname to access OpenShift. So nothing needs to be done here.
+
+==== CloudForms Managment Engine 4.0
+
+IMPORTANT: In CloudForms 4.0, due to a limitation within the product, only a single hostname can be used to communicate with OpenShift.  As previously mentioned, CloudForms communicates with OpenShift via the API to retrieve basic environment information, but it also needs to communicate over port 5000 to retrieve cluster metrics from Hawkular. This requires a deployment of an additional router on the OpenShift master to access the SDN to communicate with Hawkular. An alternate solution is available where a Virtual IP Address (VIP) is used to provide a single destination for CloudForms, but to provide the appropriate logic necessary to route the traffic accordingly depending on the request. Please see the link:/playbooks/operationalizing/cloudforms_networking{outfilesuffix}[Network Integration for OpenShift v3 and Red Hat CloudForms] document for more information. *The Metrics Collections section can be skipped if the implementation covered in the aforementioned documentation is adhered to, or if CloudForms 4.1 or later is used.*
 
 To support the deployment of a router on the master, the master must be configured as schedulable. Execute the following command to make the master schedulable: 
 
