@@ -12,7 +12,7 @@ Here I am going to walk through the steps to do a simple binary deployment to To
 
 - A WAR file
 - An OpenShift Environment running 3.1.1 or later
-- The `oc` (OpenShift Client) utility. link:https://docs.openshift.com/enterprise/3.1/cli_reference/get_started_cli.html#installing-the-cli[Install Instructions here].
+- The `oc` (OpenShift Client) utility. link:https://docs.openshift.com/container-platform/latest/cli_reference/get_started_cli.html#installing-the-cli[Install Instructions here].
 
 == Local Setup
 
@@ -36,7 +36,7 @@ In order to simplify the URL structure for my application, I'm going to rename m
 ROOT.war
 ----
 
-Now, when I deploy to the link:https://docs.openshift.com/enterprise/3.1/using_images/xpaas_images/jws.html[OpenShift Tomcat 8 Image], it's going to expect my warfile to be in a `deployments` directory, so I'm going to do that as well.
+Now, when I deploy to the link:https://access.redhat.com/documentation/en/red-hat-xpaas/0/single/red-hat-xpaas-jboss-web-server-image/[OpenShift Tomcat 8 Image], it's going to expect my warfile to be in a `deployments` directory, so I'm going to do that as well.
 
 [source,bash]
 ----
@@ -87,7 +87,7 @@ Now, I'm about ready to deploy my app. A Binary Deployment in OpenShift consists
 So for the build step, I require a few things:
 
 - My local WAR file
-- The name of the link:https://docs.openshift.com/enterprise/3.1/architecture/core_concepts/builds_and_image_streams.html#image-streams[ImageStream] for the image I want to deploy to. In this case, tomact 8.
+- The name of the link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/builds_and_image_streams.html#image-streams[ImageStream] for the image I want to deploy to. In this case, tomact 8.
 
 Since I already have my WAR file ready, I just need to find the right ImageStream to use. By default, OpenShift stores all of it's ImageStreams in a globally readable project called `openshift`, so I'll just do a search there for `tomcat8`.
 

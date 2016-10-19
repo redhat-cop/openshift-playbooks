@@ -15,7 +15,7 @@ There are at least three considerations for enterprise environments:
 
 === Assumptions
 
-This document assumes that you understand the overall architecture of OpenShift 3 and that you have already planned out what the topology of your environment will look like. If you do not have a thorough understanding of the architecture of OpenShift 3, the service layer, projects, and how topologies are configured via the scheduler, there are steps in this document that may not make sense. For more information, see https://docs.openshift.com/enterprise/3.0/architecture/overview.html[OSE 3 Architecture Overview]. This document also assumes that you have some understanding of Docker, registries, and Docker’s command line tools.
+This document assumes that you understand the overall architecture of OpenShift 3 and that you have already planned out what the topology of your environment will look like. If you do not have a thorough understanding of the architecture of OpenShift 3, the service layer, projects, and how topologies are configured via the scheduler, there are steps in this document that may not make sense. For more information, see https://docs.openshift.com/container-platform/latest/architecture/overview.html[OSE 3 Architecture Overview]. This document also assumes that you have some understanding of Docker, registries, and Docker’s command line tools.
 
 === Required Software and Components
 
@@ -275,9 +275,10 @@ Place the following text in the file:
 ==== Host Preparation
 
 At this point, the systems are ready to continue to be prepared following the OpenShift documentation. See the following section:
-https://access.redhat.com/documentation/en/openshift-enterprise/version-3.0/openshift-enterprise-30-installation-and-configuration/chapter-2-installing#host-preparation
 
-Skip the section titled “Registering the Hosts” and start with “Managing Base Packages”.
+* link:https://docs.openshift.com/container-platform/latest/install_config/install/host_preparation.html[Host Preparation]
+
+Skip the section titled “Host Registration” and start with “Installing Base Packages”.
 
 === OpenShift Installation
 
@@ -299,13 +300,13 @@ On one of the hosts that will cat as an OpenShift Master, copy and import the bu
 
 You may now follow the rest of the OpenShift installation instructions in the documentation. See the following section:
 
-https://access.redhat.com/documentation/en/openshift-enterprise/version-3.0/installation-and-configuration/#advanced-installation
+* link:https://docs.openshift.com/container-platform/latest/install_config/install/advanced_install.html[Advanced Installation]
 
 ==== Create the Internal Docker Registry
 
 You now need to create the internal Docker registry. See the following section of the documentation:
 
-https://access.redhat.com/documentation/en/openshift-enterprise/version-3.0/installation-and-configuration/#deploying-a-docker-registry
+* link:https://docs.openshift.com/container-platform/latest/install_config/registry/deploy_registry_existing_clusters.html[Deploy Internal Docker Registry]
 
 === Post-Installation Changes
 
@@ -441,7 +442,8 @@ The tags (6.2-140,6.2-84,latest + 2 more...) should not be empty.
 
 At this point the OpenShift environment is almost ready for use. It is likely that you will want to install and configure a router, documented here:
 
-https://access.redhat.com/documentation/en/openshift-enterprise/version-3.0/installation-and-configuration/#deploying-a-router
+* link:https://docs.openshift.com/container-platform/latest/install_config/router/index.html[Router Overview]
+* link:https://docs.openshift.com/container-platform/latest/install_config/router/default_haproxy_router.html[Default HAProxy Router]
 
 Other than that, your OpenShift environment is ready for use.
 

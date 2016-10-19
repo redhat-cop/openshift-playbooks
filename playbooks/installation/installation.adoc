@@ -17,7 +17,7 @@ The OpenShift Container Platform Smart Start is a reference architecture for a H
 
 image::/images/ocp_smart_start_diagram.png[Smart Start Architecture]
 
-The diagram above depicts the architecture of the Smart Start environment. It consists of 3 Masters and 5 Nodes. We further subdivide the nodes into two groups. Two of them get designated to run OpenShift's router and image registry. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:https://docs.openshift.com/enterprise/3.2/architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:https://docs.openshift.com/enterprise/3.2/admin_guide/scheduler.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the sample inventory file at the bottom of this doc to see how those labels are assigned.
+The diagram above depicts the architecture of the Smart Start environment. It consists of 3 Masters and 5 Nodes. We further subdivide the nodes into two groups. Two of them get designated to run OpenShift's router and image registry. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:https://docs.openshift.com/container-platform/latest/admin_guide/scheduler.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the sample inventory file at the bottom of this doc to see how those labels are assigned.
 
 NOTE: For more information on these concepts and components, see our link:/playbooks/fundamentals/building_blocks_openshift{outfilesuffix}[Building Blocks of OpenShift] doc.
 
@@ -82,7 +82,7 @@ Additionally, the following is assumed about the environment OpenShift is being 
 * An external DNS infrastructure is available for creating hostnames for the servers, as well as a wildcard entry for application traffic routing
 * An external storage infrastructure capable of providing NFS volumes
 
-NOTE: For more information, see the link:https://docs.openshift.com/enterprise/latest/install_config/install/prerequisites.html[Official Documentation regarding OpenShift Installation Prerequisites].
+NOTE: For more information, see the link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html[Official Documentation regarding OpenShift Installation Prerequisites].
 
 === Configure DNS
 
@@ -95,7 +95,7 @@ At a minimum the following needs to be true for all OpenShift hosts:
 * Each server can ping all other servers via a hostname in DNS (no /etc/hosts entries)
 * A wildcard DNS entry exists under a unique subdomain (i.e. `*.cloudapps.example.com`) that resolves to either the IP addresses (an A record) or the hostnames (a CNAME record) of the two _Infrastructure Nodes_
 
-NOTE: For more information, see the link:https://docs.openshift.com/enterprise/latest/install_config/install/prerequisites.html#prereq-dns[Official Documentation Regarding DNS Requirements].
+NOTE: For more information, see the link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html#prereq-dns[Official Documentation Regarding DNS Requirements].
 
 
 == Prepare Hosts for Install
@@ -116,19 +116,19 @@ Overall requirements for Installing OpenShift are very simple:
 * Install the following extra packages: `yum install wget git net-tools bind-utils iptables-services bridge-utils`
 * Optional: install the following diagnostic tools: `yum install lsof strace nc telnet`
 * Fully update all packages: `yum -y update`
-* Sync SSH keys from masters to all nodes (Here's how: https://docs.openshift.com/enterprise/latest/install_config/install/prerequisites.html#ensuring-host-access)
+* Sync SSH keys from masters to all nodes (Here's how: https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html#ensuring-host-access)
 
-NOTE: For more information, see the link:https://docs.openshift.com/enterprise/latest/install_config/install/prerequisites.html#host-preparation[Official Documenation for Host Preparation].
+NOTE: For more information, see the link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html#host-preparation[Official Documenation for Host Preparation].
 
 == Configure and Run the Ansible Installer
 
-We highly recommend using the link:https://docs.openshift.com/enterprise/latest/install_config/install/advanced_install.html#installing-ansible[Advanced Installation method using Ansible] for basically any multi-node installation. The OpenShift Quick Installer is available and useful for quick demos and short-lived installs, but does not support the customization needed to install in many real environments.
+We highly recommend using the link:https://docs.openshift.com/container-platform/latest/install_config/install/advanced_install.html#installing-ansible[Advanced Installation method using Ansible] for basically any multi-node installation. The OpenShift Quick Installer is available and useful for quick demos and short-lived installs, but does not support the customization needed to install in many real environments.
 
 The instructions in the Installer Guide will get you through most basic installs, but there are few additional things to know and be aware of to really understand the installer.
 
 === The Ansible Inventory File
 
-While the Install Guide shows some basic examples for link:https://docs.openshift.com/enterprise/latest/install_config/install/advanced_install.html#configuring-ansible[Configuring Ansible Hosts], there are many more options and variables that can be used to further customize your install. We attempt to break down a few of the common ones here.
+While the Install Guide shows some basic examples for link:https://docs.openshift.com/container-platform/latest/install_config/install/advanced_install.html#configuring-ansible[Configuring Ansible Hosts], there are many more options and variables that can be used to further customize your install. We attempt to break down a few of the common ones here.
 
 ==== Explicitly Set Hostnames and IPs
 
