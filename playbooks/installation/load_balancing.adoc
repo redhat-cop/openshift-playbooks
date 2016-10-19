@@ -67,7 +67,7 @@ Requirements for a Full Integration include:
 ** Create virtual hosts
 ** Delete virtual hosts
 ** Add and configure certificates
-* One or more link:https://docs.openshift.com/container-platform/latest/admin_guide/routing_from_edge_lb.html#establishing-a-tunnel-using-a-ramp-node[OpenShift Ramp Nodes] by which access to the internal SDN is provided to the BIG-IP(TM)
+* One or more link:https://docs.openshift.com/container-platform/latest/install_config/routing_from_edge_lb.html#establishing-a-tunnel-using-a-ramp-node[OpenShift Ramp Nodes] by which access to the internal SDN is provided to the BIG-IP(TM)
 
 In this way, the OpenShift router pods work as configuration agents for the F5. Rather than handling incoming web traffic, the pods just watch the OpenShift API for new routes to be created and pass that configuration information up to the F5 via its API to configure routes and handle traffic at the load balancer level.
 
