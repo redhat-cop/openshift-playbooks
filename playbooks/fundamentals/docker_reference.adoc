@@ -26,5 +26,5 @@ toc::[]
 
 == OpenShift Specific Guidance for Images
 
-* link:https://docs.openshift.com/enterprise/latest/creating_images/guidelines.html[Guidelines for Creating OpenShift Images]
-* link:https://docs.openshift.com/enterprise/latest/creating_images/custom.html[Building Custom S2I Builder Images]
+* link:https://docs.openshift.com/container-platform/latest/creating_images/guidelines.html[Guidelines for Creating OpenShift Images]
+* link:https://docs.openshift.com/container-platform/latest/creating_images/custom.html[Building Custom S2I Builder Images]
