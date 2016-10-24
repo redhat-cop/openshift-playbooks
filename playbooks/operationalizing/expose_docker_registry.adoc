@@ -11,7 +11,7 @@ toc::[]
 
 OpenShift provides an internal Docker registry for which to serve images for use within the OpenShift environment. It may be desirable to expose this registry for consumption by external entities. This document describes the process of accessing the integrated Docker registry from a source external to the OpenShift environment.
 
-Official documentation on this subject can be found https://docs.openshift.com/enterprise/3.0/install_config/install/docker_registry.html#exposing-the-registry[here].
+Official documentation on this subject can be found https://docs.openshift.com/container-platform/latest/install_config/registry/securing_and_exposing_registry.html#exposing-the-registry[here].
 
 == Prerequisites
 

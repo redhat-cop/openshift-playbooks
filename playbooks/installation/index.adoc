@@ -16,6 +16,8 @@ A guide for implementing the OSE 3 SmartStart described above.
 * link:./logging{outfilesuffix}[Log Management]
 * link:./install_validation{outfilesuffix}[Validating the Install]
 * link:./ldap_integration{outfilesuffix}[Integrating with LDAP & Active Directory]
+* link:./admin_overview{outfilesuffix}[An Overview of OpenShift for System Administrators]
+* link:./satellite_info{outfilesuffix}[Consuming socket-based subscriptions]
 
 == Presenter Guide
 

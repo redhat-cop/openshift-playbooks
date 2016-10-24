@@ -52,6 +52,9 @@ This is where it can get a bit confusing.  Should you add Docker registries?  Do
  * openshift3/ose-docker-builder
  * openshift3/ose-sti-builder
  * openshift3/ose-haproxy-router
+ * openshift3/openshift3/ose-recycler
+ * openshift3/openshift3/ose-keepalived-ipfailover
+ *  openshift3/openshift3/ose-f5-router
  * openshift3/mongodb-24-rhel7
  * openshift3/mysql-55-rhel7
  * openshift3/nodejs-010-rhel7
@@ -60,10 +63,14 @@ This is where it can get a bit confusing.  Should you add Docker registries?  Do
  * openshift3/postgresql-92-rhel7
  * openshift3/python-33-rhel7
  * openshift3/ruby-20-rhel7
- * jboss-amq-6/amq-openshift
- * jboss-eap-6/eap-openshift
- * jboss-webserver-3/tomcat7-openshift
- *  jboss-webserver-3/tomcat8-openshift
+ * jboss-amq-6/amq62-openshift
+ * jboss-eap-6/eap64-openshift
+ * jboss-webserver-3/webserver30-tomcat7-openshift
+ * jboss-webserver-3/webserver30-tomcat8-openshift
+ * jboss-fuse-6/fis-java-openshift
+ * jboss-fuse-6/fis-karaf-openshift
+ * jboss-datagrid-6/datagrid65-openshift
+ * jboss-decisionserver-6/decisionserver62-openshift
 9.  Sync the data from the newly-created repositories by clicking the select-all checkbox in the top left corner, then clicking "Sync Now" button.  Assuming no other connectivity or typo issues, they should all complete within a few minutes.
 
 

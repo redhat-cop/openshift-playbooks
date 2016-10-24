@@ -1,0 +1,201 @@
+---
+---
+= How to do a Simple Binary Deployment to Tomcat in OpenShift
+Eric Sauer <esauer@redhat.com>
+v1.0, 2016-07-13
+:toc: macro
+:toc-title:
+
+toc::[]
+
+Here I am going to walk through the steps to do a simple binary deployment to Tomcat 8 in OpenShift Container Platform. What you need to follow along are:
+
+- A WAR file
+- An OpenShift Environment running 3.1.1 or later
+- The `oc` (OpenShift Client) utility. link:https://docs.openshift.com/container-platform/latest/cli_reference/get_started_cli.html#installing-the-cli[Install Instructions here].
+
+== Local Setup
+
+Here I have a local directory called `warfile-demo` that just contains my warfile:
+
+[sourc,bash]
+----
+[esauer@localhost ~]$ cd warfile-demo/
+[esauer@localhost warfile-demo]$ ls
+ticket-monster.war
+----
+
+This war file is a jboss-demo sample app we like to use a lot. It would pulled and built from link:https://github.com/jboss-developer/ticket-monster[GitHub].
+
+In order to simplify the URL structure for my application, I'm going to rename my warfile to `ROOT.war`.
+
+[source,bash]
+----
+[esauer@localhost warfile-demo]$ mv ticket-monster.war ROOT.war
+[esauer@localhost warfile-demo]$ ls
+ROOT.war
+----
+
+Now, when I deploy to the link:https://access.redhat.com/documentation/en/red-hat-xpaas/0/single/red-hat-xpaas-jboss-web-server-image/[OpenShift Tomcat 8 Image], it's going to expect my warfile to be in a `deployments` directory, so I'm going to do that as well.
+
+[source,bash]
+----
+[esauer@localhost warfile-demo]$ mkdir deployments
+[esauer@localhost warfile-demo]$ mv ROOT.war deployments/
+[esauer@localhost warfile-demo]$ ls
+deployments
+[esauer@localhost warfile-demo]$ ls deployments/
+ROOT.war
+----
+
+== OpenShift Setup
+
+Next I'm going to log into OpenShift and setup a project to build and run my app in.
+
+[source,bash]
+----
+[esauer@localhost warfile-demo]$ oc login --server master.d2.rhc-ose.labs.redhat.com:8443 -u esauer
+Authentication required for https://master.d2.rhc-ose.labs.redhat.com:8443 (openshift)
+Username: esauer
+Password:
+Login successful.
+
+You have access to the following projects and can switch between them with 'oc project <projectname>':
+
+  * validate (current)
+
+Using project "validate".
+[esauer@localhost warfile-demo]$ oc new-project warfile-demo
+Now using project "warfile-demo" on server "https://master.d2.rhc-ose.labs.redhat.com:8443".
+
+You can add applications to this project with the 'new-app' command. For example, try:
+
+    $ oc new-app centos/ruby-22-centos7~https://github.com/openshift/ruby-hello-world.git
+
+to build a new hello-world application in Ruby.
+----
+
+== Building and Deploying the App
+
+Now, I'm about ready to deploy my app. A Binary Deployment in OpenShift consists of two phases:
+
+- A Build: I push my binary (WAR file) up to OpenShift, and it builds a new image around my app.
+- A Deployment: OpenShift Instantiates the image it just build to create a new container running my app.
+
+=== Creating the Build
+
+So for the build step, I require a few things:
+
+- My local WAR file
+- The name of the link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/builds_and_image_streams.html#image-streams[ImageStream] for the image I want to deploy to. In this case, tomact 8.
+
+Since I already have my WAR file ready, I just need to find the right ImageStream to use. By default, OpenShift stores all of it's ImageStreams in a globally readable project called `openshift`, so I'll just do a search there for `tomcat8`.
+
+[source,bash]
+----
+[esauer@localhost warfile-demo]$ oc get imagestream -n openshift | grep tomcat8
+jboss-webserver30-tomcat8-openshift   registry.access.redhat.com/jboss-webserver-3/webserver30-tomcat8-openshift     1.1-3,1.1-7,1.2 + 2 more...        5 weeks ago
+----
+
+Now I can take that ImageStream name and plug it into a new build. I'm going to give the build a name of `ticket-monster`:
+
+[source,bash]
+----
+[esauer@localhost warfile-demo]$ oc new-build jboss-webserver30-tomcat8-openshift --name=ticket-monster --binary=true
+--> Found image 298446b (11 weeks old) in image stream "jboss-webserver30-tomcat8-openshift" in project "openshift" under tag "latest" for "jboss-webserver30-tomcat8-openshift"
+
+    JBoss Web Server 3.0
+    --------------------
+    Platform for building and running web applications on JBoss Web Server 3.0 - Tomcat v8
+
+    Tags: builder, java, tomcat8
+
+    * A source build using binary input will be created
+      * The resulting image will be pushed to image stream "ticket-monster:latest"
+
+--> Creating resources with label build=ticket-monster ...
+    imagestream "ticket-monster" created
+    buildconfig "ticket-monster" created
+--> Success
+----
+
+Notice what OpenShift did with my request... It created me an `imagestream` and a `buildconfig` object, both named `ticket-monster`. The `imagestream` will track the new images that get built as part of this new build process, and the `buildconfig` contains all the instructions that tell OpenShift how to build my app.
+
+Now I can kick off my build by pointing the `oc` client at my local project directory. The command to do that is `oc start-build <buildconfig-name> --from-dir=<dir-path>`. Before I run it though, I want to walk through a few parameters I'm going to use. First off, I know that my `<buildconfig-name>` will be `ticket-monster` and the `<file-path>` will be my current `warfile-demo` directory. If I run that command as-is (i.e. `oc start-build ticket-monster --from-dir=.`) then a build will kick-off, the command will exit, and the build will run in the background. However, in this instance, I would prefer to actually follow the status of the build. To do that, I'm going to add the `--follow=true` (follow the logs of the build) and `--wait=true` (wait until the build completes to return an exit code).
+
+----
+[esauer@localhost warfile-demo]$ oc start-build ticket-monster --from-dir=. --follow=true --wait=true
+Uploading "." at commit "HEAD" as binary input for the build ...
+Uploading directory "." as binary input for the build ...
+ticket-monster-1
+...
+I0713 15:57:37.357235       1 sti.go:334] Successfully built warfile-demo/ticket-monster-2:25744ea1
+...
+I0713 15:57:48.210660       1 sti.go:268] Using provided push secret for pushing 172.30.51.200:5000/warfile-demo/ticket-monster:latest image
+I0713 15:57:48.210793       1 sti.go:272] Pushing 172.30.51.200:5000/warfile-demo/ticket-monster:latest image ...
+I0713 16:01:52.917306       1 sti.go:288] Successfully pushed 172.30.51.200:5000/warfile-demo/ticket-monster:latest
+----
+
+The final line of the log before the build completes should be `Successfully pushed 172.30.51.200:5000/warfile-demo/ticket-monster:latest`. This confirms that I now have a built application image in OpenShift's registry ready to deploy.
+
+=== Creating the Deployment
+
+Now that I have my application image built, I can deploy it. This is very simple. I just run the `oc new-app` command and specify my ImageStream, `ticket-monster`.
+
+[source,bash]
+----
+[esauer@localhost warfile-demo]$ oc new-app ticket-monster
+--> Found image 1a26477 (25 minutes old) in image stream ticket-monster under tag "latest" for "ticket-monster"
+
+    warfile-demo/ticket-monster-2:25744ea1
+    --------------------------------------
+    Platform for building and running web applications on JBoss Web Server 3.0 - Tomcat v8
+
+    Tags: builder, java, tomcat8
+
+    * This image will be deployed in deployment config "ticket-monster"
+    * Ports 8080/tcp, 8443/tcp, 8778/tcp will be load balanced by service "ticket-monster"
+      * Other containers can access this service through the hostname "ticket-monster"
+
+--> Creating resources with label app=ticket-monster ...
+    deploymentconfig "ticket-monster" created
+    service "ticket-monster" created
+--> Success
+    Run 'oc status' to view your app.
+----
+
+After a a minute or two, I will be able to see that I have a new pod running.
+
+[source,bash]
+----
+[esauer@localhost warfile-demo]$ oc get pods
+NAME                     READY     STATUS      RESTARTS   AGE
+ticket-monster-1-build   0/1       Completed   0          41m
+ticket-monster-1-t2wzk   1/1       Running     0          1m
+ticket-monster-2-build   0/1       Completed   0          31m
+----
+
+Additionlly, when we ran `oc new-app` a service was also created, and we can see that as well:
+[source,bash]
+----
+[esauer@localhost warfile-demo]$ oc get service
+NAME             CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+ticket-monster   172.30.62.188   <none>        8080/TCP,8443/TCP,8778/TCP   9m
+----
+
+Note that the `CLUSTER-IP` field contains a Service IP address that is local only to machines within the OpenShift environment. In order to test my new app, I need to expose my service using a Route.
+
+[source,bash]
+----
+[esauer@localhost warfile-demo]$ oc expose service ticket-monster
+route "ticket-monster" exposed
+[esauer@localhost warfile-demo]$ oc get routes
+NAME             HOST/PORT                                                                PATH      SERVICE                   TERMINATION   LABELS
+ticket-monster   ticket-monster-warfile-demo.apps.d2.rhc-ose.labs.redhat.com ... 1 more             ticket-monster:8080-tcp                 app=ticket-monster
+----
+
+As you can see here, the `oc expose` command creates me a route with a hostname. This hostname is resolvable and accessible to me which means that I can now pull up `http://ticket-monster-warfile-demo.apps.d2.rhc-ose.labs.redhat.com` in my browser.
+
+== What's Next?
+
+For a more in-depth look at how this stuff works, check out our link:builds{outfilesuffix}[Deep Dive on Builds in OpenShift]

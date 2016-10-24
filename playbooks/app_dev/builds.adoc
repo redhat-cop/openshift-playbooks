@@ -7,9 +7,9 @@ v1.0, 2015-09-15
 :toc-title:
 
 toc::[]
-[quote, OpenShift Builds, https://docs.openshift.com/enterprise/3.0/architecture/core_concepts/builds_and_image_streams.html#builds]
+[quote, OpenShift Builds, https://docs.openshift.com/container-platform/latest/architecture/core_concepts/builds_and_image_streams.html#builds]
 _________________________________________________
-A build is the process of transforming input parameters into a resulting object
+A build is the process of transforming input parameters into a resulting object.
 _________________________________________________
 
 
@@ -78,8 +78,8 @@ A Docker build in OpenShift is similar to a Docker build in a standalone environ
 
 
 ==== Additional Resources
-* https://docs.docker.com/reference/builder/[Dockerfile]
-** https://docs.docker.com/articles/dockerfile_best-practices/[Dockerfile Best Practices]
+* https://docs.docker.com/engine/reference/builder/[Dockerfile]
+** https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/[Dockerfile Best Practices]
 
 Docker Build in a BuildConfig
 The following is a snippet of code demonstrating the use of a Docker build in a BuildConfig
@@ -146,7 +146,7 @@ The following is a snippet of code demonstrating the use of a Docker build in a 
 
 == Source to Image (S2I)
 
-[quote, S2I Requirements, https://docs.openshift.com/enterprise/3.0/creating_images/s2i.html]
+[quote, S2I Requirements, https://docs.openshift.com/container-platform/latest/creating_images/s2i.html]
 _________________________________________________
 Source-to-Image (S2I) is a framework that makes it easy to write images that take application source code as an input and produce a new image that runs the assembled application as output.
 _________________________________________________
@@ -277,7 +277,7 @@ Values can be injected into S2I scripts to enable dynamic configuration for a pa
 Several of the builder images utilize environment variable to drive their execution. Examples include setting the location of a proxy server using the `HTTP_PROXY` variable or to set Maven arguments using the `MAVEN_ARGS` variable.
 
 ===== Additional Resources
-* https://docs.openshift.com/enterprise/3.0/creating_images/s2i.html#s2i-scripts[S2I Scripts]
+* https://docs.openshift.com/container-platform/latest/creating_images/s2i.html#s2i-scripts[S2I Scripts]
 
 ==== S2I within Applications
 
@@ -306,7 +306,7 @@ The JBoss EAP image for OpenShift includes S2I scripts located in the `/usr/loca
 
 The best way to learn how the JBoss S2I builder works is to investigate the builder itself. Run the following command to start a container containing the builder image
 
-   docker run -it --rm --entrypoint=/bin/bash registry.access.redhat.com/jboss-eap-6/eap-openshift
+   docker run -it --rm --entrypoint=/bin/bash registry.access.redhat.com/jboss-eap-6/eap64-openshift
 
 *Note:* the `--entrypoint` option is used to override the default functionality to start the JBoss server
 
@@ -331,7 +331,7 @@ There are a number of existing S2I builders that you can look to leverage for yo
 
 * https://github.com/openshift/source-to-image/blob/master/README.md#installation[Installation]
 * https://github.com/openshift/source-to-image/blob/master/docs/cli.md[CLI]
-* https://docs.openshift.com/enterprise/3.0/creating_images/s2i_testing.html[Testing]
+* https://docs.openshift.com/container-platform/latest/creating_images/s2i_testing.html[Testing]
 * https://blog.openshift.com/create-s2i-builder-image/[Creating an S2I Builder Image]
 
 

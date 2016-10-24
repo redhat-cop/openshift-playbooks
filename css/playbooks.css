@@ -1,3 +1,5 @@
+@import url("http://overpass-30e2.kxcdn.com/overpass.css");
+
 aside ul {
   margin: 0;
 }
@@ -19,7 +21,7 @@ aside ul li a:hover {
 }
 
 body {
-  font-family: "Open Sans", Helvetica, Arial, sans-serif;
+  font-family: 'Overpass', Helvetica, Arial, sans-serif;
 }
 
 code {

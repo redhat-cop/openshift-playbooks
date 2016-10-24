@@ -4,7 +4,8 @@
 
 The Fundamentals playbook is designed to provide you with resources to begin educating on Container & PaaS technologies.
 
-== Guides
+== Resource List
 
 * link:./docker_reference{outfilesuffix}[Docker Reference Guide]
 * link:./building_blocks_openshift{outfilesuffix}[Building Blocks of OpenShift]
+* link:./devops_reading_list{outfilesuffix}[DevOps Reference Guide]
