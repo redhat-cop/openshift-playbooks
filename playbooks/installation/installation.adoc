@@ -52,20 +52,23 @@ The Smart Start architecture requires the following Servers(VMs) be provisioned:
   ** RHEL 7.2 minimal installation
   ** 8 GB Memory
   ** 2 Cores
-  ** 30 GB Root Drive
-  ** An additional 5 GB disk or partition mounted at /var/lib/etcd
-* 2 _Infrastructure Nodes_
+  ** 40 GB for the partition containing `/var`
+  ** An additional 10 GB disk or partition mounted at `/var/log`
+  ** An additional 5 GB disk or partition mounted at `/var/lib/etcd`
+* 3 _Infrastructure Nodes_
   ** RHEL 7.2 minimal installation
-  ** 8 GB Memory
+  ** 16 GB Memory
   ** 4 Cores
-  ** 30 GB Root Drive
-  ** An additional 20 GB disk or partition mounted at /var/lib/origin
+  ** 30 GB for the partition containing `/var`
+  ** An additional 10 GB disk or partition mounted at `/var/log`
+  ** An additional 20 GB disk or partition mounted at `/var/lib/origin`
   ** An additional 50 GB disk, unformatted and unmounted
 * 3 _Application Nodes_
   ** 16 GB Memory
   ** 4 Cores
-  ** 30 GB Root Drive
-  ** An additional 20 GB disk or partition mounted at /var/lib/origin
+  ** 30 GB for the partition containing `/var`
+  ** An additional 10 GB disk or partition mounted at `/var/log`
+  ** An additional 20 GB disk or partition mounted at `/var/lib/origin`
   ** An additional 50 GB disk, unformatted and unmounted
 * (Optional) A Load Balancer host, if you plan to use Option 2 for Load Balancing, per the above section
   ** 2 cores
