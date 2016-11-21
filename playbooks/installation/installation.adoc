@@ -50,26 +50,26 @@ The Smart Start architecture requires the following Servers(VMs) be provisioned:
 
 * 3 _Masters_
   ** RHEL 7.2 minimal installation
-  ** 8 GB Memory
-  ** 2 Cores
-  ** 40 GB for the partition containing `/var`
-  ** An additional 10 GB disk or partition mounted at `/var/log`
-  ** An additional 5 GB disk or partition mounted at `/var/lib/etcd`
+  ** 24 GB Memory
+  ** 8 Cores
+  ** 60 GB for the partition containing `/var`
+  ** An additional 20 GB disk or partition mounted at `/var/log`
+  ** An additional 10 GB disk or partition mounted at `/var/lib/etcd`
 * 3 _Infrastructure Nodes_
   ** RHEL 7.2 minimal installation
-  ** 16 GB Memory
-  ** 4 Cores
-  ** 30 GB for the partition containing `/var`
-  ** An additional 10 GB disk or partition mounted at `/var/log`
+  ** 24 GB Memory
+  ** 6 Cores
+  ** 40 GB for the partition containing `/var`
+  ** An additional 20 GB disk or partition mounted at `/var/log`
   ** An additional 20 GB disk or partition mounted at `/var/lib/origin`
-  ** An additional 50 GB disk, unformatted and unmounted
+  ** An additional 100 GB disk, unformatted and unmounted
 * 3 _Application Nodes_
-  ** 16 GB Memory
+  ** 32 GB Memory
   ** 4 Cores
   ** 30 GB for the partition containing `/var`
   ** An additional 10 GB disk or partition mounted at `/var/log`
   ** An additional 20 GB disk or partition mounted at `/var/lib/origin`
-  ** An additional 50 GB disk, unformatted and unmounted
+  ** An additional 100 GB disk, unformatted and unmounted
 * (Optional) A Load Balancer host, if you plan to use Option 2 for Load Balancing, per the above section
   ** 2 cores
   ** 4 GB Memory
@@ -181,7 +181,8 @@ Ultimately, your inventory file for the OpenShift installer should look somethin
 masters
 nodes
 etcd
-lb
+# Uncomment the following for Load Balancing Option 2
+#lb
 
 # Set variables common for all OSEv3 hosts
 [OSEv3:vars]
@@ -201,9 +202,6 @@ openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 
 openshift_master_cluster_method=native
 openshift_master_cluster_hostname=master-external-lb.example.com
 openshift_master_cluster_public_hostname=master-internal-lb.example.com
-
-# override the default controller lease ttl
-#osm_controller_lease_ttl=30
 
 # host group for masters
 [masters]
@@ -225,7 +223,7 @@ master3.example.com
 # host group for nodes, includes region info
 [nodes]
 master[1:3].example.com openshift_node_labels="{'region': 'masters', 'zone': 'default'}"
-infranode[1:2].example.com openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+infranode[1:3].example.com openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
 node1.example.com openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
 node2.example.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
 ----
