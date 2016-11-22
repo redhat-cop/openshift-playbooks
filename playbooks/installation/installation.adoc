@@ -52,23 +52,23 @@ The Smart Start architecture requires the following Servers(VMs) be provisioned:
   ** RHEL 7.2 minimal installation
   ** 24 GB Memory
   ** 8 Cores
-  ** 60 GB for the partition containing `/var`
-  ** An additional 20 GB disk or partition mounted at `/var/log`
-  ** An additional 10 GB disk or partition mounted at `/var/lib/etcd`
+  ** 60 GB for the partition or logical volume containing `/var`
+  ** An additional 20 GB disk or logical volume mounted at `/var/log`
+  ** An additional 10 GB disk or logical volume mounted at `/var/lib/etcd`
 * 3 _Infrastructure Nodes_
   ** RHEL 7.2 minimal installation
   ** 24 GB Memory
   ** 6 Cores
-  ** 40 GB for the partition containing `/var`
-  ** An additional 20 GB disk or partition mounted at `/var/log`
-  ** An additional 20 GB disk or partition mounted at `/var/lib/origin`
+  ** 40 GB for the partition or logical volume containing `/var`
+  ** An additional 20 GB disk or logical volume mounted at `/var/log`
+  ** An additional 20 GB disk or logical volume mounted at `/var/lib/origin`
   ** An additional 100 GB disk, unformatted and unmounted
 * 3 _Application Nodes_
-  ** 32 GB Memory
+  ** 48 GB Memory
   ** 4 Cores
-  ** 30 GB for the partition containing `/var`
-  ** An additional 10 GB disk or partition mounted at `/var/log`
-  ** An additional 20 GB disk or partition mounted at `/var/lib/origin`
+  ** 30 GB for the partition or logical volume containing `/var`
+  ** An additional 10 GB logical volume mounted at `/var/log`
+  ** An additional 20 GB logical volume mounted at `/var/lib/origin`
   ** An additional 100 GB disk, unformatted and unmounted
 * (Optional) A Load Balancer host, if you plan to use Option 2 for Load Balancing, per the above section
   ** 2 cores
@@ -126,16 +126,16 @@ Overall requirements for Installing OpenShift are very simple:
 * Ensure time is in sync on all nodes
 ** chrony: is the default package in RHEL 7.
 ----
-    yum install -y chrony      # to install  
-    systemctl enable chronyd   # to enable 
-    systemctl start chronyd    # to start 
+    yum install -y chrony      # to install
+    systemctl enable chronyd   # to enable
+    systemctl start chronyd    # to start
     chronyc tracking           # To get information about the main time reference
     chronyc sources -v         # equivalent information to the ntpq
     ntpdate pool.ntp.org       # To quickly synchronize a server`
 ----
 * Sync SSH keys from masters to all nodes (Here's how: https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html#ensuring-host-access)
 * Ensure company CA's are installed on all the nodes in the OCP Cluster
-** Copy company CA's here `/etc/pki/ca-trust/source/anchors` 
+** Copy company CA's here `/etc/pki/ca-trust/source/anchors`
 ** Install company CA's `update-ca-trust`
 
 NOTE: For more information, see the link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html#host-preparation[Official Documenation for Host Preparation].
