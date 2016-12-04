@@ -15,7 +15,7 @@ toc::[]
 
 == Abstract
 
-OpenShift provides multiple methods for communicating with services running on the platform. The most common method is to use the integrted haproxy router solution. While this option provides support for the majority of use cases, there are restrictions which limit the usage by certain applications. Fortunately, OpenShift provides several alternate options, such as ingress, for exposing and accessing services without the use of the haproxy router. 
+OpenShift provides multiple methods for communicating with services running on the platform. The most common method is to use the integrated haproxy router solution. While this option provides support for the majority of use cases, there are restrictions which limit the usage by certain applications. Fortunately, OpenShift provides several alternate options, such as ingress, for exposing and accessing services without the use of the haproxy router. 
 
 
 == Ingress and External IP's
@@ -52,11 +52,11 @@ NOTE: Ingress is only applicable in non-cloud based environments
 
 == Implementing Ingress
 
-A common use case for ingress is the ability to provide database services, such as PostgreSQL, to clients outside of the OpenShift cluster. This section decribes how to implement this type of functionality.
+A common use case for ingress is the ability to provide database services, such as PostgreSQL, to clients outside of the OpenShift cluster. This section describes how to implement this type of functionality.
 
-=== Definining the Ingress IP Range
+=== Defining the Ingress IP Range
 
-The ability for cluster administrators to automatically allocate External IP addresses using ingress is enabled by deafult within OpenShift and configured to use the `172.46.0.0/16` range. An alternate range can be specified by configuring the `ingressIPNetworkCIDR` parameter in the `/etc/origin/master-config.yaml` file as shown below:
+The ability for cluster administrators to automatically allocate External IP addresses using ingress is enabled by default within OpenShift and configured to use the `172.46.0.0/16` range. An alternate range can be specified by configuring the `ingressIPNetworkCIDR` parameter in the `/etc/origin/master-config.yaml` file as shown below:
 
 [source]
 ----
@@ -68,7 +68,7 @@ Restart the OpenShift master service to apply the changes.
 
 === Deploy a sample application
 
-To expose aPostgreSQL as a service for external consumption, the application must be first deployed into the cluster. Create a new project or use and existing project and instantiate one of the PostgreSQL templates as shown below using the OpenShift Command Line tool.  
+To expose a PostgreSQL as a service for external consumption, the application must be first deployed into the cluster. Create a new project or use and existing project and instantiate one of the PostgreSQL templates as shown below using the OpenShift Command Line tool.  
 
 [source]
 ----
@@ -154,9 +154,11 @@ Instead of connecting directly to individual node's, a more robust strategy for 
 
 NOTE: Nodes that will have ipfailover routers deployed to them must be in the same Layer 2 switching domain for ARP broadcasts to communicate with switches the appropriate port the destination should flow.
 
+CAUTION: Only 254 addresses can be allocated in a single VLAN due to the restrictions placed by the Virtual Router Redundancy Protocol (VRRP) which is used by the ipfailover router.
+
 Since routers require privileged access to the host they are deployed to facilitate port binding, a separate service account called _ipfailover_ will be used to run the pod containing the router. 
 
-Preconfigure the service account to be a member of the _privileged_ link:https://docs.openshift.com/container-platform/latest/admin_guide/manage_scc.html[security context contraint] by executing the following command:
+Preconfigure the service account to be a member of the _privileged_ link:https://docs.openshift.com/container-platform/latest/admin_guide/manage_scc.html[security context constraint] by executing the following command:
 
 [source]
 ----
@@ -190,3 +192,11 @@ oadm ipfailover ipf-ha-postgresql \
 Once successfully deployed, the ipfailover router internally uses link:http://www.keepalived.org/[keepalived] to ensure the service is available
 
 An external PostgreSQL client can now use the address of the external IP (10.9.54.100) and native service port (5432) to communicate with the backend database.
+
+=== Expanding the Range of Addresses Served by a Single ipfailover Route
+
+One of the benefits of OpenShift is the ability to remove traditional limitations placed on developers and allowing them to be empowered. As demonstrated previously, a single external address can be exposed by a ipfailover router, but this action requires intervention by cluster administrators. Instead of defining a single address for the ipfailover router to use and deploying additional routers for each external services, multiple addresses or a range of addresses can configured within a single router to limit the amount of administrative actions that would be required and reduced the amount of required resources. This reduces the need to have an administrator intervene when configuring new services using an _ExternalIP_.
+
+When deploying the ipfailover router with the `oadm ipfailover` command, the `--virtual-ips` flag defines the addressess that will be served by the router. To allow for more than one address to be served, a comma separated list of addresses can be provided (10.9.54.100,10.9.54.110) or a range of multiple addresses (10.9.54.100-110). Once deployed, the list of addresses is defined within the `OPENSHIFT_HA_VIRTUAL_IPS` environment variable within the _DeploymentConfig_ API object. This environment variable can be modified after initial deployment to change the configuration of the router. 
+
+By default, the ipfailover router monitors the status of a single port to ensure that it is available and listening on the node it is deployed on prior to broadcasting the availability of the address to layer 2 switching devices. If the validation fails, the external address will not be routable by the node. Once multiple addresses are defined, it becomes impractical to track whether all nodePorts exposed by external services are currently listening. To disable the validation check on the ipfailover router, configure a value of *0* in the  `--watch-port` flag in the `oadm ipfailover` command. After deployment, the `OPENSHIFT_HA_MONITOR_PORT` environment variable can by modified within the _DeploymentConfig_ to make any subsequent changes.
