@@ -146,7 +146,7 @@ spec:
 ----
 <1> Automatically assigned port
 
-A PostgreSQL client can now be configured to connect directly to the node the application is deploy on using the value of the assigned nodePort.
+A PostgreSQL client can now be configured to connect directly to any node using the value of the assigned _nodePort_.
 
 === Configuring the Service to be Highly Available
 
