@@ -310,8 +310,7 @@ AssertionConsumerService:  https://saml-auth.example.com/mellon/postResponse
 .sp-saml.xml
 ```xml
 <?xml version='1.0' encoding='UTF-8'?>
-<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
-cacheDuration="P7D" entityID="saml.example.com/saml2">
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" cacheDuration="P7D" entityID="saml-auth.example.com/saml2">
   <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
     <md:KeyDescriptor use="signing">
       <ds:KeyInfo>
