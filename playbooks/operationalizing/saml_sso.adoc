@@ -310,7 +310,8 @@ AssertionConsumerService:  https://saml-auth.example.com/mellon/postResponse
 .sp-saml.xml
 ```xml
 <?xml version='1.0' encoding='UTF-8'?>
-<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" cacheDuration="P7D" entityID="https://ip-1-70-104-171.dob1.bcpc.bloomberg.com/saml2">
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+cacheDuration="P7D" entityID="saml.example.com/saml2">
   <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
     <md:KeyDescriptor use="signing">
       <ds:KeyInfo>
@@ -337,8 +338,8 @@ AssertionConsumerService:  https://saml-auth.example.com/mellon/postResponse
         </ds:X509Data>
       </ds:KeyInfo>
     </md:KeyDescriptor>
-    <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://ip-1-70-104-171.dob1.bcpc.bloomberg.com/saml2/logout"/>
-    <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://ip-1-70-104-171.dob1.bcpc.bloomberg.com/saml2/postResponse" index="0"/>
+    <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://saml-auth.example.com/saml2/logout"/>
+    <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://saml-auth.example.com/saml2/postResponse" index="0"/>
     <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
   </md:SPSSODescriptor>
 </md:EntityDescriptor>
