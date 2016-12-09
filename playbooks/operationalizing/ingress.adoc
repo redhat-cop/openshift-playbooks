@@ -178,8 +178,8 @@ Finally, deploy the ipfailover router to monitor postgresql listening on node po
 
 [source]
 ----
-oadm ipfailover ipf-ha-postgresql \
-    --replicas=1 <1> --selector="app-type=postgresql" <2> \ 
+oadm ipfailover ipf-ha-router \
+    --replicas=1 <1> --selector="region=infra" <2> \ 
     --virtual-ips=10.9.54.100 <3> --watch-port=32439 <4>  \
     --credentials=/etc/origin/master/openshift-router.kubeconfig \
     --service-account=ipfailover --create
