@@ -14,7 +14,7 @@ elif [ "$TRAVIS_BRANCH" != "master" ] && [ "$TRAVIS_PULL_REQUEST" == true ]; the
 
 fi
 
-if [ -z ${deploy_repo} ] && [ -z $deploy_host ]; then
+if [ -n "${deploy_repo}" ] && [ -n "${deploy_host}" ]; then
   openssl aes-256-cbc -K $encrypted_4ffc634c0a1c_key -iv $encrypted_4ffc634c0a1c_iv -in .travis_id_rsa.enc -out deploy_key.pem -d
 
   eval "$(ssh-agent -s)"
