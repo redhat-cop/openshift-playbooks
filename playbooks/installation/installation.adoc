@@ -50,30 +50,31 @@ The Smart Start architecture requires the following Servers(VMs) be provisioned:
 
 * 3 _Masters_
   ** RHEL 7.2 minimal installation
-  ** 24 GB Memory
-  ** 8 Cores
-  ** 60 GB for the partition or logical volume containing `/var`
-  ** An additional 20 GB disk or logical volume mounted at `/var/log`
+  ** 20 GB Memory
+  ** 4 Cores
+  ** 60 GB for the root (`/`) partition or logical volume containing `/var`
   ** An additional 10 GB disk or logical volume mounted at `/var/lib/etcd`
+  ** An additional 50 GB disk or logical volume, unformatted and unmounted (for local Docker)
 * 3 _Infrastructure Nodes_
   ** RHEL 7.2 minimal installation
   ** 24 GB Memory
   ** 6 Cores
-  ** 40 GB for the partition or logical volume containing `/var`
-  ** An additional 20 GB disk or logical volume mounted at `/var/log`
+  ** 40 GB for the root (`/`) partition or logical volume containing `/var`
   ** An additional 20 GB disk or logical volume mounted at `/var/lib/origin`
-  ** An additional 100 GB disk, unformatted and unmounted
+  ** An additional 100 GB allocated to a volume group, unformatted and unmounted (for local Docker)
 * 3 _Application Nodes_
   ** 48 GB Memory
   ** 4 Cores
   ** 30 GB for the partition or logical volume containing `/var`
-  ** An additional 10 GB logical volume mounted at `/var/log`
   ** An additional 20 GB logical volume mounted at `/var/lib/origin`
   ** An additional 100 GB disk, unformatted and unmounted
 * (Optional) A Load Balancer host, if you plan to use Option 2 for Load Balancing, per the above section
   ** 2 cores
   ** 4 GB Memory
   ** 10 GB Root Drive
+
+TODO: Need something about persistent storage
+- push for iSCSI volumes for registry/metrics/logging
 
 NOTE: We chose the resource sizing above based on some reasonable starting sizes for hosts based on our experiences in the field. Before building further environments, it is important to go through a real production sizing exercise. For more information on how we recommend going about this, see our link:/playbooks/operationalizing/environment_sizing{outfilesuffix}[Environment Sizing Guide].
 
