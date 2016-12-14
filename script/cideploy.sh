@@ -7,7 +7,7 @@ if [ "$TRAVIS_REPO_SLUG" == "rhtconsulting/openshift-playbooks" ] && [ "$TRAVIS_
   deploy_repo=${git_repo}
   deploy_host=${git_host}
 
-elif [ "$TRAVIS_BRANCH" != "master" ] && [ "$TRAVIS_PULL_REQUEST" == true ]; then
+elif [ "$TRAVIS_BRANCH" != "master" ] || [ "$TRAVIS_PULL_REQUEST" == true ]; then
 
   deploy_repo=${git_repo_test}
   deploy_host=${git_host_test}
