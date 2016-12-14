@@ -8,10 +8,9 @@ before_script:
  - gem --version
  - gem install bundler --version=1.11.2
  - bundler --version
- 
-script: ./script/cibuild.sh
 
-after_success:
+script:
+ - ./script/cibuild.sh
  - ./script/cideploy.sh
 
 env:
