@@ -1,5 +1,10 @@
 #!/bin/bash
 
+echo "Debugging..."
+echo "${git_repo}"
+echo "${git_host}"
+echo "${git_repo_prod}"
+echo "${git_repo_test}"
 
 # Deploy site if on master branch and not PR
 if [ "$TRAVIS_REPO_SLUG" == "rhtconsulting/openshift-playbooks" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == false ]; then
@@ -31,5 +36,6 @@ if [ -n "${deploy_repo}" ] && [ -n "${deploy_host}" ]; then
   git remote add deploy $deploy_repo
   git push --force deploy
 else
-    echo "Skipping deployment. Criteria not met."
+    echo "Something wasn't set right. Missing either deploy_repo or deploy_host"
+    exit 1
 fi
