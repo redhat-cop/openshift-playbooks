@@ -76,12 +76,14 @@ OpenShift provides an additional CLI tool that can perform more fine grained dia
 NOTE: Not all errors or warnings warrant action. The diagnostics check will additionally examine all deployed services and report anything out of the ordinary. This could include apps that may have been misconfigured by a developer, and would not necessarily warrant administrative intervention.
 
 ----
-# openshift ex diagnostics
+# oadm diagnostics
 .... Lots of output ......
 [Note] Summary of diagnostics execution (version v3.1.0.4-16-g112fcc4):
 [Note] Warnings seen: 3
 [Note] Errors seen: 1
 ----
+
+IMPORTANT: Previous to OpenShift Enterprise 3.2 the diagnostics was a tech preview and part of the `openshift ex` (experimental) commands. In that case the command would be `openshift ex diagnostics`.
 
 == Create an Application
 
@@ -109,15 +111,19 @@ Follow the steps below
 [Wait for build to start]
 # oc get pods | grep build
 [ copy the pod id ]
-# oc logs <pod id>
+# oc logs -f <pod id>
 [ Look for message saying an image was successfully pushed ]
-# oc get deployments
-[ make sure one has succeeded ]
+# oc get deploymentConfig
+[ copy the deploymentConfig name ]
+# oc deploy <deploymentConfig>
+[ make sure you see a deployment has succeeded ]
 # oc get routes
 [ copy the `hostname` field]
 # curl http://[hostname]
 [ should get back html output ]
 ----
+
+IMPORTANT: Between OpenShift Enterprise 3.1 and 3.2, there was a slight change in the way Deploment events show in the CLI. The above command (`oc deploy <deploymentConfig>`) is for 3.2 and later. For 3.1 and before, you can see Deploments using `oc get deployments`.
 
 Finally, make sure you can pull up your app via a web browser, and that you see a welcome page.
 

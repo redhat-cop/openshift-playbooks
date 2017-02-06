@@ -13,12 +13,11 @@ if [ "$TRAVIS_REPO_SLUG" == "rhtconsulting/openshift-playbooks" ] && [ "$TRAVIS_
     ssh-keyscan $git_host >> ~/.ssh/known_hosts
     cd _site/
     git init
-    git config user.name "Travis"
-    git config user.emal "noreply@redhat.com"
-    git add *
-    git commit -m "Deploy for ${TRAVIS_COMMIT}"
+    git config --global push.default simple
+    git add .
+    git -c "user.name=Travis" -c "user.email=noreply@redhat.com" commit -m "Deploy for ${TRAVIS_COMMIT}"
     git remote add deploy $git_repo
-    git push --force deploy
+    git push --force --set-upstream deploy master
 else
     echo "Skipping deployment. Not on master branch"
 fi

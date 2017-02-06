@@ -31,7 +31,7 @@ Need some examples of forwarding OpenShift logs using rsyslog.
 
 ==== Centralizing Logs with Fluentd
 
-The OpenShift 3.0 Documentation provides a way to link:https://docs.openshift.com/enterprise/3.0/admin_guide/aggregate_logging.html[use Fluentd to capture and centralize container logs]. This implementation is fairly limiting though as it doesn't fully parse the log files and capture metadata like namespaces, pods names, etc.
+The OpenShift 3.0 Documentation provides a way to link:https://docs.openshift.com/container-platform/latest/install_config/aggregate_logging.html[use Fluentd to capture and centralize container logs]. This implementation is fairly limiting though as it doesn't fully parse the log files and capture metadata like namespaces, pods names, etc.
 
 ==== Full Metadata Supported Log Aggregation with Fluentd
 

@@ -1,0 +1,86 @@
+---
+= Satellite info for consuming OpenShift socket-based subscriptions
+
+When you purchase the OpenShift socket-based subscriptions, you can use each subscription in one of two ways:
+
+- You can put the subscription on a hardware which is running OpenShift directly and create as many containers and applications as you like.
+- You can put the subscripiton on hardware (like above) but instead of running OpenShift directly on the hardware, you can create any number
+of Virtual Machines that run OpenShift.
+
+If you are running OpenShift directly on hardware just subscribe your hardware to your Satellite server or the Red Hat CDN normally, ensure you attach to
+the correct pool and you are done.  There is no need to continue reading this document.
+
+If you want to run Virtual Machines on your hardware and put your OpenShift on those Virtual Machines, keep reading.  This is exactly
+the use-case that this document was meant to cover.  You can run RHEL and OpenShift on any number of Virtual Machines which reside on this hardware,
+and use any of the repositories that those subscriptions entitle you too.
+
+In order to leverage socket-based subscriptions we need a mapping service to provide HV <--> VM mappings to Satellite +
+Virt-who is the package that does this for us.
+
+== KVM
+In a KVM environment virt-who is installed on all Hypervisors and these hypervisors are registered to satellite normally.
+No additional configuration is necessary, just ensure that the hypervisors are attached to the correct pool so that they consume
+one of the per-cpu entitlements.
+
+=== Install virt-who
+----
+# yum install -y virt-who
+----
+
+Jump to <<Configure Activation Keys on Satellite>>
+
+== VMWare
+For VMWare, we need virt-who to run as a service on a RHEL server or VM.  In this capacity virt-who acts as an 'agent'
+and talks to vCenter and reports mappings back into Satellite.
+Select a server or VM to host this service and install the virt-who package.  Have a VMWare administrator create a read-only
+service account that allows access into vCenter for the virt-who service.
+
+=== Install virt-who
+----
+# yum install -y virt-who
+----
+
+=== Configure /etc/sysconfig/virt-who with the following configuration (VMWare only)
+----
+
+# vim /etc/sysconfig/virt-who
+
+VIRTWHO_INTERVAL=3600
+VIRTWHO_SATELLITE6=1
+VIRTWHO_BACKGROUND=1
+VIRTWHO_DEBUG=0
+----
+
+=== Configure /etc/virt-who.d/conf (VMWare only)
+----
+# vim /etc/virt-who.d/conf
+
+[vcenter]
+type=esx
+owner={Satellite Org name}
+env=Library
+server={Satellite server fqdn}
+username={nt_domain\service_account_username}
+password={password}
+hypervisor_id={fqdn of agent server running virt-who}
+----
+
+=== Enable and Start virt-who services (VMWare only)
+----
+# systemctl enable virt-who
+# systemctl start virt-who
+----
+
+=== Apply subscriptions to selected hypervisors in Satellite
+From Satellite, use content_hosts to locate the hypervisors which should have the unlimited guests subscriptions,
+then use the Subscriptions tab to apply them.
+
+image::content_hosts.png[]
+
+=== Configure Activation Keys on Satellite
+Now that the hypervisors have the subscriptions attached to them, there will be a new subscription available
+"guests of xxxx" for each licensed hypervisor.  Navigate to your activation keys and apply these new "guests of"
+subscription to each activation key that needs them.  Activation keys can have more than one subscription and subscriptions
+can be attached to multiple activation keys.
+
+image::activation_key.png[]

@@ -1,0 +1,202 @@
+---
+---
+= Using Ingress to Expose Services
+Andrew Block <ablock@redhat.com>
+v1.0, 2016-11-07
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+Using OpenShift's ingress capabilities to provide access to services running on the cluster
+
+
+toc::[]
+
+
+== Abstract
+
+OpenShift provides multiple methods for communicating with services running on the platform. The most common method is to use the integrated haproxy router solution. While this option provides support for the majority of use cases, there are restrictions which limit the usage by certain applications. Fortunately, OpenShift provides several alternate options, such as ingress, for exposing and accessing services without the use of the haproxy router. 
+
+
+== Ingress and External IP's
+
+One method to access to services running in OpenShift is to configure the service with an link:http://kubernetes.io/docs/user-guide/services/#external-ips[External IP]. An External IP is an address which terminates at one of the OpenShift nodes as configured by externally configured routing mechanisms. When configured within a service definition, once a request reaches a node, traffic is redirected to a service endpoint. The example below shows how an external IP can be configured within a service definition:
+
+[source]
+----
+oc create -f - <<INGRESS
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-ingress
+spec:
+  externalIPs:
+  - 10.9.54.100 <1>
+  ports:
+  - port: 5432
+    protocol: TCP
+  selector:
+    name: postgresql
+  type: LoadBalancer
+INGRESS
+----
+<1> The address of the IP address assigned to the external IP
+
+The external IP address itself is not managed by the underlying Kubernetes infrastructure and must be maintained and provided by a cluster administrator. While external IP's provides a solution for accessing services on the OpenShift cluster, there are several shortcomings. First, application users cannot create external IP addresses themselves, and must work with cluster administrators to allocate an address for their usage. Secondly, there are no protections in place to restrict the usage of a particular external address configured within the cluster. This allows the potential for a single address to be used by multiple services targeting the same port. When this situation occurs, the service which requested the port first is given use of the port. 
+
+=== Ingress as a solution
+
+Ingress is a functionality within OpenShift to streamline the allocation of External IP's for accessing to services in the cluster. Cluster administrators can designate a range of addresses using a CIDR notation which allows an application user to make a request against the cluster for an external IP address. When a service is configured with the type *LoadBalancer*, an External IP address will be automatically assigned from the designated range. 
+
+NOTE: Ingress is only applicable in non-cloud based environments 
+
+== Implementing Ingress
+
+A common use case for ingress is the ability to provide database services, such as PostgreSQL, to clients outside of the OpenShift cluster. This section describes how to implement this type of functionality.
+
+=== Defining the Ingress IP Range
+
+The ability for cluster administrators to automatically allocate External IP addresses using ingress is enabled by default within OpenShift and configured to use the `172.46.0.0/16` range. An alternate range can be specified by configuring the `ingressIPNetworkCIDR` parameter in the `/etc/origin/master-config.yaml` file as shown below:
+
+[source]
+----
+networkConfig:
+  ingressIPNetworkCIDR: 10.9.54.0/25
+----
+
+Restart the OpenShift master service to apply the changes.
+
+=== Deploy a sample application
+
+To expose a PostgreSQL as a service for external consumption, the application must be first deployed into the cluster. Create a new project or use and existing project and instantiate one of the PostgreSQL templates as shown below using the OpenShift Command Line tool.  
+
+[source]
+----
+oc new-app --template=postgresql-ephemeral
+----
+
+CAUTION: The _postgresql-ephemeral_ template does not make use of persistent storage. Once the application is scaled down or destroyed, any existing data will be lost. To use persistent storage, specify the `postgresql-persistent` template instead.
+
+After instantiating the template, a _ClusterIP_ based service and DeploymentConfig is created and a new pod containing PostgreSQL will be started.
+
+
+=== Configuring an IP Address for a Service
+
+To allow the cluster to automatically assign an IP address for a service, create a service definition similar to the following that will create a new ingress service:
+
+[source]
+----
+oc create -f - <<INGRESS
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-ingress
+spec:
+  ports:
+  - name: postgresql
+    port: 5432
+  type: LoadBalancer <1>
+  selector:
+    name: postgresql
+INGRESS
+----
+<1> The LoadBalancer type of service will make the request for an external service on behalf of the application user 
+
+Alternatively, the `oc expose` command can be used to create the servie.
+
+[source]
+----
+oc expose dc postgresql --type=LoadBalancer --name=postgresql-ingress
+----
+ 
+Once the service has been created, note the external ip address has been automatically allocated by the cluster and can be confirmed by running `oc get svc postgresql-ingress`.
+
+[source]
+----
+NAME         CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+postgresql-ingress    172.30.74.106   10.9.54.100,10.9.54.100    5432/TCP    30s
+----
+
+Specifying the type _LoadBalancer_ has also configured the service with a _nodePort_ value allowing direct access to the service on each of the node's the application is deployed on. To discover the node port automatically assigned, execute `oc export svc postgresql-ingress`
+
+[source]
+----
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: postgresql-persistent
+    template: postgresql-persistent-template
+  name: postgresql-ingress
+spec:
+  deprecatedPublicIPs:
+  - 10.9.54.100
+  externalIPs:
+  - 10.9.54.100
+  ports:
+  - nodePort: 32439 <1>
+    port: 5432
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    name: postgresql
+  sessionAffinity: None
+  type: LoadBalancer
+----
+<1> Automatically assigned port
+
+A PostgreSQL client can now be configured to connect directly to any node using the value of the assigned _nodePort_.
+
+=== Configuring the Service to be Highly Available
+
+Instead of connecting directly to individual node's, a more robust strategy for providing access services configured with external ip addresses is to utilize one of OpenShift's link:https://docs.openshift.com/container-platform/latest/admin_guide/high_availability.html[high availability strategies] by deploying ipfailover router. This allows cluster administrators the flexibility of defining the ingress points within a cluster, and ensuring the service is readily available. 
+
+NOTE: Nodes that will have ipfailover routers deployed to them must be in the same Layer 2 switching domain for ARP broadcasts to communicate with switches the appropriate port the destination should flow.
+
+CAUTION: Only 254 addresses can be allocated in a single VLAN due to the restrictions placed by the Virtual Router Redundancy Protocol (VRRP) which is used by the ipfailover router.
+
+Since routers require privileged access to the host they are deployed to facilitate port binding, a separate service account called _ipfailover_ will be used to run the pod containing the router. 
+
+Preconfigure the service account to be a member of the _privileged_ link:https://docs.openshift.com/container-platform/latest/admin_guide/manage_scc.html[security context constraint] by executing the following command:
+
+[source]
+----
+oadm policy add-scc-to-user privileged system:serviceaccount:default:ipfailover
+----
+
+Next, multicast must be enabled on each node the router will be deployed to in order for it to receive traffic for 224.0.0.18 (the VRRP multicast IP). Depending on your environment, enable multicast on each of the nodes by executing the following command
+
+[source]
+----
+sudo /sbin/iptables -I INPUT -i <interface> -d 224.0.0.18/32 -j ACCEPT
+----
+
+NOTE: Replace the <interface> variable with the applicable network interface receiving traffic
+
+Finally, deploy the ipfailover router to monitor postgresql listening on node port 32439 and the external IP address as defined in the `postgresql-ingress` service:
+
+[source]
+----
+oadm ipfailover ipf-ha-router \
+    --replicas=1 <1> --selector="region=infra" <2> \ 
+    --virtual-ips=10.9.54.100 <3> --watch-port=32439 <4>  \
+    --credentials=/etc/origin/master/openshift-router.kubeconfig \
+    --service-account=ipfailover --create
+----
+<1> Specifies the number of instances to deploy 
+<2> Restricts where the router is deployed
+<3> Virtual IP addresses to monitor
+<4> Port on which the ipfailover router will monitor on each node
+
+Once successfully deployed, the ipfailover router internally uses link:http://www.keepalived.org/[keepalived] to ensure the service is available
+
+An external PostgreSQL client can now use the address of the external IP (10.9.54.100) and native service port (5432) to communicate with the backend database.
+
+=== Expanding the Range of Addresses Served by a Single ipfailover Route
+
+One of the benefits of OpenShift is the ability to remove traditional limitations placed on developers and allowing them to be empowered. As demonstrated previously, a single external address can be exposed by a ipfailover router, but this action requires intervention by cluster administrators. Instead of defining a single address for the ipfailover router to use and deploying additional routers for each external services, multiple addresses or a range of addresses can configured within a single router to limit the amount of administrative actions that would be required and reduced the amount of required resources. This reduces the need to have an administrator intervene when configuring new services using an _ExternalIP_.
+
+When deploying the ipfailover router with the `oadm ipfailover` command, the `--virtual-ips` flag defines the addressess that will be served by the router. To allow for more than one address to be served, a comma separated list of addresses can be provided (10.9.54.100,10.9.54.110) or a range of multiple addresses (10.9.54.100-110). Once deployed, the list of addresses is defined within the `OPENSHIFT_HA_VIRTUAL_IPS` environment variable within the _DeploymentConfig_ API object. This environment variable can be modified after initial deployment to change the configuration of the router. 
+
+By default, the ipfailover router monitors the status of a single port to ensure that it is available and listening on the node it is deployed on prior to broadcasting the availability of the address to layer 2 switching devices. If the validation fails, the external address will not be routable by the node. Once multiple addresses are defined, it becomes impractical to track whether all nodePorts exposed by external services are currently listening. To disable the validation check on the ipfailover router, configure a value of *0* in the  `--watch-port` flag in the `oadm ipfailover` command. After deployment, the `OPENSHIFT_HA_MONITOR_PORT` environment variable can by modified within the _DeploymentConfig_ to make any subsequent changes.
