@@ -100,8 +100,8 @@ frontend front_route
   tcp-request content accept if { req_ssl_hello_type 1 }
   
   # Here we use SNI to route the internal and external API requests
-  acl subdomain_is_private req_ssl_sni -i <PRIVATE_MASTER_HOSTNAME>
-  acl subdomain_is_public req_ssl_sni -i <PUBLIC_MASTER_HOSTNAME>
+  acl subdomain_is_private req_ssl_sni -i <PRIVATE_MASTER_DNS_HOSTNAME>
+  acl subdomain_is_public req_ssl_sni -i <PUBLIC_MASTER_DNS_HOSTNAME>
   
   # Route to specific backends for each type of traffic
   use_backend atomic-openshift-api-private if subdomain_is_private
@@ -111,6 +111,7 @@ frontend front_route
 backend back_external
   mode tcp
   server public 127.0.0.1:9003
+
 
 # Provides SSL termination using the master-server.pem found on the OSE master  
 frontend atomic-openshift-api-public
@@ -127,23 +128,42 @@ frontend atomic-openshift-api-public
   
   capture cookie ssn len 25
   
+# The file ocp_master_ca.pem should be the master ca.pem found in /etc/origin/master
 backend atomic-openshift-api-public
   balance source
   mode http
-  server master0 <MASTER1_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ca.pem
-  server master1 <MASTER2_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ca.pem
-  server master2 <MASTER3_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ca.pem
+  server master0 <MASTER1_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ocp_master_ca.pem
+  server master1 <MASTER2_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ocp_master_.pem
+  server master2 <MASTER3_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ocp_master_.pem
   
 backend atomic-openshift-api-private
   balance source
   mode tcp
-  server master0 <MASTER1_IP>:8443 ssl check
-  server master1 <MASTER2_IP>:8443 ssl check
-  server master2 <MASTER3_IP>:8443 ssl check
+  server master0 <MASTER1_IP>:8443 check
+  server master1 <MASTER2_IP>:8443 check
+  server master2 <MASTER3_IP>:8443 check
 
 ----
 
 In the file above, there are a few things to notice first. First of all, the main front-end block listening on port 8443. That doesn't change. What happens inside that block is a little more interesting. OpenShift provides a public URL for external API, and private URL for internal API interactions. These are defined in master-config.yaml. What we need to do here is SSL terminate the public API, while leaving the internal API as TLS pass-through. We can use SNI declarations in HAProxy to route this traffic based on the URL. Traffic tagged as external is routed to a special HAProxy front-end configured as a "feed-back loop" that listens on a special port 9003 to provide SSL terminiation and TLS pass-through respectively. SNI configuration is based on a procedure at http://serverfault.com/questions/662662/haproxy-with-sni-and-different-ssl-settings
+
+In this configuration, the OpenShift public master certificates will be presented by the HAProxy, instead of all the masters. If you have any named certificates specified on your masters, you can remove them, because the the public client will no longer care. The private traffic is then re-encrypted to the masters using the OpenShift master CA found in /etc/origin/master/ca.pem.
+You may create a seperate encryption certificate pair using:
+
+----
+# oadm ca create-signer-cert \
+  --cert='/etc/openshift/master/haproxyca.crt' \
+  --key='/etc/openshift/master/haproxyca.key' \
+  --name='openshift-haproxy-signer@1432232228' \
+  --serial='/etc/openshift/master/haproxyca.serial.txt'
+  
+# oadm create-api-client-config \
+  --certificate-authority='/etc/openshift/master/HAproxySigner.crt' \
+  --client-dir='/etc/openshift/master/haproxy' \
+  --signer-cert='/etc/openshift/master/haproxyca.crt' \
+  --signer-key='/etc/openshift/master/haproxy.key' \
+  --signer-serial='/etc/openshift/master/haproxy.serial.txt' \
+  --user='system:haproxy' ----
 
 If not already set, add the http_listen context to that port. 
 
