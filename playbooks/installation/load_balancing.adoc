@@ -326,7 +326,7 @@ node02.myorg.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
 
 ===== 3. Run the Advanced Installer
 
-Run the installer per the instructions in the link:https://docs.openshift.com/enterprise/3.1/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Installation Guide]
+-Run the installer per the instructions in the link:https://docs.openshift.com/container-platform/latest/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Installation Guide]
 
 == Guides for Specific Load Balancer Implementations
 
