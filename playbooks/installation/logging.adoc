@@ -163,7 +163,8 @@ You may create a seperate encryption certificate pair using:
   --signer-cert='/etc/openshift/master/haproxyca.crt' \
   --signer-key='/etc/openshift/master/haproxy.key' \
   --signer-serial='/etc/openshift/master/haproxy.serial.txt' \
-  --user='system:haproxy' ----
+  --user='system:haproxy'
+----
 
 If not already set, add the http_listen context to that port. 
 
