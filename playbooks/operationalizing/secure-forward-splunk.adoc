@@ -51,7 +51,7 @@ Specify the following values to configure the TCP based Splunk input:
 * Source name override: OCP
 * Source Type: _json
 
-NOTE: It is beyond the scope of this document for the creation of a custom link:https://docs.splunk.com/Splexicon\:Sourcetype[sourcetype] to perform advanced parsing of the data received.
+NOTE: It is beyond the scope of this document for the creation of a custom link:https://docs.splunk.com/Splexicon%3ASourcetype[sourcetype] to perform advanced parsing of the data received.
 
 Complete the necessary fields to finalize the addition of the new TCP input
 
