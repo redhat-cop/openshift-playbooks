@@ -101,10 +101,15 @@ image::/images/load_balancing_masters_simple.png[Simple Passthrough for OpenShif
 * Load Balancer VIP pre-created
   ** Configured for SSL Passthrough
   ** VIP must listen on port 8443, and proxy back to all master hosts on port 8443
+  ** WebSockets Enabled
 * Domain Name for VIP registered in DNS
   ** Domain name will become value of both `openshift_master_cluster_public_hostname` and `openshift_master_cluster_hostname` in OpenShift Installer
   ** For this example, we will give our VIP an FQDN: *paas.myorg.com*
 * Master hosts created and prepped per link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html[Install Prerequisites]
+
+WARNING: The OpenShift Web Console heavily utilizes WebSockets for many of the rich interface features like tailing pod logs, watching a deployment, or getting a terminal of a pod. While most enterprise load balancers support Web Sockets, they often need to be explicitly enabled for a particular VIP/Profile/etc.
+
+WARNING: The OpenShift Web Console heavily utilizes WebSockets for many of the rich interface features like tailing pod logs, watching a deployment, or getting a terminal of a pod. While most enterprise load balancers support Web Sockets, they often need to be explicitly enabled for a particular VIP/Profile/etc.
 
 For the purposes of this example, we will use the hosts specified in the table below
 
@@ -204,6 +209,7 @@ image::/images/load_balancing_masters_prod.png[Production Ready Load Balancing f
       **** A trusted certificate from your org's PKI
     *** VIP must listen on port 8443, and proxy back to all master hosts on port 8443
     *** For this example, we will give our External VIP a domain name: _paas.myorg.com_
+    *** WebSockets Enabled
   ** Internal VIP (will be the same configuration as the Simple integration option above)
     *** Configured for SSL Passthrough (see step 1 below)
     *** VIP must listen on port 8443, and proxy back to all master hosts on port 8443
@@ -212,6 +218,10 @@ image::/images/load_balancing_masters_prod.png[Production Ready Load Balancing f
   ** FQDN for _external_ VIP will become value of `openshift_master_cluster_public_hostname` in OpenShift Installer (i.e. paas.myorg.com)
   ** FQDN for _internal_ VIP will become value of `openshift_master_cluster_hostname` in OpenShift Installer (i.e. paas-internal.myorg.com)
 * Master hosts created and prepped per link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html[Install Prerequisites]
+
+WARNING: The OpenShift Web Console heavily utilizes WebSockets for many of the rich interface features like tailing pod logs, watching a deployment, or getting a terminal of a pod. While most enterprise load balancers support Web Sockets, they often need to be explicitly enabled for a particular VIP/Profile/etc.
+
+WARNING: The OpenShift Web Console heavily utilizes WebSockets for many of the rich interface features like tailing pod logs, watching a deployment, or getting a terminal of a pod. While most enterprise load balancers support Web Sockets, they often need to be explicitly enabled for a particular VIP/Profile/etc.
 
 For the purposes of this example, we will use the hosts specified in the table below
 
