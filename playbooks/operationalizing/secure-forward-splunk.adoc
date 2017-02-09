@@ -18,7 +18,7 @@ OpenShift includes an aggregated logging solution consisting of link:https://www
 
 == Architecture
 
-As part of the aggregated logging framework within OpenShift, containerized instances of Fluentd are deployed to OpenShift nodes as link:https://docs.openshift.com/container-platform/latest/dev_guide/daemonsets.html[DaemonSets]. As messages are collected, Fluentd communicates with ElasticSearch to persistently store messages for later retrieval. Cluster administrators and users can browse, search and view stored messages using Kibana, a web based user interface.
+As part of the aggregated logging framework within OpenShift, containerized instances of Fluentd are deployed to OpenShift nodes as link:https://docs.openshift.com/container-platform/latest/dev_guide/daemonsets.html[DaemonSets]. As messages are collected, Fluentd communicates with ElasticSearch to persistently store messages for later retrieval. Cluster administrators and users can browse, search, and view stored messages using Kibana, a web based user interface.
 
 To support forwarding messages to Splunk that are captured by the aggregated logging framework, Fluentd can be configured to make use of the secure forward output plugin (already included within the containerized Fluentd instance) to send an additional copy of the captured messages outside of the framework. A separate instance of Fluentd must also be deployed in order to reveive messages sent by secure forward plugin. Once captured by the separate Fluentd instance, messages can then be sent to Splunk.
 
@@ -28,7 +28,7 @@ The remainder of this document describes the process for implementing the integr
 
 == Implementation
 
-This section describes how to configure the OpenShift's integrated logging solution to forward logs to splunk
+This section describes how to configure the OpenShift's integrated logging solution to forward logs to Splunk
 
 === Prerequisites
 
@@ -43,7 +43,7 @@ The following prerequisites are assumed and must be satisfied prior to implement
 
 To accept messages sent from the fluent-plugin-splunk-ex plugin, a new TCP based data input must be configured within Splunk.
 
-As an Splunk user with administrative privileges, navigate to the Splunk user interface. Select *Settings* -> *Data Inputs* and then within the _Local Inputs_ section, select *Add new* next to the _TCP_ type. 
+As a Splunk user with administrative privileges, navigate to the Splunk user interface. Select *Settings* -> *Data Inputs* and then within the _Local Inputs_ section, select *Add new* next to the _TCP_ type. 
 
 Specify the following values to configure the TCP based Splunk input:
 
@@ -51,13 +51,13 @@ Specify the following values to configure the TCP based Splunk input:
 * Source name override: OCP
 * Source Type: _json
 
-NOTE: It is beyond the scope of this document for the creation of custom link:https://docs.splunk.com/Splexicon:Sourcetype[sourcetype's] to perform advanced parsing of the data received.
+NOTE: It is beyond the scope of this document for the creation of a custom link:https://docs.splunk.com/Splexicon\:Sourcetype[sourcetype] to perform advanced parsing of the data received.
 
 Complete the necessary fields to finalize the addition of the new TCP input
 
 NOTE: Open applicable firewall ports on the Splunk machine to allow for data to be received 
 
-Since the fluent-plugin-splunk-ex plugin sends data to Splunk in batches, Splunk must be configured separate messages based on the presence of a new line character.
+Since the fluent-plugin-splunk-ex plugin sends data to Splunk in batches, Splunk must be configured to separate messages based on the presence of a new line character.
 
 Configure the _/opt/splunk/apps/search/local/props.conf_ file with the following content which will configure messages received from the _OCP_ source to split messages correctly:
 
@@ -67,7 +67,7 @@ Configure the _/opt/splunk/apps/search/local/props.conf_ file with the following
 SHOULD_LINEMERGE = false
 ----
 
-Restart Splunk to apply the changes
+Restart Splunk to apply the changes:
 
 [source]
 ----
@@ -88,7 +88,7 @@ Fluentd can be installed on a RHEL machine by running the following command:
 curl -L https://toolbelt.treasuredata.com/sh/install-redhat-td-agent2.sh | sh
 ----
 
-With the installation successfully completed, enable the *td-agent* service to be started at boot and start the service
+With the installation successfully completed, enable the *td-agent* service to be started at boot and start the service:
 
 [source]
 ----
@@ -103,7 +103,7 @@ Two Fluentd plugins must be installed to receive and forward messages from OpenS
 * Secure forward plugin
 * Fluentd extended Splunk plugin
 
-Execute the following commands to install the two plugins
+Execute the following commands to install the two plugins:
 
 [source]
 ----
@@ -122,7 +122,7 @@ For demonstration purposes, a private CA will be utilized. The plugin includes a
 /opt/td-agent/embedded/bin/secure-forward-ca-generate /etc/td-agent/certs/ ocpsecureforward
 ----
 
-CAUTION: Be sure to specify a unique private key password for your own environment
+CAUTION: Be sure to specify a unique private key password for your own environment.
 
 ==== Configure Fluentd
 
@@ -162,9 +162,9 @@ Finally, add the settings for both plugins to the Fluentd configuration file loc
 <8> Format in which messages are sent to Splunk
 
 
-NOTE: To allow messages to be received on port 24284 for the secure forward plugin, ensure the proper firewall configurations are in place
+NOTE: To allow messages to be received on port 24284 for the secure forward plugin, ensure the proper firewall configurations are in place.
 
-Restart the _td-agent_ service to apply the changes
+Restart the _td-agent_ service to apply the changes:
 
 [source]
 ----
@@ -200,15 +200,15 @@ oc patch secrets/logging-fluentd --type=json --patch "[{'op':'add','path':'/data
 
 [NOTE]
 ====
-The names external_ca_cert.pem and external_ca_key.pem provided in the code sample are the key names configured within the patched secret
+The names external_ca_cert.pem and external_ca_key.pem provided in the code sample are the key names configured within the patched secret.
 
-The base64 utility must be present on the machine executing the commands
+The base64 utility must be present on the machine executing the commands.
 ====
 
 
 ==== Configuring Fluentd
 
-A link:https://docs.openshift.com/container-platform/latest/dev_guide/configmaps.html[ConfigMap] called _logging-fluentd_ is configured within the aggregated logging framework to specify the values to containing the configurations for Fluentd. Multiple files are containing within the ConfigMap, including a file called _secure-forward.conf_. The contents of this file are commented out as secure forward plugin is not enabled by default.
+A link:https://docs.openshift.com/container-platform/latest/dev_guide/configmaps.html[ConfigMap] called _logging-fluentd_ is configured within the aggregated logging framework to specify the values containing the configurations for Fluentd. Multiple files are contained within the ConfigMap, including a file called _secure-forward.conf_. The contents of this file are commented out as secure forward plugin is not enabled by default.
 
 Edit the secure-forward.conf file contained within the ConfigMap using the command `oc edit configmap logging-fluentd` with the following content:
 
@@ -239,13 +239,13 @@ Edit the secure-forward.conf file contained within the ConfigMap using the comma
 <5> Hostname or IP address of the standalone Fluentd instance
 <6> Port number of the standalone Fluentd instance
 
-Note: It is recommended the enable_strict_verification option be uncommented to increase security between each endpoint of the secure forward plugin. This FQDN of the target instance to match the value configured in the certificates used to secure the communication channel.
+NOTE: It is recommended the enable_strict_verification option be uncommented to increase security between each endpoint of the secure forward plugin. This FQDN of the target instance to match the value configured in the certificates used to secure the communication channel.
 
 ==== Applying the changes
 
 Finally, since a portion of the Fluentd configuration involved the modification of secrets, the existing Fluentd pods will need to be deleted in order for them to make use of the updated values.
 
-Execute the following command to remove the existing Fluentd pods
+Execute the following command to remove the existing Fluentd pods:
 
 [source]
 ----
@@ -256,7 +256,7 @@ The DaemonSet will automatically start pods on the nodes in which they were prev
 
 == Verification
 
-At this point, messages captured by OpenShift integrated logging solution should now be sent to Splunk and available within the Splunk user interface.
+At this point, messages captured by the OpenShift integrated logging solution should now be sent to Splunk and available within the Splunk user interface.
 
 The following steps can be used to verify the integration between OpenShift and Splunk using the secure forward plugin
 
@@ -264,7 +264,7 @@ The following steps can be used to verify the integration between OpenShift and 
 
 The communication between the Fluentd pods running within OpenShift and the standalone Fluentd instance can be validated by viewing the logs in any one of the running pods. 
 
-Locate a running Fluentd pod within the project containing the logging infrastructure
+Locate a running Fluentd pod within the project containing the logging infrastructure:
 
 [source]
 ----
@@ -285,7 +285,7 @@ View the logs of one of the running containers:
 oc logs logging-fluentd-9z0ye
 ----
 
-A result similar to the following indicates there are no communication issues between OpenShift and the standalone instance of Fluentd
+A result similar to the following indicates there are no communication issues between OpenShift and the standalone instance of Fluentd:
 
 [source]
 ----
