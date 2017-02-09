@@ -2,7 +2,7 @@
 
 
 # Deploy site if on master branch and not PR
-if [ "$TRAVIS_REPO_SLUG" == "rhtconsulting/openshift-playbooks" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == false ]; then
+if [ "$TRAVIS_REPO_SLUG" == "redhat-cop/openshift-playbooks" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == false ]; then
 
     openssl aes-256-cbc -K $encrypted_4ffc634c0a1c_key -iv $encrypted_4ffc634c0a1c_iv -in .travis_id_rsa.enc -out deploy_key.pem -d
 
