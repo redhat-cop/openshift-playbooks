@@ -47,3 +47,148 @@ link:./logging_with_fluentd{outfilesuffix}[Using Fluentd to Centralize Container
 ****
 Need to add discussions about collecting systemlogs for OpenShift
 ****
+
+=== OpenShift API Event Logging Through HAProxy
+
+Because all user-attributable events occur through the OpenShift Master API service, we may run into a situation with which each is required to be logged. In a typical multi-master OpenShift setup, each master provides its own API service. This would mean 3 separate API servers to log. Luckily, the front-end proxy server provides a single point of API event aggregation to each of the masters. In this procedure, HAProxy will be configured to provide this level of centralized logging.
+
+By default, OpenShift does not provide logging of events to its API service. Out of the box, HAProxy is configured for TLS passthrough of connections, relying on a simple TCP load balancing of all traffic on port 8443. Normally you would be able to configure HAProxy to HTTP mode and insert a simple httplog statement. This will not work with OpenShift, since it uses SSL certificates for internal communication. This procedures also assumes the OpenShift installation to be in a PKI-enabled environment in which the masters each have their own PKI certificate.
+
+First of all, we need to modify the haproxy config file found in /etc/haproxy/haproxy.conf.
+
+----
+global
+  chroot  /var/lib/haproxy
+  pidfile /var/run/haproxy.pid
+  maxconn 20000
+  user    haproxy
+  group   haproxy
+  daemon
+  log     127.0.0.1 local1
+  tune.ssl.default-dh-param 2048
+  
+  # turn on stats unix socket
+  stats socket /var/lib/haproxy/stats
+  
+defaults
+  mode  tcp
+  log   global
+  option dontlognull
+  option http-server-close
+  option forwardfor except 127.0.0.0/8
+  option redispatch
+  retries 3
+  timeout http-request 10s
+  timeout queue 1m
+  timeout connect 10s
+  timeout client 300s
+  timeout server 300s
+  timeout http-keep-alive 10s
+  timeout check 10s
+  maxconn 20000
+  
+listen stats :9000
+  mode http
+  stats enable
+  stats uri /
+  
+frontend front_route
+  bind *:8443
+  mode tcp
+  
+  tcp-request inspect-delay 5s
+  tcp-request content accept if { req_ssl_hello_type 1 }
+  
+  # Here we use SNI to route the internal and external API requests
+  acl subdomain_is_private req_ssl_sni -i <PRIVATE_MASTER_DNS_HOSTNAME>
+  acl subdomain_is_public req_ssl_sni -i <PUBLIC_MASTER_DNS_HOSTNAME>
+  
+  # Route to specific backends for each type of traffic
+  use_backend atomic-openshift-api-private if subdomain_is_private
+  use_backend back_external if subdomain_is_public
+
+# Loop back to atomic-openshift-api-public   
+backend back_external
+  mode tcp
+  server public 127.0.0.1:9003
+
+
+# Provides SSL termination using the master-server.pem found on the OSE master  
+frontend atomic-openshift-api-public
+  bind *:9003 ssl cert /etc/pki/tls/certs/master-server.pem ca-file /etc/pki/tls/certs/ca.pem
+  # OPTIONAL: add client cert as a header in case it is needed.
+  http-response add-header Client-Cert %{ssl_f_der,base64}
+  default_backend atomic-openshift-api-public
+  mode http
+  log global
+  option httplog
+  
+  # This is key to attribute API events to user sessions/tokens
+  capture request header Authorization len 15
+  
+  capture cookie ssn len 25
+  
+# The file ocp_master_ca.pem should be the master ca.pem found in /etc/origin/master
+backend atomic-openshift-api-public
+  balance source
+  mode http
+  server master0 <MASTER1_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ocp_master_ca.pem
+  server master1 <MASTER2_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ocp_master_.pem
+  server master2 <MASTER3_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ocp_master_.pem
+  
+backend atomic-openshift-api-private
+  balance source
+  mode tcp
+  server master0 <MASTER1_IP>:8443 check
+  server master1 <MASTER2_IP>:8443 check
+  server master2 <MASTER3_IP>:8443 check
+
+----
+
+In the file above, there are a few things to notice first. First of all, the main front-end block listening on port 8443. That doesn't change. What happens inside that block is a little more interesting. OpenShift provides a public URL for external API, and private URL for internal API interactions. These are defined in master-config.yaml. What we need to do here is SSL terminate the public API, while leaving the internal API as TLS pass-through. We can use SNI declarations in HAProxy to route this traffic based on the URL. Traffic tagged as external is routed to a special HAProxy front-end configured as a "feed-back loop" that listens on a special port 9003 to provide SSL terminiation and TLS pass-through respectively. SNI configuration is based on a procedure at http://serverfault.com/questions/662662/haproxy-with-sni-and-different-ssl-settings
+
+In this configuration, the OpenShift public master certificates will be presented by the HAProxy, instead of all the masters. If you have any named certificates specified on your masters, you can remove them, because the the public client will no longer care. The private traffic is then re-encrypted to the masters using the OpenShift master CA found in /etc/origin/master/ca.pem.
+You may create a seperate encryption certificate pair using:
+
+----
+# oadm ca create-signer-cert \
+  --cert='/etc/openshift/master/haproxyca.crt' \
+  --key='/etc/openshift/master/haproxyca.key' \
+  --name='openshift-haproxy-signer@1432232228' \
+  --serial='/etc/openshift/master/haproxyca.serial.txt'
+  
+# oadm create-api-client-config \
+  --certificate-authority='/etc/openshift/master/HAproxySigner.crt' \
+  --client-dir='/etc/openshift/master/haproxy' \
+  --signer-cert='/etc/openshift/master/haproxyca.crt' \
+  --signer-key='/etc/openshift/master/haproxy.key' \
+  --signer-serial='/etc/openshift/master/haproxy.serial.txt' \
+  --user='system:haproxy'
+----
+
+If not already set, add the http_listen context to that port. 
+
+----
+# semanage port -a -t http_port -p tcp 9003
+----
+
+We need the SSL termination to be able to inspect the master traffic, so we copy the master.server.pem and master.server.key from /etc/origin/master/ on the OCP master nodes.
+The backends have also been split to address the SSL termination. Notice the private and public backend, specifically that the public specifies CAs for each of the master servers. This CA should be configured with the same enterprise CA that you used when installing the masters.
+
+Notice the HAProxy logging configuration under the global section.
+
+----
+log     127.0.0.1 local1
+----
+
+HAProxy uses rsyslog sockets to forward its logging facilities directly. This means all your haproxy events will appear on the local Rsyslog server under facility "local1". You can then configure rsyslog to output these logs to file if you wish in /etc/rsyslog.conf.
+
+----
+module(load="imudp")
+input(type="imudp" port="514" address="127.0.0.1")
+...
+local1.*      -/var/log/haproxy.log
+...
+----
+
+After making these changes to HAProxy, restart the service and you should start seeing your master API logging.
