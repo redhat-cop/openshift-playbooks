@@ -1,8 +1,5 @@
 #!/bin/bash
 
-set -x
-echo "PR Test"
-
 # Deploy site if on master branch and not PR
 if [ "$TRAVIS_REPO_SLUG" == "redhat-cop/openshift-playbooks" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == false ]; then
 
