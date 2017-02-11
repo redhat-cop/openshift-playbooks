@@ -1,8 +1,10 @@
 ---
 ---
-= OCP TroubleShooting
+= OCP Troubleshooting
 
 * link:troubleshooting_guide{outfilesuffix}[Troubleshooting Guide]
+* link:https://docs.openshift.com/container-platform/latest/admin_guide/sdn_troubleshooting.html[Troubleshooting OpenShift SDN]
+* link:https://docs.openshift.com/container-platform/latest/admin_guide/diagnostics_tool.html[Diagnostic Tool]
 
 == Red Hat CSP Solutions
 
