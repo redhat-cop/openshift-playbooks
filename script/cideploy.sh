@@ -8,11 +8,23 @@ echo "Travis Repo Slug: $TRAVIS_REPO_SLUG"
 echo "Travis Branch: $TRAVIS_BRANCH"
 echo "Travis Pull Request $TRAVIS_PULL_REQUEST"
 
+if [ "$TRAVIS_REPO_SLUG" == "redhat-cop/openshift-playbooks" ]; then
+  echo "Repo Slug Match!"
+fi
+
+if [ "$TRAVIS_BRANCH" == "travis-debug" ]; then
+  echo "Branch Match!"
+fi
+
+if [ "$TRAVIS_PULL_REQUEST" == false ]; then
+  echo "Pull request match"
+fi
+
 # Deploy site if on master branch and not PR
-if [ "$TRAVIS_REPO_SLUG" == "redhat-cop/openshift-playbooks" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == false ]; then
+if [ "$TRAVIS_REPO_SLUG" == "redhat-cop/openshift-playbooks" ] && [ "$TRAVIS_BRANCH" == "travis-debug" ] && [ "$TRAVIS_PULL_REQUEST" == false ]; then
 
 #    openssl aes-256-cbc -K $encrypted_4ffc634c0a1c_key -iv $encrypted_4ffc634c0a1c_iv -in .travis_id_rsa.enc -out deploy_key.pem -d
-     echo "Would Deploy to 
+     echo "Would Deploy to Production" 
 #    eval "$(ssh-agent -s)"
 #    cp -f deploy_key.pem ~/.ssh/id_rsa
 #    chmod 600 ~/.ssh/id_rsa
