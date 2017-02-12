@@ -29,4 +29,3 @@
 == Other Known Issues
 
 * link:known_bugs{outfilesuffix}[Known Bugs]
-* link:common_issues{outfilesuffix}[Common Issues]
