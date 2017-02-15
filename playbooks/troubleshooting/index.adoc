@@ -1,8 +1,12 @@
 ---
 ---
+
 = OCP Troubleshooting
 
 * link:troubleshooting_guide{outfilesuffix}[Troubleshooting Guide]
+
+== Official OCP Troubleshooting docs
+
 * link:https://docs.openshift.com/container-platform/latest/admin_guide/sdn_troubleshooting.html[Troubleshooting OpenShift SDN]
 * link:https://docs.openshift.com/container-platform/latest/admin_guide/diagnostics_tool.html[Diagnostic Tool]
 
