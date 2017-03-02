@@ -1,280 +1,108 @@
 ---
 ---
-= OpenShift Enterprise 3 Installation
+= OpenShift Container Platform Smart Start Installation
 Eric Sauer <esauer@redhat.com>
-v1.0, 2015-09-04
+v2.0, 2016-08-18
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
 :toc: macro
 :toc-title:
 
 toc::[]
 
-== Prereqs
+== Overview
 
-Official Documentation: https://docs.openshift.com/enterprise/3.0/admin_guide/install/prerequisites.html
+The OpenShift Container Platform Smart Start is a reference architecture for a Highly Available installation of OpenShift. This document outlines the architecture of such an installation and walks through the installation process.
 
+== Architecture
 
-=== DNS
+image::/images/ocp_smart_start_diagram.png[Smart Start Architecture]
 
-If the organization has the ability to add an A record to the corporate DNS, supporting wildcard name resolution to the OpenShift environment, that DNS server should be utilized.
+The diagram above depicts the architecture of the Smart Start environment. It consists of 3 Masters and 5 Nodes. We further subdivide the nodes into two groups. Two of them get designated to run OpenShift's router and image registry. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:https://docs.openshift.com/container-platform/latest/admin_guide/scheduler.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the sample inventory file at the bottom of this doc to see how those labels are assigned.
 
-If adding those entries is problematic, a quick DNS solution for OpenShift is to use dnsmasq.
+NOTE: For more information on these concepts and components, see our link:/playbooks/fundamentals/building_blocks_openshift{outfilesuffix}[Building Blocks of OpenShift] doc.
 
-=== Node Sizing
+== Before You Begin
 
-The Offcial Documentation lists some link:https://docs.openshift.com/enterprise/3.0/admin_guide/install/prerequisites.html#system-requirements[minimal system requirements] for OpenShift masters and nodes. Beyond that, there are several things to consider when deciding on the sizing for your nodes.
+Before jumping into an install of OpenShift, there are a few Architectural decisions and planning steps to go through. We attempt to outline them here.
 
-==== Number of Nodes & Overall Environment Size
+=== Decide on Load Balancing Approach
 
-When deciding how to size nodes, it's helpful to have an idea of the final size of your environment. This is important because knowing the total amount of resources your workloads will consume will help to dictate the amount of capacity loss your environment can handle. This is especially relevant in smaller environments, where the loss of one node could have significant impact on the performance and capacity of your overall environment. It's a good rule of thumb for environment sizing is to take the max expected total workload size and add 30% to that. This leaves about 10% for overhead on your nodes, plus 20% extra to account for node failure.
+In order to run a fully HA OpenShift cluster, load balancing will be required between both the 3 master hosts, and the 2 infrastructure node hosts. We recommend choosing one of the following options:
 
-NOTE: This applies to _real_ environments (i.e. _Dev_, _QA_, _Prod_) where we care about handling failure. Lab or sandbox environments will work just fine using the minimal recommendations.
+==== Option 1: Integrate with an External Loadbalancer (Recommended)
 
-==== Type of Workload
+Even if you don't go this route initially, we highly recommend you plan to eventually bring an Enterprise-grade load balancer into your OpenShift environment. The primary reason we recommend this is for failover. Most Enterprise load balancers have built-in, proven capabilities to fail over a single VIP between two or more physical or virtual appliances. While this _can_ be done with software load balancers, like HAProxy, the resiliency and management simplicity just isn't quite the same.
 
-Depending on the types of Workloads you expect to run in OpenShift, you may want to cater certain nodes to certain workload types. For example, computational workloads may want to run on nodes that have a higher CPU-to-Memory ratio (say 1 Core to 2 GB), while legacy Java applications that have a large starting memory footprint but low transactions may be more efficiently run with higher memory and low CPU counts. Nodes in OpenShift do not all need to be the same size, and using Topology Rules within the Scheduler, you can create separate groups of Nodes catered to different workload profiles.
+To integrate with an external load balancer, at minimum, you'll need to create:
 
-If you expect to support a healthy mix of different workload types and sizes, then its most likely going to be best to pick a balanced middle ground and allow the Scheduler to fit workloads where they will be most appropriate.
+* A passthrough VIP and back-end pool for the Master hosts
+* A passthrough VIP and back-end pool for the Infrastructure hosts
 
-==== Node Limit
+See our link:/playbooks/installation/load_balancing{outfilesuffix}[Integrating External Loadbalancers] guide for more details on this.
 
-Kubernetes, and therefore OpenShift has a logical limit to the number of nodes that can be provisioned in a single cluster (single OpenShift installation). We have seen test configurations of roughly 250 nodes. This is expected to increase with future releases (3.1, etc.).
+==== Option 2: Use the Integrated HAProxy Balancer
 
-The logical limit for Nodes in a cluster might sway administrators of large clusters to increase node size in order to increase the total capacity a Cluster can support
+The OpenShift installer has the ability to configure a Linux host has a load balancer for your master servers. This has the disadvantage of being a single point of failure out of the box, and also doesn't meet the need for loadbalancing the infrastructure nodes. Additional, manual work will be needed post-install to rectify these shortcomings. Again, ultimately we recommend you go with Option 1, but this is a reasonable workaround so that you can continue with the install.
 
-=== Firewall Considerations
-Ansible playbook will manage the host-based firewall configuration.  If you have a segregated network topology (or if your environment has host-to-host external firewall rules), you should consider the following: 
+=== Provision Servers
 
-[width="40%",frame="topbot",options="header"]
-|========================================================
-| Port | Protocol | Source-to-Dest | Description 
-| 4789 | UDP      | Node-to-Node          | required between nodes for SDN communication between pods on separate hosts  
-| 53   | TCP/UDP  | Nodes-to-Master       | On openshift master server. Which provides DNS services within the environment  
-| 4789 | UDP      | Nodes-to-Master       | required between nodes for SDN communication between pods on separate hosts  
-| 53   | TCP/UDP  | Master-to-Master      | On openshift master server. Which provides DNS services within the environment  
-| 4789 | UDP      | Master-to-Master      | required between nodes for SDN communication between pods on separate hosts  
-| 4001 | TCP/UDP  | Master-to-Master      | Master: ETCD. accepts changes in state  
-| 7001 | TCP      | Master-to-Master      | Etcd requires 7001 between masters as well, which is used for leader election and peering connections.  
-| 10250 | TCP      | Master-to-Nodes      | on the minons(Kublet), master proxies to nodes via kubelet for things like `oc logs` or `oc exec`
-| 8443 | TCP      | External-to-Master(s) | To allow API updates via cli, GUI or REST  
-|========================================================
+The Smart Start architecture requires the following Servers(VMs) be provisioned:
 
-You should also review the following KB https://access.redhat.com/solutions/1520653
+* 3 _Masters_
+  ** RHEL 7.2 minimal installation
+  ** 8 GB Memory
+  ** 2 Cores
+  ** 30 GB Root Drive
+  ** An additional 5 GB disk or partition mounted at /var/lib/etcd
+* 2 _Infrastructure Nodes_
+  ** RHEL 7.2 minimal installation
+  ** 8 GB Memory
+  ** 4 Cores
+  ** 30 GB Root Drive
+  ** An additional 20 GB disk or partition mounted at /var/lib/origin
+  ** An additional 50 GB disk, unformatted and unmounted
+* 3 _Application Nodes_
+  ** 16 GB Memory
+  ** 4 Cores
+  ** 30 GB Root Drive
+  ** An additional 20 GB disk or partition mounted at /var/lib/origin
+  ** An additional 50 GB disk, unformatted and unmounted
+* (Optional) A Load Balancer host, if you plan to use Option 2 for Load Balancing, per the above section
+  ** 2 cores
+  ** 4 GB Memory
+  ** 10 GB Root Drive
 
-==== Questions to Ask
+NOTE: We chose the resource sizing above based on some reasonable starting sizes for hosts based on our experiences in the field. Before building further environments, it is important to go through a real production sizing exercise. For more information on how we recommend going about this, see our link:/playbooks/operationalizing/environment_sizing{outfilesuffix}[Environment Sizing Guide].
 
-. What is the total workload landscape?
-. What is the CPU and memory footprint of to-be-migrated workloads?
-. What is the platform type (bare metal, virtualized, IaaS)? (Failure is more difficult to handle in bare metal circumstances and may require more nodes)
-. Can all workloads run on the same nodes or do you require segregation?
+NOTE: We recommend segregating local disks this way in order to provide more stability to the separate components that will write to these locations. For more information about why we configure local storage this way, read link:/playbooks/operationalizing/local_storage{outfilesuffix}[Considerations for Configuring Local Storage on OpenShift Hosts]
 
-=== Storage Considerations
+Additionally, the following is assumed about the environment OpenShift is being installed into:
 
-Without the proper protections in place (through either Disk partitioning or volume groups), we leave ourselves at risk that a component or service running on the host OS could potentially fill the disk, preventing either of these from writing to disk and corrupting the OSE install.
+* An external load balancer is available for use to load balance to the *Master* and *Infrastructure Node* servers
+* An external DNS infrastructure is available for creating hostnames for the servers, as well as a wildcard entry for application traffic routing
+* An external storage infrastructure capable of providing NFS volumes
 
-==== OpenShift Storage Requirements
+NOTE: For more information, see the link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html[Official Documentation regarding OpenShift Installation Prerequisites].
 
-There are two main components of OpenShift that require specialized storage considerations to ensure environment stability. These components are the OpenShift DataStore (etcd) and the Container Platform (Docker).
+=== Configure DNS
 
-===== DataStore (etcd)
+OpenShift expects properly configured DNS in order to work properly. The assumption of this document is that you will be using some external DNS system (Corporate DNS) to do this. If you don't have an existing DNS system or don't plan to use it for the purpose of this setup, then you will have to create one. We recommend creating a bind server if this will be a permanent setup, or using DNSMasq as a temporary workaround if you plan to ultimately tie into a Corporate DNS in the future.
 
-OpenShift uses a key-value pair datastore called etcd to manage environment state. Etcd writes this data to `/var/lib/openshift`. While the data needs of the datastore are by no means large, it is important that it be given dedicated storage in order to protect it from other items (especially logs) filling up the disk, which could cause corruption of the etcd data.
+At a minimum the following needs to be true for all OpenShift hosts:
 
-IMPORTANT: When running multiple instances of etcd in a cluster configuration, etcd runs as a standalone process, rather than being embedded in the `openshift-master` service. When this is the case, etcd writes to `/var/lib/etcd` rather than `/var/lib/openshift`, and therefore the configurations should be adjusted accordingly.
+* Each server has a hostname, resolvable in DNS
+* Each server's `hostname` command returns its fully qualified domain name (FQDN)
+* Each server can ping all other servers via a hostname in DNS (no /etc/hosts entries)
+* A wildcard DNS entry exists under a unique subdomain (i.e. `*.cloudapps.example.com`) that resolves to either the IP addresses (an A record) or the hostnames (a CNAME record) of the two _Infrastructure Nodes_
 
-The size of the partition can be relatively small. For a lab or sandbox environment, 2GB should be plenty of disk. For larger, more permanent environments which will support multiple teams/users, 5 - 10GB may be needed.
+NOTE: For more information, see the link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html#prereq-dns[Official Documentation Regarding DNS Requirements].
 
-====== Backups, Shared Storage & Replication
 
-Etcd datastores can be clustered in order to prevent loss of data in the event of a failure. In this case etcd handles its own data replication, so there is no need for shared storage or external data replication. Standard backup practices can and should be observed here, but nothing more is needed.
-
-===== Container Platform (Docker)
-
-Docker is the current container platform used by OpenShift. Docker uses local storage on each node to store images and active containers. The amount of storage needed depends on the size of the node and the number and size of the containers expected to be supported by each node. It would not be uncommon for Nodes to support anywhere from 20 - 100 containers depending on the environment, and container images can be sizeable. We recommend planning for a reasonably large image size of 500mb. That means a partition or volume size of 20 - 50GB is required per node.
-
-Docker's data directories live in `/var/lib/docker`, so the disk space should be allocated to that mount point. As with the OpenShift DataStore, it is highly recommended to give Docker a dedicated partition or volume so as to protect it from over-crowding by logging or other administrative services.
-
-NOTE: This section is referring to local storage used by Docker to run containers on a host. This *DOES NOT* refer to running a Docker registry.
-
-====== Backups, Shared Storage & Replication
-
-Nodes are considered stateless in a Kubernetes architecture, meaning that in the event of a loss of a Node, the Scheduler will immediately replace lost containers elsewhere in the environment. Therefore, no specialized sharing or replication is required at the node level to account for loss.
-
-====== Configuration Considerations
-
-The `docker` package ships with a command for setting up docker storage, `docker-storage-setup`. This script expects us to create a volume group for it in order to point it to the storage we've allocated.
-
-==== Storage Configuration Implementation
-
-===== Local Disk Config
-
-Create the following partitions (disk partitions or LVMs) on the system disk image:
-
-* Boot partition (`/boot`)
-* OS Root (`/`)
-* etcd storage (`/var/lib/openshift` or `/var/lib/etcd`)
-* Log storage (`/var/log`) - Optional, but recommended
-
-===== Docker Storage Config
-
-The OpenShift docs discuss link:https://docs.openshift.com/enterprise/3.0/install_config/install/prerequisites.html#configuring-docker-storage[three different options for configuring docker storage]. We consider options A and B to be "production ready".
-
-For option A: Attach an additional volume or block device to each node for Docker storage (20-50 GB)
-
-For option B: Leave unallocated space (20 - 50 GB) on your local disk. From the unallocated space, create the following volume group:
-
-* `docker-vg`
-
-TIP: For more information and examples about docker-storage-setup options, see link:https://access.redhat.com/articles/1492923[Managing Storage with Docker Formatted Containers on Red Hat Enterprise Linux and Red Hat Enterprise Linux Atomic Host] in the Red Hat Knowledge Base
-
-===== Example: Configuring Host Storage with Docker Storage Option A
-
-To account for the above DataStore & Container storage needs, we are going to attach a single 25 GB volume and partition it to accommodate our needs. Here is a sample vdb layout for the disk:
-
-NOTE: The following must be done on ALL NODES, including the Master. However, if you are not going to be using the master as a node, then a minimal volume size can be used, as no containers will be hosted. Also, for NODES that are NOT MASTERS, the second DataStore partition is not needed.
-
-[source,bash]
-----
-# NOTE: actual numeric values will be different for each running system, but the steps outlined should be the same for all
-
->> fdisk /dev/vdb
-
-Command (m for help): n <enter>
-Partition type:
-   p   primary (0 primary, 0 extended, 4 free)
-   e   extended
-Select (default p): p <enter>
-Partition number (1-4, default 1):  <enter>
-First sector (2048-16777215, default 2048): <enter>
-Using default value 2048
-Last sector, +sectors or +size{K,M,G} (2048-16777215, default 16777215): +20G <enter>
-Partition 1 of type Linux and of size 20 GiB is set
-
-Command (m for help): n <enter>
-Partition type:
-   p   primary (1 primary, 0 extended, 3 free)
-   e   extended
-Select (default p): p <enter>
-Partition number (2-4, default 2): <enter>
-First sector (12584960-16777215, default 12584960): <enter>
-Using default value 12584960
-Last sector, +sectors or +size{K,M,G} (12584960-16777215, default 16777215): +2G <enter>
-Partition 2 of type Linux and of size 2 GiB is set
-
-Command (m for help): t <enter>
-Partition number (1,2, default 2): 1 <enter>
-Hex code (type L to list all codes): 8e <enter>
-Changed type of partition 'Linux' to 'Linux LVM'
-
-Command (m for help): t <enter>
-Partition number (1,2, default 2): 2 <enter>
-Hex code (type L to list all codes): 8e <enter>
-Changed type of partition 'Linux' to 'Linux LVM'
-
-Command (m for help): w <enter>
-The partition table has been altered!
-
-Calling ioctl() to re-read partition table.
-Syncing disks.
-----
-
-We then create the volume group, install docker, and run `docker-storage-setup`.
-
-[source,bash]
-----
-pvcreate /dev/vdb1
-vgcreate vg-docker /dev/vdb1
-
-cat << EOF > /etc/sysconfig/docker-storage-setup
-VG=vg-docker
-SETUP_LVM_THIN_POOL=yes
-EOF
-
-# Let docker setup the storage based on the above config file
-docker-storage-setup
-----
-
-Finally, the DataStore, we setup the volume group, create data directory, and mount it.
-[source,bash]
-----
-pvcreate /dev/vdb2
-vgcreate vg-openshift /dev/vdb2
-lvcreate -l 100%FREE -n lv-ose vg-openshift
-
-mkfs.xfs -q -f /dev/vg-openshift/lv-ose
-
-mkdir -p /var/lib/openshift
-echo "/dev/vg-openshift/lv-ose        /var/lib/openshift              xfs defaults 0 0" >> /etc/fstab
-
-mount -a
-----
-
-===== Example: Configuring Host Storage with Docker Storage Option B
-
-In this example, we have a device (vdc) with available space that we will dedicate to vg-docker which will be used by docker-storage-setup (identified in /etc/
-sysconfig/docker-storage-setup)
-
-First, review the current configuration of the device
-[source,bash]
-----
-parted /dev/vdc print
-Model: Virtio Block Device (virtblk)
-Disk /dev/vdc: 21.5GB
-Sector size (logical/physical): 512B/512B
-Partition Table: gpt
-Disk Flags:
-
-Number  Start   End     Size    File system  Name     Flags
- 1      1049kB  10.0GB  9999MB               primary  lvm
-----
-
-Add a partition, using the remainder of the device.
-[source,bash]
-----
-
-parted /dev/vdc mkpart primary ext3 10g 100% set 2 lvm on
-Information: You may need to update /etc/fstab.
-
-parted /dev/vdc print
-Model: Virtio Block Device (virtblk)
-Disk /dev/vdc: 21.5GB
-Sector size (logical/physical): 512B/512B
-Partition Table: gpt
-Disk Flags:
-
-Number  Start   End     Size    File system  Name     Flags
- 1      1049kB  10.0GB  9999MB               primary  lvm
- 2      10.0GB  21.5GB  11.5GB               primary  lvm
-----
-
-Create the PV and a VG using that PV.
-[source,bash]
-----
-pvcreate /dev/vdc2
-  Physical volume "/dev/vdc2" successfully created
-vgcreate vg-docker /dev/vdc2
-  Volume group "vg-docker" successfully created
-----
-
-Update the docker-storage-setup file that is used as a guideline and run the docker-storage-setup command.
-[source,bash]
-----
-cat << EOF > /etc/sysconfig/docker-storage-setup
-VG=vg-docker
-SETUP_LVM_THIN_POOL=yes
-EOF
-
-# Let docker setup the storage based on the above config file
-docker-storage-setup
-----
-
-== Host Preparation
-
-Official Documenation for link:https://docs.openshift.com/enterprise/3.0/admin_guide/install/prerequisites.html#host-preparation[Host Preparation].
+== Prepare Hosts for Install
 
 Overall requirements for Installing OpenShift are very simple:
 
-* Install Red Hat provided Red Hat Enterprise Linux 7.1 image
+* Install Red Hat provided Red Hat Enterprise Linux 7.x image
 ** If the environment uses a custom image, we recommend testing the OSE install with the Red Hat provided image first, then incrementally adding environment-specific image customizations with an eye toward the following:
 *** Assess whether the image customization is still appropriate and necessary (to avoid changes inherited from earlier circumstances that are no longer relevant)
 *** Test each customization to make sure it allows normal OSE operation and mitigate if necessary
@@ -282,38 +110,42 @@ Overall requirements for Installing OpenShift are very simple:
 ** rhel-7-server-rpms
 ** rhel-7-server-extras-rpms
 ** rhel-7-server-optional-rpms
-** rhel-7-server-ose-3.0-rpms
+** rhel-7-server-ose-3.x-rpms
 * If you plan to Install HA Masters, an additional channel is needed on Master Nodes
 ** rhel-7-for-ha-server-rpms
-* Remove all `NetworkManager*` packages
-
-.Update Needed
-****
-Verify this step is still needed in the official documentation
-****
-* Install the following extra packages: `yum install wget git net-tools bind-utils iptables-services bridge-utils`
-* Optional: install the following diagnostic tools: `yum install lsof strace nc telnet`
+* Install the following extra packages: `yum install NetworkManager wget git net-tools bind-utils iptables-services bridge-utils`
+* Optional: install the following diagnostic tools: `yum install lsof strace nc telnet mlocate`
 * Fully update all packages: `yum -y update`
-* Configure Storage according to <<storage-considerations>>
-* Sync SSH keys from masters to all nodes (HINT: Here's a script to do this: TODO)
+* Ensure NetworkManager is running and enabled
+** `systemctl status NetworkManager`
+** `systemctl enable NetworkManager`
+** `systemctl start NetworkManager`
+* Ensure time is in sync on all nodes
+** chrony: is the default package in RHEL 7.
+----
+    yum install -y chrony      # to install  
+    systemctl enable chronyd   # to enable 
+    systemctl start chronyd    # to start 
+    chronyc tracking           # To get information about the main time reference
+    chronyc sources -v         # equivalent information to the ntpq
+    ntpdate pool.ntp.org       # To quickly synchronize a server`
+----
+* Sync SSH keys from masters to all nodes (Here's how: https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html#ensuring-host-access)
+* Ensure company CA's are installed on all the nodes in the OCP Cluster
+** Copy company CA's here `/etc/pki/ca-trust/source/anchors` 
+** Install company CA's `update-ca-trust`
 
-NOTE: Installing High Availability Masters requires the _High Availability for RHEL 7 Add-on_. This is a separate subscription from RHEL 7 or OpenShift so make sure you have acquired the proper subscriptions ahead of time.
+NOTE: For more information, see the link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html#host-preparation[Official Documenation for Host Preparation].
 
-== Ansible Installer
+== Configure and Run the Ansible Installer
 
-We highly recommend using the link:https://docs.openshift.com/enterprise/3.0/admin_guide/install/advanced_install.html#installing-ansible[Advanced Installation method using Ansible] for basically any multi-node installation. The OpenShift Quick Installer is available and useful for quick demos and short-lived installs, but does not support the customization needed to install in many real environments.
+We highly recommend using the link:https://docs.openshift.com/container-platform/latest/install_config/install/advanced_install.html#installing-ansible[Advanced Installation method using Ansible] for basically any multi-node installation. The OpenShift Quick Installer is available and useful for quick demos and short-lived installs, but does not support the customization needed to install in many real environments.
 
 The instructions in the Installer Guide will get you through most basic installs, but there are few additional things to know and be aware of to really understand the installer.
 
-=== Installer Source Code
+=== The Ansible Inventory File
 
-The Ansible Installer source code is downloaded from link:https://github.com/openshift/openshift-ansible[GitHub]. At the time of writing this document, the docs instruct you to pull down the Master (main) branch of the source code. Changes and bug fixes are merged into this repository on a daily basis, so the installer does not follow the same release cycle that the OpenShift bits do. This means that there are chances that new bug fixes that are merged in could potentially break the installer which had just been working for you the day before. It is important to remember this when you are planning a large environment deployment.
-
-IMPORTANT: Our recommendation is to keep a copy of the installer you use to install your environment for re-use when adding nodes or trying to replicate your environment build. When it's time to upgrade to do a new release of the env, you should then pull down the latest installer as a starting point.
-
-=== The Ansible Hosts File
-
-While the Install Guide shows some basic examples for link:https://docs.openshift.com/enterprise/3.0/admin_guide/install/advanced_install.html#configuring-ansible[Configuring Ansible Hosts], there are many more options and variables that can be used to further customize your install. We attempt to break down a few of the common ones here.
+While the Install Guide shows some basic examples for link:https://docs.openshift.com/container-platform/latest/install_config/install/advanced_install.html#configuring-ansible[Configuring Ansible Hosts], there are many more options and variables that can be used to further customize your install. We attempt to break down a few of the common ones here.
 
 ==== Explicitly Set Hostnames and IPs
 
@@ -324,37 +156,73 @@ In many cloud environments, it's common for you to assign hostnames to your host
 master.ose.example.com openshift_hostname=master.ose.example.com openshift_public_ip=10.3.4.5
 ----
 
-.Feedback or Contribution Needed
-****
-Need to add DNS subdomain, node labeling, master schedulable flag
-****
+==== Configure Corporate Proxy Settings
 
-== Automating the Install
+If your OpenShift environment will need to go through a Web Proxy, you'll want to configure that proxy information in your inventory file.
 
-.Feedback or Contribution Needed
-****
-Things to talk about
+----
+openshift_http_proxy=http://proxy.example.com:1234
+openshift_https_proxy=http://proxy.example.com:1235
+openshift_no_proxy=localhost,127.0.0.1 # The Installer will automatically append hosts and ips of the masters and nodes to this list
+----
 
-* Scripting options
-** Ansible
-** Bash (show osc-install script)
-****
+==== Example Inventory File
 
-== Troubleshooting
+Ultimately, your inventory file for the OpenShift installer should look something like this:
 
-.Feedback or Contribution Needed
-****
-Things to talk about
+----
+# Create an OSEv3 group that contains the master, nodes, etcd, and lb groups.
+# The lb group lets Ansible configure HAProxy as the load balancing solution.
+# Comment lb out if your load balancer is pre-configured.
+[OSEv3:children]
+masters
+nodes
+etcd
+lb
 
-* Hostname issue
-****
+# Set variables common for all OSEv3 hosts
+[OSEv3:vars]
+ansible_ssh_user=root
+deployment_type=openshift-enterprise
 
-== Parking Lot Items
+# Uncomment the following to enable htpasswd authentication; defaults to
+# DenyAllPasswordIdentityProvider.
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
 
-.Feedback or Contribution Needed
-****
-This is a list of items that we would like contributions on:
+# Native high availbility cluster method with optional load balancer.
+# If no lb group is defined installer assumes that a load balancer has
+# been preconfigured. For installation the value of
+# openshift_master_cluster_hostname must resolve to the load balancer
+# or to one or all of the masters defined in the inventory if no load
+# balancer is present.
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname=master-external-lb.example.com
+openshift_master_cluster_public_hostname=master-internal-lb.example.com
 
-* HA Masters need High Availability Add-On
-* Adding Nodes
-****
+# override the default controller lease ttl
+#osm_controller_lease_ttl=30
+
+# host group for masters
+[masters]
+master1.example.com
+master2.example.com
+master3.example.com
+
+# host group for etcd
+[etcd]
+master1.example.com
+master2.example.com
+master3.example.com
+
+# Specify load balancer host
+# Uncomment these two lines if you didn't integrate with an external LB
+#[lb]
+#lb.example.com
+
+# host group for nodes, includes region info
+[nodes]
+master[1:3].example.com openshift_node_labels="{'region': 'masters', 'zone': 'default'}"
+infranode[1:2].example.com openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+node1.example.com openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
+node2.example.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
+----

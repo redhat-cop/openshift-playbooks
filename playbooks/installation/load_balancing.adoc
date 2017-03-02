@@ -67,18 +67,18 @@ Requirements for a Full Integration include:
 ** Create virtual hosts
 ** Delete virtual hosts
 ** Add and configure certificates
-* One or more link:https://docs.openshift.com/enterprise/3.0/admin_guide/routing_from_edge_lb.html#establishing-a-tunnel-using-a-ramp-node[OpenShift Ramp Nodes] by which access to the internal SDN is provided to the BIG-IP(TM)
+* One or more link:https://docs.openshift.com/container-platform/latest/install_config/routing_from_edge_lb.html#establishing-a-tunnel-using-a-ramp-node[OpenShift Ramp Nodes] by which access to the internal SDN is provided to the BIG-IP(TM)
 
 In this way, the OpenShift router pods work as configuration agents for the F5. Rather than handling incoming web traffic, the pods just watch the OpenShift API for new routes to be created and pass that configuration information up to the F5 via its API to configure routes and handle traffic at the load balancer level.
 
 Through the use of tunnels provided by ramp nodes, the F5 BIG-IP(TM) is given the ability to directly send traffic to OpenShift pods.
 
-TIP: By default, the use of a Ramp Node creates a single point of failure. To avoid this, you must configure a link:https://docs.openshift.com/enterprise/3.1/install_config/routing_from_edge_lb.html#establishing-a-tunnel-using-a-ramp-node[highly available ramp node].
+TIP: By default, the use of a Ramp Node creates a single point of failure. To avoid this, you must configure a link:https://docs.openshift.com/container-platform/latest/install_config/routing_from_edge_lb.html#establishing-a-tunnel-using-a-ramp-node[highly available ramp node].
 
 image::/images/load_balancing_full.jpg[Full Integration]
 
 For more information on configuration, view the routing section of the official OpenShift Enterprise docs:
-https://docs.openshift.com/enterprise/3.1/install_config/install/deploy_router.html#deploying-the-f5-router
+https://docs.openshift.com/container-platform/latest/install_config/router/f5_router.html
 
 == Load Balancing For HA Master Infrastructure
 
@@ -104,7 +104,7 @@ image::/images/load_balancing_masters_simple.png[Simple Passthrough for OpenShif
 * Domain Name for VIP registered in DNS
   ** Domain name will become value of both `openshift_master_cluster_public_hostname` and `openshift_master_cluster_hostname` in OpenShift Installer
   ** For this example, we will give our VIP an FQDN: *paas.myorg.com*
-* Master hosts created and prepped per link:https://docs.openshift.com/enterprise/3.1/install_config/install/prerequisites.html[Install Prerequisites]
+* Master hosts created and prepped per link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html[Install Prerequisites]
 
 For the purposes of this example, we will use the hosts specified in the table below
 
@@ -183,7 +183,7 @@ node02.myorg.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
 
 ===== 3. Run the Advanced Installer
 
-Run the installer per the instructions in the link:https://docs.openshift.com/enterprise/3.1/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Insallation Guide]
+Run the installer per the instructions in the link:https://docs.openshift.com/container-platform/latest/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Insallation Guide]
 
 === Custom Certificate SSL Termination (Production)
 
@@ -211,7 +211,7 @@ image::/images/load_balancing_masters_prod.png[Production Ready Load Balancing f
 * FQDN for each VIP registered in DNS
   ** FQDN for _external_ VIP will become value of `openshift_master_cluster_public_hostname` in OpenShift Installer (i.e. paas.myorg.com)
   ** FQDN for _internal_ VIP will become value of `openshift_master_cluster_hostname` in OpenShift Installer (i.e. paas-internal.myorg.com)
-* Master hosts created and prepped per link:https://docs.openshift.com/enterprise/3.1/install_config/install/prerequisites.html[Install Prerequisites]
+* Master hosts created and prepped per link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html[Install Prerequisites]
 
 For the purposes of this example, we will use the hosts specified in the table below
 
@@ -273,7 +273,7 @@ Finally, provide the generated `internal-vip.crt` and `internal-vip.key` to the 
 
 ===== 2. Setup the Installer
 
-Before running the installer, you'll need to be provided the certificate and keyfile that will be hosted on the External VIP, so that they can be added to OpenShift's trust. Those files must be placed somewhere on the host that will run the installer.
+To set up the install, we need to create a host inventory file for the ansible-based installer.
 
 [source,bash]
 ----
@@ -326,4 +326,4 @@ node02.myorg.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
 
 ===== 3. Run the Advanced Installer
 
-Run the installer per the instructions in the link:https://docs.openshift.com/enterprise/3.1/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Installation Guide]
+Run the installer per the instructions in the link:https://docs.openshift.com/container-platform/latest/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Installation Guide]
