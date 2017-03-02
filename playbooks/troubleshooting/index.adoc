@@ -2,4 +2,5 @@
 ---
 = OSE 3 TroubleShooting
 
+* link:troubleshooting_guide{outfilesuffix}[Troubleshooting Guide]
 * link:known_bugs{outfilesuffix}[Known Bugs]

@@ -113,10 +113,27 @@ Overall requirements for Installing OpenShift are very simple:
 ** rhel-7-server-ose-3.x-rpms
 * If you plan to Install HA Masters, an additional channel is needed on Master Nodes
 ** rhel-7-for-ha-server-rpms
-* Install the following extra packages: `yum install wget git net-tools bind-utils iptables-services bridge-utils`
-* Optional: install the following diagnostic tools: `yum install lsof strace nc telnet`
+* Install the following extra packages: `yum install NetworkManager wget git net-tools bind-utils iptables-services bridge-utils`
+* Optional: install the following diagnostic tools: `yum install lsof strace nc telnet mlocate`
 * Fully update all packages: `yum -y update`
+* Ensure NetworkManager is running and enabled
+** `systemctl status NetworkManager`
+** `systemctl enable NetworkManager`
+** `systemctl start NetworkManager`
+* Ensure time is in sync on all nodes
+** chrony: is the default package in RHEL 7.
+----
+    yum install -y chrony      # to install  
+    systemctl enable chronyd   # to enable 
+    systemctl start chronyd    # to start 
+    chronyc tracking           # To get information about the main time reference
+    chronyc sources -v         # equivalent information to the ntpq
+    ntpdate pool.ntp.org       # To quickly synchronize a server`
+----
 * Sync SSH keys from masters to all nodes (Here's how: https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html#ensuring-host-access)
+* Ensure company CA's are installed on all the nodes in the OCP Cluster
+** Copy company CA's here `/etc/pki/ca-trust/source/anchors` 
+** Install company CA's `update-ca-trust`
 
 NOTE: For more information, see the link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html#host-preparation[Official Documenation for Host Preparation].
 
