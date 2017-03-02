@@ -101,10 +101,15 @@ image::/images/load_balancing_masters_simple.png[Simple Passthrough for OpenShif
 * Load Balancer VIP pre-created
   ** Configured for SSL Passthrough
   ** VIP must listen on port 8443, and proxy back to all master hosts on port 8443
+  ** WebSockets Enabled
 * Domain Name for VIP registered in DNS
   ** Domain name will become value of both `openshift_master_cluster_public_hostname` and `openshift_master_cluster_hostname` in OpenShift Installer
   ** For this example, we will give our VIP an FQDN: *paas.myorg.com*
 * Master hosts created and prepped per link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html[Install Prerequisites]
+
+WARNING: The OpenShift Web Console heavily utilizes WebSockets for many of the rich interface features like tailing pod logs, watching a deployment, or getting a terminal of a pod. While most enterprise load balancers support Web Sockets, they often need to be explicitly enabled for a particular VIP/Profile/etc.
+
+WARNING: The OpenShift Web Console heavily utilizes WebSockets for many of the rich interface features like tailing pod logs, watching a deployment, or getting a terminal of a pod. While most enterprise load balancers support Web Sockets, they often need to be explicitly enabled for a particular VIP/Profile/etc.
 
 For the purposes of this example, we will use the hosts specified in the table below
 
@@ -204,6 +209,7 @@ image::/images/load_balancing_masters_prod.png[Production Ready Load Balancing f
       **** A trusted certificate from your org's PKI
     *** VIP must listen on port 8443, and proxy back to all master hosts on port 8443
     *** For this example, we will give our External VIP a domain name: _paas.myorg.com_
+    *** WebSockets Enabled
   ** Internal VIP (will be the same configuration as the Simple integration option above)
     *** Configured for SSL Passthrough (see step 1 below)
     *** VIP must listen on port 8443, and proxy back to all master hosts on port 8443
@@ -212,6 +218,10 @@ image::/images/load_balancing_masters_prod.png[Production Ready Load Balancing f
   ** FQDN for _external_ VIP will become value of `openshift_master_cluster_public_hostname` in OpenShift Installer (i.e. paas.myorg.com)
   ** FQDN for _internal_ VIP will become value of `openshift_master_cluster_hostname` in OpenShift Installer (i.e. paas-internal.myorg.com)
 * Master hosts created and prepped per link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html[Install Prerequisites]
+
+WARNING: The OpenShift Web Console heavily utilizes WebSockets for many of the rich interface features like tailing pod logs, watching a deployment, or getting a terminal of a pod. While most enterprise load balancers support Web Sockets, they often need to be explicitly enabled for a particular VIP/Profile/etc.
+
+WARNING: The OpenShift Web Console heavily utilizes WebSockets for many of the rich interface features like tailing pod logs, watching a deployment, or getting a terminal of a pod. While most enterprise load balancers support Web Sockets, they often need to be explicitly enabled for a particular VIP/Profile/etc.
 
 For the purposes of this example, we will use the hosts specified in the table below
 
@@ -326,4 +336,63 @@ node02.myorg.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
 
 ===== 3. Run the Advanced Installer
 
-Run the installer per the instructions in the link:https://docs.openshift.com/container-platform/latest/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Installation Guide]
+-Run the installer per the instructions in the link:https://docs.openshift.com/container-platform/latest/install_config/install/advanced_install.html#running-the-advanced-installation[Advanced Installation Guide]
+
+== Guides for Specific Load Balancer Implementations
+
+=== 1. Load Balancing in Amazon Web Services
+
+When deploying your HA OpenShift cluster into AWS, there are a couple
+of things to consider. Amazon provides its own Elastic Load Balancer
+objects you can associate with a group of instances. They work by 
+providing an enterprise-level load balancer that sits outside of 
+your instances. In this case, it would load balance across the OSE 
+masters. Theoretically, this should work
+seamlessly but in reality there are issues with how AWS handles load
+balancing. 
+
+CAUTION: This procedure will walk through the process of setting up the ELB but does not recommend it if you intend to rely on features in the dashboard such as remote console and logs.
+
+1. Create ELB and associate it with your instances. Follow the directions on Amazon to define and register your instances with the load balancer.
+
+  http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/elb-getting-started.html
++
+In a typical setup, you would configure an ELB with a public-facing interface.
+This generates a public DNS name that clients can see to send requests.
+
+2. Configure SSL/TLS termination at the ELB
+
++
+Because communication to the master and API takes place over secured port 8443, the ELB
+would need to be aware of this.
++
+NOTE: Because of the way ELB distributes loads, there is no guarentee of session persistance
+between masters. Every single web request can be re-directed to a different OSE master, completely
+destroying any stateful sessions. Because of this, you will need to configure TLS/SSL termination
+in the ELB
+
++
+The ELB needs to be aware of the of the SSL certificate in use by the OSE master in order to inspect
+the HTTP session for session persistance. Follow the instructions on http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/elb-update-ssl-cert.html to upload your OSE master certificate into AWS.
+
+3. Configure ELB for "sticky-sessions"
+
++
+We will need to configure AWS ELB to persist HTTPS sessions via the "ssn" cookie.
+See SessionName under master-config.yaml
+  https://docs.openshift.com/enterprise/3.2/install_config/configuring_authentication.html
+
++
+Follow the "Application-Controlled Session Stickiness" procedure in http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/elb-sticky-sessions.html to set your ELB to be aware of the OpenShift session.
+
++
+IMPORTANT: Configuring an ELB in this way makes general GUI and API usage
+work as expected for the user. Everything running inside of OSE, including applications
+should run seamlessly. Although, some of the more dynamic 
+features of the GUI do not load properly.
+Specifically, the pod logging, and remote console features do not
+work at all. This is because much of the asynchronous web-content
+used in the OSE dashboard uses web-sockets. At this time, it seems
+ that AWS ELB does not currently support load-balancing websocket connections 
+at the session-layer. Until Amazon supports a more robust ELB, 
+we can only recommend using a HAProxy instance to do the load balancing.

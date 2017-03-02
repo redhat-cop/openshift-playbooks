@@ -55,6 +55,43 @@ Also configured in the LTM are two sets of load balancing pools. Load balancing 
 
 Once these two components have been defined, the virtual server associated to port 8443 can include the load balancing pool containing the set of master instances on port 8443. The virtual server associated to port 5000 can include the load balancing pool containing the set of node instance that contain running instances of the integrated HAProxy router to pass traffic to the Hawkular metrics services within the OpenShift cluster.
 
+===== HAProxy Configuration
+Software load balancer (HAProxy) can be used which Openshift provide if there is no F5. In this case, HAProxy play a role in both load balancer for multiple masters and a reverse proxy for hawkular metrics. The following HAProxy configuration is for hawkular metrics. (It should be added at the end of /etc/haproxy/haproxy.cfg file)
+
+[source]
+----
+# Example configuration of balancing the pool of masters 
+frontend  atomic-openshift-api
+   bind *:8443
+   default_backend atomic-openshift-api
+   mode tcp
+   option tcplog
+
+backend atomic-openshift-api
+   balance source
+   mode tcp
+   server      master0 192.168.x.x:8443 check
+   server      master1 192.168.x.y:8443 check
+   server      master2 192.168.x.z:8443 check
+
+# Example configuration for hawkular-metrics  
+frontend hawkular-metrics
+   bind *:5000
+   default_backend hawkular-metrics
+   mode tcp
+   option tcplog
+
+backend hawkular-metrics
+    balance source
+    mode tcp
+    option tcplog
+
+# Use physical ip for infra node
+    server infra1 10.x.x.x:443 check
+
+# If you have multiple nodes with routers deployed, you have to add all of them.
+#   server infra2 /10.x.x.y:443 check
+----
 
 ==== SSL Considerations
 
