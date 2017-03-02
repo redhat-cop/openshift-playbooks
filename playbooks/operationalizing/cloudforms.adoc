@@ -260,28 +260,31 @@ The following steps occurs during a SmartState container image analysis:
 CloudForms Control allows you to handle OpenSCAP features such as Policy. By default, there is one condition for container image. If OpenSCAP rule result has high severity,
 it fails to deploy any container using the image.
 
-~~~
+.Condition Expression
+--
 FIND Container Image.Openscap Rule Results : Result = "fail" CHECK ANY Severity = "High" 
-~~~
+--
 
 image::images/cloudforms-openscap-condition.png[title=CloudForms OpenSCAP Default Condition]
 
+
 == Chargeback for OpenShift Container Platform
-Red Hat CloudForms provides Chargeback feature allows administrator to caculate monetary projects/containers charges. Adminstrator create Chargeback rate based on mainly Compute or Storage.  In order to get Chargeback report, OpenShift have to deploy metrics and Cloudforms have to be integrated with OpenShift. Moreover, it takes couple of hours to gather data hence, it does not show any record during the time. Refer official document for [Chargeback](https://access.redhat.com/documentation/en-us/red_hat_cloudforms/4.2/html-single/monitoring_alerts_and_reporting/#sect_chargeback)
+Red Hat CloudForms provides Chargeback feature allows an administrator to calculate monetary projects/containers charges. The administrator creates Chargeback rate based on mainly Compute or Storage.  In order to get Chargeback report, OpenShift has to deploy metrics and Cloudforms have to be integrated with OpenShift. Moreover, it takes a couple of hours to gather data hence, it does not show any record during the time. Refer official document for link:https://access.redhat.com/documentation/en-us/red_hat_cloudforms/4.2/html-single/monitoring_alerts_and_reporting/#sect_chargeback[Chargeback]
+
 
 === Create Chargeback Rate
-In the CloudForms user interface, select *Cloud Intel* ==> *Chargeback* ==>  *Rates* ==> *Compute*. Click the *Configuration* button and then  *Add a new Chargeback Rate*.
-Give name to *Description* and choose *Currencies* then, click *Add*.
+In the CloudForms user interface, select *Cloud Intel* => *Chargeback* =>  *Rates* => *Compute*. Click the *Configuration* button and then  *Add a new Chargeback Rate*.
+Give a name to *Description* and choose *Currencies* then, click *Add*.
 
 
-image::images/Chargeback-Rate.png[title=CloudForms Chargeback Rate]
+image::images/Chargeback_Rate.png[title=CloudForms Chargeback Rate]
 
 
 == Report
-Red Hat CloudForms provides report tool. With this feature and Chargeback, administrator can get monetary charges grouped by project,container and so on.
+Red Hat CloudForms provides report tool. With this feature and Chargeback, an administrator can get monetary charges grouped by project, container and so on.
 
 === Create Custom Report
-In the CloudForms user interface, select *Cloud Intel* ==> *Report* ==>  *Reports*.  Click the *Configuration* button and then  *Add a new Report*.
+In the CloudForms user interface, select *Cloud Intel* => *Report* =>  *Reports*.  Click the *Configuration* button and then  *Add a new Report*.
 
 [cols="1,1,2", options=header"]
 .Columns Tab
@@ -298,7 +301,7 @@ In the CloudForms user interface, select *Cloud Intel* ==> *Report* ==>  *Report
 
 |Title
 |Inventory Team OpenShift Cost
-|This name will be used for Saved Reports menu*
+|This name will be used for *Saved Reports menu*
 
 |*Base the report on
 |Chargeback Container Images
@@ -311,7 +314,9 @@ In the CloudForms user interface, select *Cloud Intel* ==> *Report* ==>  *Report
 - Newtork I/O Used Cost
 - Total Cost
 |===
+image::images/report-chargeback-create-1.png[title=Create CloudForms Report for Chargeback 1]
 
+Click *Filter Tab*
 
 [cols="1,1,2", options=header"]
 .Filter Tab
@@ -326,7 +331,7 @@ In the CloudForms user interface, select *Cloud Intel* ==> *Report* ==>  *Report
 
 |Provider
 |Dev OpenShift
-|This is provider name. **Should be changed accoring to your environment**
+|This is provider name. **Should be changed according to your environment**
 
 
 |Container Image
@@ -339,17 +344,21 @@ In the CloudForms user interface, select *Cloud Intel* ==> *Report* ==>  *Report
 
 |===
 
-Click *Save*.
-
-image::images/report-chargeback-create-1.png[title=Create CloudForms Report for Chargeback 1]
 image::images/report-chargeback-create-2.png[title=Create CloudForms Report for Chargeback 2]
 
 
+Click *Save*.
+
+
+
+
 === Generating Report
-Now, there is a new custom report `Dev OSE Chargeback Inventory Team` under *My Company(All EVM Groups) ==> Custom*. On the report, click *Queue* button
+Now, there is a new custom report `Dev OSE Chargeback Inventory Team` under *My Company(All EVM Groups) => Custom*. On the report, click *Queue* button
 
 
-image::images/report-chargeback-queue.png[title=Queue CloudForms Report for Chargeback]
+image::images/report-chargeback-queue.png[title=CloudForms Custom Report for Chargeback]
 image::images/report-chargeback-result.png[title=CloudForms Result Report for Chargeback]
+
+
 
 
