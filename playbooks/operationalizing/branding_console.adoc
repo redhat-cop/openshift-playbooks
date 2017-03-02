@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-= Branding console
-=======
 ---
 ---
 = Branding the OpenShift Web Console 
->>>>>>> 90366d9bf9277a6a53c611ee7904aebab6e04d8d
 Jooho Lee <jlee@redhat.com>
 v1.0, 2016-03-16
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
@@ -169,11 +165,7 @@ NOTE: The indent space is remarkably important. Sometimes, master server can not
 ```
 
 === Web console logo
-<<<<<<< HEAD
-After login, it is allowed to modify anything on console style using extended `css/javascrpt/images`. https://docs.openshift.com/enterprise/3.1/install_config/web_console_customization.html[The official document] explain it in detail but it could take a little bit long time to configure due to yaml syntax of master-config.xml. Hence, I recommand to follow this chapter exactly, then you can see brand new logo without trial and error.
-=======
 After login, it is allowed to modify anything on console style using extended `css/javascrpt/images`. https://docs.openshift.com/container-platform/latest/install_config/web_console_customization.html[The official document] explains it in detail, but it could take a little bit of time to configure due to yaml syntax of the master-config.xml file. Hence, I recommend following this chapter exactly, then you can see brand new logo without trial and error.
->>>>>>> 90366d9bf9277a6a53c611ee7904aebab6e04d8d
 
 .Workflow
 . Create CSS/Image folder
@@ -228,11 +220,7 @@ assetConfig:
           /etc/origin/master/stylesheet/images
       extensionDevelopment: true
       extensionStylesheets:
-<<<<<<< HEAD
-    - /etc/origin/master/stylesheet/css/extension.css
-=======
         - /etc/origin/master/stylesheet/css/extension.css
->>>>>>> 90366d9bf9277a6a53c611ee7904aebab6e04d8d
   logoutURL: ""
 ...
 ----
