@@ -1,0 +1,394 @@
+# SAML Authentication for OpenShift
+
+This doc explain how to set up SSO for multiple OCP clusters.
+
+_Architecture_
+
+[uml,file="ditaa-diagram.png"]
+--
+@startditaa
+                           +---> Cluster1 (master1/2/3 + node1/2/3)
+                           |
+     PROXY(Apache) --------+---> Cluster2 (master1/2/3 + node1/2/3)
+       ^                   |
+       |                   +---> Cluster3 (master1/2/3 + node1/2/3)
+       v              
+      IDP
+      
+@endditaa
+--
+
+
+## Solution Overview
+A small SAML federation is established to provide single sign-on (SSO) functionality for the Red Hat Openshift Container Platform (RHOCP) environment.There are three key conceptual elements is in this solution: *an Identity Provider*, *a Service Provider* and an *Apache-based SAML Proxy*.
+
+### Identity Provider (IdP)
+A kind of provider that creates, maintains, and manages identity information for principals and provides principal authentication to other service providers within a federation, such as with web browser profiles.
+
+
+### Service Provider (SP)
+OpenShift provides end-user services in this federation, and it is configured to forward unauthenticated requests to the SAML Proxy, which in turns returns authenticated users to OpenShift the and-user services.
+~~~
+NB.: Each RHOCP master is configured to use two distinct authentication mechanism, one for CLI interaction and another for the Web UI. LDAP is used for CLI interactions and SAML for the web interface
+~~~
+
+### SAML Proxy
+An httpd service is installed and configured with mod_auth_mellon on each OpenShift masters, enabling authentication requests to be forwarded to IDP.  We can consider this server as a special type of Service Provider.
+
+## Authentication Workflow
+1. Browser requests a given end-user service (e.g. Kibana logs) from the SP (i.e. from RHOCP)
+2. Service see no authentication token and redirects to <master>/oauth/authorize/...
+3. OAuth server sees no identity headers and redirects to the SAML Proxy server at <proxy>/mod_auth_mellon/...
+4. This location (/mod_auth_mellon) sees no authentication info and redirects to IdP sending a signed SAML authentication request
+5. ... user logs in, gets redirected back to <proxy>/mellon/postResponse with signed SAML authentication response
+6. Apache validates signed SAML, extracts identity information, redirects back to <proxy>/mod_auth_mellon/…
+7. Apache proxies <proxy>/mod_auth_mellon/... to <master>/oauth/authorize/... with identity headers added
+8. <master>/oauth/authorize/... reads identity from headers and issues an API token
+9. Browser uses identity token to gain access to the end-user service
+
+
+## Pre-requisites
+1. Requesting IdP metadata file.  A request (i.e. an internal ticket) was created and addressed to “Route 363” (NDIS-SYSSEC).  We needed to provide the following information:
+  - Credentials used to authenticate: Toolkit
+  - SAML subject: adddev username
+  - AssertionConsumerService: `https://saml-auth.example.com/mellon/postResponse`
+  - EntityID: `https://saml-auth.example.com`   (This is used for `./mellon_create_metadata.sh` and it is proxy hostname)
+  - NameIDFormat: `urn:oasis:names:tc:SAML:1:1:nameid-format:unspecified`
+  - SAML attributes required:
+    - LastName, FirstName, UUID, LoginID, Email
+2. A host with the following Apache modules installed and a running httpd service
+  - mod_ssl
+  - Mod_auth_mellon
+  - DNS record
+  - CA-issued SSL certificates (optional)
+
+
+## Identity Provider (IdP) information 
+The SAML Proxy server needs to know where to seek for principal authentication information (i.e. user logins).  Thus we need a way to point it to the correct IdP. This information is embedded on an XML file called an IdP Metadata file.
+
+
+[WARNING]
+====
+IdP EntityID is `https://idp.example.com`.
+
+This is not the same EntitiyID which is used `./mellon_create_metadata.sh`
+====
+
+
+### IDP metadata
+./etc/httpd/conf/saml/sp-idp-metadata.xml
+```xml
+<md:EntityDescriptor ID="xxxx" cacheDuration="xxxx" entityID="https://idp.example.com" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"><ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+<ds:SignedInfo>
+<ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+<ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+<ds:Reference URI="#rXVGb3QoZlpIL9ifqsCR38RZ3MJ">
+<ds:Transforms>
+<ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+<ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+</ds:Transforms>
+<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+<ds:DigestValue>u8M/kq76Z5OK35.....8=</ds:DigestValue>
+</ds:Reference>
+</ds:SignedInfo>
+<ds:SignatureValue>
+xxxx
+</ds:SignatureValue>
+<ds:KeyInfo>
+<ds:X509Data>
+<ds:X509Certificate>
+xxxx
+</ds:X509Certificate>
+</ds:X509Data>
+<ds:KeyValue>
+<ds:RSAKeyValue>
+<ds:Modulus>
+xxxx
+</ds:Modulus>
+<ds:Exponent>AQAB</ds:Exponent>
+</ds:RSAKeyValue>
+</ds:KeyValue>
+</ds:KeyInfo>
+</ds:Signature><md:IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol" WantAuthnRequestsSigned="false"><md:KeyDescriptor use="signing"><ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:X509Data><ds:X509Certificate>xxxx</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor><md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat><saml:Attribute Name="firstName" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"/><saml:Attribute Name="lastName" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"/><saml:Attribute Name="email" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"/></md:IDPSSODescriptor><md:ContactPerson contactType="administrative"/></md:EntityDescriptor>
+```
+
+## SAML Proxy Information
+### Virtual Host
+
+.ssl.conf
+```conf
+# Nothing needs to be served over HTTP.  This virtual host simply redirects to
+# HTTPS.
+<VirtualHost *:80>
+  DocumentRoot /var/www/html
+  RewriteEngine              On
+  RewriteRule     ^(.*)$     https://%{HTTP_HOST}:9443$1 [R,L]
+</VirtualHost>
+
+# Listen Port List
+Listen 9443 
+Listen 9444
+Listen 9445
+
+# VirtualHost List
+NameVirtualHost *:9443 
+NameVirtualHost *:9444 
+NameVirtualHost *:9445
+
+<VirtualHost *:9443>
+  # This needs to match the certificates you generated.  See the CN and X509v3
+  # Subject Alternative Name in the output of:
+  # openssl x509 -text -in /etc/pki/tls/certs/localhost.crt
+  ServerName saml-auth.example.com
+
+  SSLEngine on
+  #This is for proxy ssl connection 
+  SSLCertificateFile /etc/httpd/conf.d/server.crt 
+  SSLCertificateKeyFile /etc/httpd/conf.d/server.key
+  SSLCACertificateFile /etc/httpd/conf.d/ca.crt
+
+  SSLProxyEngine on
+  # This cert file is from master root ca
+  # This part should be changed for each cluster ** SHOULD CHANGE **
+  SSLProxyCACertificateFile /etc/httpd/conf.d/ca-cluster1.crt   
+  
+  SSLProxyVerify None
+  SSLProxyCheckPeerCN Off
+  SSLProxyCheckPeerName Off
+  # It's critical to enforce client certificates on the Master.  Otherwise
+  # requests could spoof the X-Remote-User header by accessing the Master's
+  # /oauth/authorize endpoint directly.
+  
+  # This pem is from `oadm create-api-client-config`.
+  # This part should be changed for each cluster ** SHOULD CHANGE **
+  SSLProxyMachineCertificateFile /etc/httpd/conf.d/authproxy-cluster1.pem  
+
+<Location />
+    # Add mod_auth_mellon info to all contexts
+    MellonEnable "info"
+    MellonSetEnv "name" "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
+
+    # Auth redirects will be located under /mellon
+    MellonEndpointPath /mellon
+    # This files are from `mellon_create_metadata.sh` and those files are generated based on Proxy(Apache) Hostname 
+    # Hence, each cluster can use same files
+    MellonSPPrivateKeyFile /etc/httpd/conf/saml/https_saml_auth.example.com.key
+    MellonSPCertFile /etc/httpd/conf/saml/https_saml_auth.example.com.cert
+    MellonSPMetadataFile /etc/httpd/conf/saml/https_saml_auth.example.com.xml
+
+    # idp metadata
+    # All cluster have to use same idp metadata 
+    MellonIdPMetadataFile /etc/httpd/conf/saml/sp-idp-metadata.xml
+</Location>
+
+<Location /cluster1> <8>
+    # Protect with auth
+    MellonEnable "auth"
+    ProxyPass https://cluster1-api.example.com:9443
+    RequestHeader set Remote-User %{MELLON_loginID}e env=MELLON_LoginID
+
+</VirtualHost>
+
+
+<VirtualHost *:9444>
+  # This needs to match the certificates you generated.  See the CN and X509v3
+  # Subject Alternative Name in the output of:
+  # openssl x509 -text -in /etc/pki/tls/certs/localhost.crt
+  ServerName saml-auth.example.com
+
+  SSLEngine on
+  SSLCertificateFile /etc/httpd/conf.d/server.crt
+  SSLCertificateKeyFile /etc/httpd/conf.d/server.key
+  SSLCACertificateFile /etc/httpd/conf.d/ca.crt
+
+  SSLProxyEngine on
+  SSLProxyCACertificateFile /etc/httpd/conf.d/ca-cluster2.crt
+  SSLProxyVerify None
+  SSLProxyCheckPeerCN Off
+  SSLProxyCheckPeerName Off
+  # It's critical to enforce client certificates on the Master.  Otherwise
+  # requests could spoof the X-Remote-User header by accessing the Master's
+  # /oauth/authorize endpoint directly.
+  SSLProxyMachineCertificateFile /etc/httpd/conf.d/authproxy-cluster2.pem
+<Location />
+    # Add mod_auth_mellon info to all contexts
+    MellonEnable "info"
+    MellonSetEnv "name" "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
+
+    # Auth redirects will be located under /mellon
+    MellonEndpointPath /mellon
+
+    MellonSPPrivateKeyFile /etc/httpd/conf/saml/https_saml_auth.example.com.key
+    MellonSPCertFile /etc/httpd/conf/saml/https_saml_auth.example.com.cert
+    MellonSPMetadataFile /etc/httpd/conf/saml/https_saml_auth.example.com.xml
+   
+    # idp metadata
+    MellonIdPMetadataFile /etc/httpd/conf/saml/sp-idp-metadata.xml
+</Location>
+<Location /cluster2>
+    # Protect with auth
+    MellonEnable "auth"
+    ProxyPass https://cluster2-api.example.com:9443
+    RequestHeader set Remote-User %{MELLON_loginID}e env=MELLON_LoginID
+</Location>
+</VirtualHost>
+
+<VirtualHost *:9445>
+  # This needs to match the certificates you generated.  See the CN and X509v3
+  # Subject Alternative Name in the output of:
+  # openssl x509 -text -in /etc/pki/tls/certs/localhost.crt
+  ServerName saml-auth.example..com
+
+  SSLEngine on
+  SSLCertificateFile /etc/httpd/conf.d/server.crt
+  SSLCertificateKeyFile /etc/httpd/conf.d/server.key
+  SSLCACertificateFile /etc/httpd/conf.d/ca.crt
+
+  SSLProxyEngine on
+  SSLProxyCACertificateFile /etc/httpd/conf.d/ca-cluster3.crt
+  SSLProxyVerify None
+  SSLProxyCheckPeerCN Off
+  SSLProxyCheckPeerName Off
+  # It's critical to enforce client certificates on the Master.  Otherwise
+  # requests could spoof the X-Remote-User header by accessing the Master's
+  # /oauth/authorize endpoint directly.
+  SSLProxyMachineCertificateFile /etc/httpd/conf.d/authproxy-cluster3.pem
+
+<Location />
+    # Add mod_auth_mellon info to all contexts
+    MellonEnable "info"
+    MellonSetEnv "name" "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
+
+    # Auth redirects will be located under /mellon
+    MellonEndpointPath /mellon
+
+    MellonSPPrivateKeyFile /etc/httpd/conf/saml/https_saml_auth.example.com.key
+    MellonSPCertFile /etc/httpd/conf/saml/https_saml_auth.example.com.cert
+    MellonSPMetadataFile /etc/httpd/conf/saml/https_saml_auth.example.com.xml
+    # idp metadata
+    MellonIdPMetadataFile /etc/httpd/conf/saml/sp-idp-metadata.xml
+</Location>
+
+<Location /cluster3>
+    # Protect with auth
+    MellonEnable "auth"
+    ProxyPass https://cluster3-api.example.com:9443
+    RequestHeader set Remote-User %{MELLON_loginID}e env=MELLON_LoginID
+</Location>
+</VirtualHost>
+
+RequestHeader unset Remote-User
+```
+
+
+
+## SP Information
+- Apache’s mod_auth_mellon module is used for this function
+- MellonEndpointPath is `/mellon`
+- EntityID is `https://<proxy>`
+- SingleLogoutService is `https://<proxy>/mellon/logout`
+- AssertionConsumerService is `https://<proxy>/mellon/postResponse`
+
+### Generating SP metadata
+mellon_create_metadata.sh can be used to generate this.
+
+.For example:
+```bash
+$ ./mellon_create_metadata.sh saml-auth.example.com https://saml-auth.example.com/mellon
+Output files:
+Private key:            saml-auth.example.com.key
+Certificate:            saml-auth.example.com.cert
+Metadata:               saml-auth.example.com.xml
+Host:                   saml-auth.example.com
+ 
+Endpoints:
+SingleLogoutService:    https://saml-auth.example.com/mellon/logout
+AssertionConsumerService:  https://saml-auth.example.com/mellon/postResponse
+```
+### SP metadata
+
+.sp-saml.xml
+```xml
+<?xml version='1.0' encoding='UTF-8'?>
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" cacheDuration="P7D" entityID="saml-auth.example.com/saml2">
+  <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo>
+        <ds:X509Data>
+          <ds:X509Certificate>MIIDNzCCAh+gAwIBAgIJAM9It08+9uKPMA0GCSqGSIb3DQEBCwUAMDIxMDAuBgNV
+ BAMMJ2lwLTEtNzAtMTA0LTE3MS5kb2IxLmJjcGMuYmxvb21iZXJnLmNvbTAeFw0x
+ NjA5MjExMzAwMzVaFw0yMTA5MjAxMzAwMzVaMDIxMDAuBgNVBAMMJ2lwLTEtNzAt
+ MTA0LTE3MS5kb2IxLmJjcGMuYmxvb21iZXJnLmNvbTCCASIwDQYJKoZIhvcNAQEB
+ BQADggEPADCCAQoCggEBAK2ohItaU5VuAEpgQmijgcJuEP7fBpOEBYcpI3YH4TXZ
+ J7takiO7Xx6P9+Q49uVe+2/Ad0XvnP0/0h84qBuWaj0xwrYd5CQm2KcWR56JxaDp
+ H1y+bCFBCLTt/R3iqacLE6hyEddGPKWm7hBC5qqxrO3ec3k8mrnegDmIY0LOMhyk
+ uL4SHEIclpksJHzHoujRMsky3NpKGNHNmCrtGw3KTKH3NHoUNB6BlYQd84ys9n6T
+ iCChqjdKBiM4peItOz73Jxy0/lcK22pcBUQAwHe03qacJnHl4hvKEvhT9AY/CEZP
+ c5+DLJiTici9bBYYSeZNw24mK0I9nbWHqHisZkgf3fECAwEAAaNQME4wHQYDVR0O
+ BBYEFNwrC8K5qsKpi8Fu9f0AsUnf7s7aMB8GA1UdIwQYMBaAFNwrC8K5qsKpi8Fu
+ 9f0AsUnf7s7aMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBABkLSt9P
+ Xu3VKo4Qk2wCEEpJbMd0gHRUW1KJytSUGy7Srirx+e3/KV39QjajO8l1z1yC7C7q
+ oPHHE9vrPZexxmJj+KJym0HT8SC+F4DmqFYuOeNNqE8kphfVEldI1aB92VpwxPx9
+ gve+7vrdnTX9sXTphPw7HhQwU9CZmeJkVDBE3jYX7Tons7loL3jjBzyRkbE+lSph
+ 9GCyqdvexfYzTUeoBudDpeU7pVv8R5mVt5GNyE6km1mPlnNW8PNFJ6XQf6eDLZio
+ NPJKNdCK1pHLt+DyC+9zCo0aBFAlvge59WnCSfZ/TOvArEQuWcC/YY3/R/+d2FXV
+ oxvJ8E0MK4C48pg=
+</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://saml-auth.example.com/saml2/logout"/>
+    <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://saml-auth.example.com/saml2/postResponse" index="0"/>
+    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
+  </md:SPSSODescriptor>
+</md:EntityDescriptor>
+```
+
+## Authenticate Certificate
+This is client certificate which should be provided by each cluster.After create some files, they should be copied to certificate folder on proxy server 
+```bash
+$ oadm create-api-client-config   --certificate-authority='/etc/origin/master/ca.crt' \
+                                --client-dir='/etc/origin/master/' \
+                                --signer-cert='/etc/origin/master/ca.crt' \
+                                --signer-key='/etc/origin/master/ca.key' \
+                                --signer-serial='/etc/origin/master/ca.serial.txt' \
+                                --user='system:proxy'
+
+mkdir ./httpd-ose-certs
+cat /etc/origin/master/system\:proxy.crt /etc/origin/master/system\:proxy.key > ./httpd-ose-certs/authproxy.pem
+cp /etc/origin/master/ca.crt httpd-ose-certs/ca.crt
+
+```
+## OCP Configuration
+
+/etc/origin/master/master-config.yaml (eg. Cluster1)
+```yaml
+...
+assetConfig:
+  logoutURL: "https://saml-auth.example.com/mellon/logout?ReturnTo=https://ui.example.com"
+...
+  - name: sso
+    challenge: false
+    login: true
+    mappingMethod: add
+    name: SSO_ADDEV
+    provider:
+      apiVersion: v1
+      kind: RequestHeaderIdentityProvider
+      loginURL: "https://saml-auth.example.com:9444/dev-dob/oauth/authorize?${query}"
+      headers:
+        - Remote-User
+      clientCA: /etc/origin/master/ca.crt
+```
+
+## References
+- mod_auth_mellon documentation
+  - https://github.com/UNINETT/mod_auth_mellon
+- OpenShift Request Header SAML Service Provider
+  - https://github.com/openshift/request-header-saml-service-provider
+- Auth Proxy
+  - https://github.com/liggitt/auth-proxy
+- Telstra engagement:
+  - https://github.com/waynedovey/openshift-saml
+
+
