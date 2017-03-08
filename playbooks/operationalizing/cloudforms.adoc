@@ -361,14 +361,14 @@ image::images/report-chargeback-create-2.png[title=Create CloudForms Report for 
 1) Go to *My Company(All EVM Groups) => Custom*
 Now, you can see a new custom report `Dev OSE Chargeback Inventory Team`. 
 
-2) Click the custom report
+2) Click the custom report.
 
-3) On the report, click *Queue* button
+3) On the report, click *Queue* button.
 
 
 image::images/report-chargeback-queue.png[title=CloudForms Custom Report for Chargeback]
 
-4) Click the complete saved report
+4) Click the complete saved report.
 
 image::images/report-chargeback-result.png[title=CloudForms Result Report for Chargeback]
 
