@@ -1,0 +1,154 @@
+:toc:
+:toclevels: 2
+
+= OpenShift Pre-Install Validation checklist
+
+### Ensure ssh keys are propagated for ansible installer
+[NOTE]
+==================
+----
+The Ansible installer requires either:
+root password-less ssh access using ssh keys 
+                   or 
+A non-root user with password-less ssh acess and full password-less sudo access 
+----
+==================
+
+----
+example:
+ssh-copy-id -i ~/.ssh/Myidrsa.pub remote.server.com
+----
+
+### Do a lookup on each node in your cluster
+
+[NOTE]
+==================
+----
+example:
+dig www.google.com +short
+172.217.7.132
+----
+==================
+
+### DNS Reverse Lookup on each node 
+[NOTE]
+==================
+----
+example:
+dig -x `dig www.google.com +short` +short
+iad23s59-in-f4.1e100.net.
+----
+==================
+
+### OCP 3.3 install repos
+------------------
+subscription-manager repos \
+    --enable="rhel-7-server-rpms" \
+    --enable="rhel-7-server-extras-rpms" \
+    --enable="rhel-7-server-optional-rpms"\
+    --enable="rhel-7-server-ose-3.3-rpms"
+------------------
+
+### OCP 3.4 install repos
+------------------
+subscription-manager repos \
+    --enable="rhel-7-server-rpms" \
+    --enable="rhel-7-server-extras-rpms" \
+    --enable="rhel-7-server-optional-rpms"\
+    --enable="rhel-7-server-ose-3.4-rpms"
+------------------
+
+### show the repos expected and enabled
+------------------
+yum repolist enabled
+------------------
+
+### Are updates required before you install OpenShift
+------------------
+yum list updates
+------------------
+
+### Is subscription manager active
+------------------
+subscription-manager status
+------------------
+
+
+
+### To list all repos recognized by your rhel 7 nodes
+------------------
+subscription-manager repos
+------------------
+
+### Install some extras required for OpenShift
+------------------
+yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion atomic-openshift-utils docker-selinux docker
+------------------
+
+### Is docker running if not start and enable it
+------------------
+systemctl status docker
+systemctl enable docker
+systemctl start docker
+------------------
+
+### Ensure NetworkManager is enabled and started
+------------------
+systemctl enable NetworkManager;systemctl restart NetworkManager
+------------------
+
+### Check the sha256sum of a docker 1.10 installation for OpenShift 3.3, 3.2
+------------------
+sha256sum /etc/sysconfig/docker
+sha256sum /etc/sysconfig/docker-storage
+sha256sum /etc/sysconfig/docker-storage-setup
+------------------
+[NOTE]
+==================
+----
+Notice the sha256sum values for docker 1.10.  It assumes no modification to the default install of the files
+----
+==================
+|==================
+|/etc/sysconfig/docker | 1fe04a24430eaefb751bf720353e730aec5641529f0a3b2567f72e6c63433e8b
+|/etc/sysconfig/docker-storage | 709dca62ac8150aa280fdb4d49d122d78a6a2f4f46ff3f04fe8d698b7035f3a0
+|/etc/sysconfig/docker-storage-setup | bf3e1056e8df0dd4fc170a89ac2358f872a17509efa70a3bc56733a488a1e4b2
+|==================
+[NOTE]
+==================
+----
+Notice the sha256sum values for docker 1.12.  It assumes no modification to the default install of the files
+----
+==================
+|==================
+|/etc/sysconfig/docker | 86ed0dbf5b7c53d827c29f9de703000b720bd23cad06460aa68410c646f61a92  
+|/etc/sysconfig/docker-storage | 709dca62ac8150aa280fdb4d49d122d78a6a2f4f46ff3f04fe8d698b7035f3a0 
+|/etc/sysconfig/docker-storage-setup | bf3e1056e8df0dd4fc170a89ac2358f872a17509efa70a3bc56733a488a1e4b2
+|==================
+
+### Check to see if SELinux is installed and enforcing
+[NOTE]
+==================
+Ensure you see SELinux status: enabled, Current mode: enforcing, Mode from config file: enforcing
+==================
+------------------
+sestatus
+SELinux status:                 enabled
+SELinuxfs mount:                /sys/fs/selinux
+SELinux root directory:         /etc/selinux
+Loaded policy name:             targeted
+Current mode:                   enforcing
+Mode from config file:          enforcing
+Policy MLS status:              enabled
+Policy deny_unknown status:     allowed
+Max kernel policy version:      28
+
+grep ^SELINUX= /etc/sysconfig/selinux  
+SELINUX=enforcing
+------------------
+
+### Set SELinux nfs write booleans on all nodes in the cluster
+------------------
+/usr/sbin/setsebool -P virt_use_nfs 1
+/usr/sbin/setsebool -P virt_sandbox_use_nfs 1
+------------------
