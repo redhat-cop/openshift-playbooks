@@ -13,4 +13,4 @@ The Operationalizing OpenShift Enterprise 3 playbook provides guidance on enviro
 * link:./external-docker-registry-integration{outfilesuffix}[External Docker Registry Integration]
 * link:./ingress{outfilesuffix}[Using Ingress to Expose Services]
 * link:./secure-forward-splunk{outfilesuffix}[Log Forwarding to Splunk Using Fluentd Secure Forward]
-* link:https://access.redhat.com/articles/2750891[&raquo;Container Image Signing Integration Guide]
+* link:https://access.redhat.com/articles/2750891[Container Image Signing Integration Guide]
