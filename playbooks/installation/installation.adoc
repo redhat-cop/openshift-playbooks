@@ -17,7 +17,7 @@ The OpenShift Container Platform Smart Start is a reference architecture for a H
 
 image::/images/ocp_smart_start_diagram.png[Smart Start Architecture]
 
-The diagram above depicts the architecture of the Smart Start environment. It consists of 3 Masters and 5 Nodes. We further subdivide the nodes into two groups. Two of them get designated to run OpenShift's router and image registry. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:https://docs.openshift.com/container-platform/latest/admin_guide/scheduler.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the sample inventory file at the bottom of this doc to see how those labels are assigned.
+The diagram above depicts the architecture of the Smart Start environment. It consists of 3 Masters and 5 Nodes. We further subdivide the nodes into two groups. Three of them get designated to run OpenShift's router and image registry. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:https://docs.openshift.com/container-platform/latest/admin_guide/scheduler.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the sample inventory file at the bottom of this doc to see how those labels are assigned.
 
 NOTE: For more information on these concepts and components, see our link:/playbooks/fundamentals/building_blocks_openshift{outfilesuffix}[Building Blocks of OpenShift] doc.
 
@@ -27,7 +27,7 @@ Before jumping into an install of OpenShift, there are a few Architectural decis
 
 === Decide on Load Balancing Approach
 
-In order to run a fully HA OpenShift cluster, load balancing will be required between both the 3 master hosts, and the 2 infrastructure node hosts. We recommend choosing one of the following options:
+In order to run a fully HA OpenShift cluster, load balancing will be required between both the 3 master hosts, and the 3 infrastructure node hosts. We recommend choosing one of the following options:
 
 ==== Option 1: Integrate with an External Loadbalancer (Recommended)
 
@@ -42,7 +42,7 @@ See our link:/playbooks/installation/load_balancing{outfilesuffix}[Integrating E
 
 ==== Option 2: Use the Integrated HAProxy Balancer
 
-The OpenShift installer has the ability to configure a Linux host has a load balancer for your master servers. This has the disadvantage of being a single point of failure out of the box, and also doesn't meet the need for loadbalancing the infrastructure nodes. Additional, manual work will be needed post-install to rectify these shortcomings. Again, ultimately we recommend you go with Option 1, but this is a reasonable workaround so that you can continue with the install.
+The OpenShift installer has the ability to configure a Linux host as a load balancer for your master servers. This has the disadvantage of being a single point of failure out of the box, and also doesn't meet the need for loadbalancing the infrastructure nodes. Additional, manual work will be needed post-install to rectify these shortcomings. Again, ultimately we recommend you go with Option 1, but this is a reasonable workaround so that you can continue with the install.
 
 === Provision Servers
 
@@ -97,7 +97,7 @@ At a minimum the following needs to be true for all OpenShift hosts:
 * Each server has a hostname, resolvable in DNS
 * Each server's `hostname` command returns its fully qualified domain name (FQDN)
 * Each server can ping all other servers via a hostname in DNS (no /etc/hosts entries)
-* A wildcard DNS entry exists under a unique subdomain (i.e. `*.cloudapps.example.com`) that resolves to either the IP addresses (an A record) or the hostnames (a CNAME record) of the two _Infrastructure Nodes_
+* A wildcard DNS entry exists under a unique subdomain (i.e. `*.cloudapps.example.com`) that resolves to either the IP addresses (an A record) or the hostnames (a CNAME record) of the three _Infrastructure Nodes_
 
 NOTE: For more information, see the link:https://docs.openshift.com/container-platform/latest/install_config/install/prerequisites.html#prereq-dns[Official Documentation Regarding DNS Requirements].
 
@@ -115,8 +115,6 @@ Overall requirements for Installing OpenShift are very simple:
 ** rhel-7-server-extras-rpms
 ** rhel-7-server-optional-rpms
 ** rhel-7-server-ose-3.x-rpms
-* If you plan to Install HA Masters, an additional channel is needed on Master Nodes
-** rhel-7-for-ha-server-rpms
 * Install the following extra packages: `yum install NetworkManager wget git net-tools bind-utils iptables-services bridge-utils`
 * Optional: install the following diagnostic tools: `yum install lsof strace nc telnet mlocate`
 * Fully update all packages: `yum -y update`
