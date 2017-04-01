@@ -16,7 +16,7 @@ This site is written in asciidoc format and is built using the link:https://gith
 +
 ----
 git clone https://github.com/rhtconsulting/rhc-ose.git
-git clone https://github.com/rhtconsulting/openshift-playbooks.git
+git clone https://github.com/redhat-cop/openshift-playbooks.git
 ----
 3. Create and run Jekyll Asciidoc Docker container
 +
@@ -48,8 +48,8 @@ NOTE: For `gnome-terminal` users, you'll need to do this link:https://rvm.io/int
 2. Install and use Ruby 2.0
 +
 ----
-rvm install 2.0.0
-rvm use 2.0.0
+rvm install 2.3.0
+rvm use 2.3.0
 ----
 3. Install and set up RubyGems
 +
