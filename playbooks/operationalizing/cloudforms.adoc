@@ -242,7 +242,7 @@ In the upper-right hand corner, click on the dropdown next to your *username* an
 
 In the *Settings* tree, click on the *CFME Region*, then click on *Zones*, the OCP *Zone*, and finally pick the *Server*.
 
-Turn on the checkboxes *Capacity & Utilization Coordinator*, *Capacity & Utilization Data Collector*, *Capacity & Utilization Data Processor*.
+Under the *Server* tab, in the *Server Control* section, under *Server Roles*, turn on the checkboxes *Capacity & Utilization Coordinator*, *Capacity & Utilization Data Collector*, *Capacity & Utilization Data Processor*.
 
 Capacity and Utilization metrics will begin to flow into CFME and will take approximately 24 hours to process data and make the default report generation and visualizations available.
 
