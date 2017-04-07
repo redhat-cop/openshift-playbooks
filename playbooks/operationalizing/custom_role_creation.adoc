@@ -14,7 +14,7 @@ toc::[]
 
 == Overview
 
-The Role Based Access Controls within OpenShift gives platform administrators the tools to effectively govern the platform. Through the use of Roles, Policies and Bindings, operators can customize the level of access that are granted to each user of the platform. Access can be granted at a local (project) or cluster level. Several default roles are provided by the and include:
+The Role Based Access Controls within OpenShift gives platform administrators the tools to effectively govern the platform. Through the use of Roles, Policies and Bindings, operators can customize the level of access that are granted to each user of the platform. Access can be granted at a local (project) or cluster level. Several default roles are provided by the platform and include:
 
 * admin
 * basic-user
@@ -46,7 +46,7 @@ NOTE: It is recommended that the default roles remain unaltered and instead new 
 
 === Determine the Resource
 
-The first step in restricting access to a particular function, the resource that provides the action must be determined. One of the methods in which to determine the resource is to increase the verbocity of the OpenShift Command Line (CLI) tool. Since every action (CLI or web console) makes use of the API, being able to trace the invocation affords the best opportunity to lcate the resource.
+The first step in restricting access to a particular function, the resource that provides the action must be determined. One of the methods in which to determine the resource is to increase the verbosity of the OpenShift Command Line (CLI) tool. Since every action (CLI or web console) makes use of the API, being able to trace the invocation affords the best opportunity to locate the resource.
 
 Accessing a terminal within a pod is made possible using the Command Line Interface by the `oc rsh` command. Targeting a specific running pod, such as one with the name `sample-app-1-au4yj`, results in the following command to gain access to a terminal:
 
