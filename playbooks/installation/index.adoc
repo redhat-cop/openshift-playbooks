@@ -8,6 +8,7 @@ The SmartStart playbook provides guidance on deploying a production-ready pilot 
 
 A guide for implementing the OSE 3 SmartStart described above.
 
+* link:./pre-validation{outfilesuffix}[Pre Validation Checklist]
 * link:./installation{outfilesuffix}[Initial Installation]
 * link:./disconnected_environments{outfilesuffix}[Enterprise Environments]
 * link:./load_balancing{outfilesuffix}[Integrating with External Load Balancing]
