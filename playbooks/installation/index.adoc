@@ -1,27 +1,501 @@
 ---
 ---
-= OSE 3 SmartStart (Production-Ready Installation and Configuration)
+= Installing an HA OpenShift Cluster
+Red Hat Containers & PaaS CoP
+v2.0, 2016-08-18
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
 
-The SmartStart playbook provides guidance on deploying a production-ready pilot of OpenShift Enterprise 3. The resulting deployment goes beyond a simple OSE proof-of-concept and can be used to run a representative sample of enterprise workloads in PaaS. It may not address the full catalog of expected workloads and production use cases such as multi-data center approaches, application development workflows, and specialized network configuration.
+toc::[]
 
-== Implementer Guide
 
-A guide for implementing the OSE 3 SmartStart described above.
+== Overview
 
-* link:./pre-validation{outfilesuffix}[Pre Validation Checklist]
-* link:./installation{outfilesuffix}[Initial Installation]
-* link:./disconnected_environments{outfilesuffix}[Enterprise Environments]
-* link:./load_balancing{outfilesuffix}[Integrating with External Load Balancing]
-* Routers
-* Docker Registry Setup
-* link:./logging{outfilesuffix}[Log Management]
-* link:./install_validation{outfilesuffix}[Validating the Install]
-* link:./ldap_integration{outfilesuffix}[Integrating with LDAP & Active Directory]
-* link:./admin_overview{outfilesuffix}[An Overview of OpenShift for System Administrators]
-* link:./satellite_info{outfilesuffix}[Consuming socket-based subscriptions]
+The OpenShift Container Platform Smart Start is a reference architecture for a Highly Available installation of OpenShift. This document outlines the architecture of such an installation and walks through the installation process.  The intention of this process is to perform iterative installations of the OpenShift cluster, which we refer too as the MVP (Minimal Viable Product ) process.  Starting with the most basic installation and iteratively adding components and integrations points to the OpenShift Cluster.  The goal is to provide the knowledge transfer of how to build and maintain the cluster to gain confidence in the ability to install and manage any cluster.
 
-== Presenter Guide
+== Cluster Design & Architecture
 
-A guide to producing a demo that showcases the concepts described in the Implementation Guide.
+image::/images/ocp_smart_start_diagram.png[Smart Start Architecture]
 
-* link:./presenter_guide{outfilesuffix}[Presenter Guide]
+The diagram above depicts the architecture of the Smart Start environment. It consists of 3 Masters and 6 Nodes. We further subdivide the nodes into two groups. Three of them get designated to run OpenShift's router and image registry. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:https://docs.openshift.com/container-platform/latest/admin_guide/scheduler.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the sample inventory file at the bottom of this doc to see how those labels are assigned.
+
+=== Preparing the Installer
+
+OpenShift uses Ansible as it's installation & configuration manager. As we walk through design decisions, we can start capturing this information we will fill out an ini style config file that's referred to as the _ansible inventory file_. To start, we'll establish a skeleton file to begin populating information specific to the cluster we are designing:
+
+----
+[OSEv3:children]
+masters
+etcd
+nodes
+
+[OSEv3:vars]
+
+[masters]
+[etcd]
+[nodes]
+----
+
+=== Selecting the Version of OpenShift to Install
+
+Red Hat does major releases of OpenShift about once a quarter. As of this writing, the current major version is 3.4. Additionally, "dot releases" of OpenShift tend to be released every 4 to 6 weeks. The latest 3.4, for example, is 3.4.1.12. It's generally a good practice to decide on the major version of OpenShift to target and allow the install playbook to take the latest minor release of that major version. This will make sure you get all of the latest bug fixes and patches for that version.
+
+You can set the version of OpenShift in your Ansible inventory file under the OSEv3:vars section.
+
+----
+...
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.4
+...
+----
+
+=== Networking
+
+The OpenShift cluster needs to have 2 different network Cidrs defined in order to be able to assign pod and service IPs to its own components as well as the workloads running on it.  These two values are the Pod Network CIDR and the Services Network CIDR
+
+==== Pod Network CIDR
+
+Ansible Host File Variable: `osm_cluster_network_cidr=10.128.0.0/14`
+
+This value will determine the maximum number of Pod IPs available to the cluster.  The Default value of /14 will provide 262,142 pod IPs for the cluster to assing to Pods. If this installation needs to use an alternative value, capture and insert into the hosts file.
+
+
+==== Service Network CIDR
+Ansible Host File Variable: `openshift_portal_net=172.30.0.0/16`
+
+Each service in the cluster will be assigned an IP from this range.  The default value of /16 will provide up to 65,534 IP addresses for services. If this installation needs to use an alternative value, capture and insert into the hosts file.
+
+Both the openshift_portal_net and the osm_cluster_network_cidr will default to the value above if not set, however if you prefer to have your inventory file describe your environment, its recommended to set them explicitly for future reference or comparison.
+
+==== Master API Port
+
+This is the port that the Master services (console, api, etc) will be listening on.
+
+Ansible Host File Variable: `#openshift_master_api_port=8443`
+
+The default value is 8443, Since we are using dedicated hosts for the masters we can set this to 443 and omit the port # from urls when connecting.
+
+==== Ansible Inventory Update
+
+Once networking decisions have been made, we should be able to add the following to the Ansible inventory file for the cluster:
+
+----
+...
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.4
+
+openshift_master_api_port=443
+openshift_portal_net=172.30.0.0/16
+osm_cluster_network_cidr=10.128.0.0/14
+...
+----
+
+More information on Pods & Services can be found in the link:https://docs.openshift.com/container-platform/3.4/architecture/core_concepts/pods_and_services.html[OpenShift Documentation]
+
+=== DNS
+
+TODO: Blurb about
+
+Public Master URL
+
+This will be the url that external users and/or tools will use to login to the OpenShift cluster
+
+Ansible Host file variable:
+
+`openshift_master_cluster_public_hostname=openshift-ansible.test.example.com`
+
+Replace the value in your host file
+
+
+Master URL
+
+This will be the url that external users and/or tools will use to login to the OpenShift cluster
+
+`openshift_master_cluster_hostname=openshift-ansible.test.example.com`
+
+Wildcard DNS entry for Infrastructure(Router) nodes
+
+A wildcard DNS entry exists under a unique subdomain (i.e. `*.cloudapps.example.com`) that resolves to either the IP addresses (an A record) or the hostnames (a CNAME record) of the three Infrastructure Nodes
+
+
+TODO add image?
+
+Having added all of the above to your inventory file we should have something like the following in your inventory file.
+
+==== Ansible Inventory Update
+
+----
+...
+[OSEv3:vars]
+deployment_type=openshift-enterprise
+openshift_release=v3.4
+
+openshift_master_api_port=443
+openshift_portal_net=172.30.0.0/16
+osm_cluster_network_cidr=10.128.0.0/14
+
+openshift_master_cluster_hostname=openshift-ansible.test.example.com
+openshift_master_cluster_public_hostname=openshift-ansible.test.example.com
+...
+----
+
+=== Storage
+
+
+
+=== Load Balancing & HA
+
+In order to run a fully HA OpenShift cluster, load balancing will be required across the 3 master hosts, and the 3 infrastructure node hosts respectively. We recommend choosing one of the following options:
+
+==== Option 1: Integrate with an External Loadbalancer (Recommended)
+
+Even if you don't go this route initially, we highly recommend you plan to eventually bring an Enterprise-grade load balancer into your OpenShift environment. The primary reason we recommend this is for failover. Most Enterprise load balancers have built-in, proven capabilities to fail over a single VIP between two or more physical or virtual appliances. While this _can_ be done with software load balancers, like HAProxy, the resiliency and management simplicity just isn't quite the same.
+
+To integrate with an external load balancer, at minimum, you'll need to create:
+
+* A passthrough VIP and back-end pool for the Master hosts
+* A passthrough VIP and back-end pool for the Infrastructure hosts
+
+See our link:/playbooks/installation/load_balancing{outfilesuffix}[Integrating External Loadbalancers] guide for more details on this.
+
+==== Option 2: Use the Integrated HAProxy Balancer
+
+The OpenShift installer has the ability to configure a Linux host as a load balancer for your master servers. This has the disadvantage of being a single point of failure out of the box, and also doesn't meet the need for loadbalancing the infrastructure nodes. Additional, manual work will be needed post-install to rectify these shortcomings. Again, ultimately we recommend you go with Option 1, but this is a reasonable workaround so that you can continue with the install.
+
+==== Ansible Inventory Update
+
+----
+...
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.4
+
+openshift_master_api_port=443
+openshift_portal_net=172.30.0.0/16
+osm_cluster_network_cidr=10.128.0.0/14
+
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname=openshift-ansible.test.example.com
+openshift_master_cluster_public_hostname=openshift-ansible.test.example.com
+...
+----
+
+=== Authentication
+
+For the initial installation we are going to simply use htpasswd for simple authentication and seed it with a sample user to allow us to login to the OpenShift Console and validate the installation. We will add integration in a later iteration of the
+
+
+----
+...
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.4
+
+openshift_master_api_port=443
+openshift_portal_net=172.30.0.0/16
+osm_cluster_network_cidr=10.128.0.0/14
+
+openshift_master_cluster_method=native # <-- NEW LINE
+openshift_master_cluster_hostname=openshift-ansible.test.example.com
+openshift_master_cluster_public_hostname=openshift-ansible.test.example.com
+
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_master_htpasswd_users={'admin': '', 'user2': '<pre-hashed password>'}
+...
+----
+
+== Building the Infrastructure
+
+=== Create Standalone Registry
+
+==== Using `docker-distribution`
+
+
+
+----
+yum install -y docker docker-distribution firewalld
+
+systemctl enable firewalld
+systemctl start firewalld
+
+firewall-cmd --add-port 5000/tcp --permanent
+firewall-cmd --reload
+
+systemctl enable docker-distribution
+systemctl start docker-distribution
+----
+
+==== Using OpenShift Atomic Enterprise Registry
+
+=== Sync RPM Channels
+
+==== Satellite 6
+
+TODO
+
+==== Satellite 5 (Custom Channels)
+
+TODO
+
+==== Custom Yum Repos
+
+The procedure for creating custom yum repos is documented in the link:https://docs.openshift.com/container-platform/latest/install_config/install/disconnected_install.html#disconnected-syncing-repos[Official Documentation]
+
+=== Provision Servers
+
+The Smart Start architecture requires the following Servers(VMs) be provisioned:
+
+* 1 Ansible control host
+  ** RHEL 7.2 minimal installation
+  ** 8 GB Memory
+  ** 2 Cores
+* 3 _Masters_
+  ** RHEL 7.2 minimal installation
+  ** 20 GB Memory
+  ** 4 Cores
+  ** 60 GB for the root (`/`) partition or logical volume containing `/var`
+  ** An additional 10 GB disk or logical volume mounted at `/var/lib/etcd`
+  ** An additional 50 GB disk or logical volume, unformatted and unmounted (for local Docker)
+* 3 _Infrastructure Nodes_
+  ** RHEL 7.2 minimal installation
+  ** 24 GB Memory
+  ** 6 Cores
+  ** 40 GB for the root (`/`) partition or logical volume containing `/var`
+  ** An additional 20 GB disk or logical volume mounted at `/var/lib/origin`
+  ** An additional 100 GB allocated to a volume group, unformatted and unmounted (for local Docker)
+* 3 _Application Nodes_
+  ** 48 GB Memory
+  ** 4 Cores
+  ** 30 GB for the partition or logical volume containing `/var`
+  ** An additional 20 GB logical volume mounted at `/var/lib/origin`
+  ** An additional 100 GB disk, unformatted and unmounted
+* (Optional) A Load Balancer host, if you plan to use Option 2 for Load Balancing, per the above section
+  ** 2 cores
+  ** 4 GB Memory
+  ** 10 GB Root Drive
+
+==== Cloud-Specific Provisioning Guides
+
+* Provisioning infrastructure on OpenStack using the openstack CLI
+* Provigioning infrastructure on Amazon EC2 using the awscli
+
+==== Ansible Inventory Update
+
+----
+...
+[masters]
+openshift-master-[1:3].os-lab.example.com
+
+[etcd]
+openshift-master-[1:3].os-lab.example.com
+
+[nodes]
+openshift-infranode-[1:3].os-lab.example.com
+openshift-appnode-1.os-lab.example.com.com
+openshift-appnode-2.os-lab.example.com
+----
+
+=== Configure Load Balancer
+
+==== Configure for F5 Big IP
+Master LB
+
+----
+create ltm node openshift-master-1.example.com fqdn { name openshift-master-1.example.com }
+create ltm node openshift-master-2.example.com fqdn { name openshift-master-2.example.com }
+create ltm node openshift-master-3.example.com fqdn { name openshift-master-3.example.com }
+create ltm pool master.example.com monitor https members add { openshift-master-1.example.com:443 openshift-master-2.example.com:443 openshift-master-3.example.com.com:443 }
+ create ltm virtual OpenShift-Master persist replace-all-with { source_addr } pool master.example.com destination 192.168.10.100:443
+----
+
+Infra Node / Router LB
+
+----
+create ltm node openshift-infranode-1.example.com fqdn { name openshift-infranode-1.example.com }
+create ltm node openshift-infranode-2.example.com fqdn { name openshift-infranode-2.example.com }
+create ltm node openshift-infranode-3.example.com fqdn { name openshift-infranode-3.example.com }
+create ltm pool infra.example.com-http monitor http members add { openshift-infranode-1.example.com:80 openshift-infranode-2.example.com:80 openshift-infranode-3.example.com.com:80 }
+create ltm pool infra.example.com-https monitor https members add { openshift-infranode-1.example.com:443 openshift-infranode-2.example.com:443 openshift-infranode-3.example.com.com:443 }
+create ltm virtual infra.example.com-http  pool master.example.com destination 192.168.10.101:80
+create ltm virtual infra.example.com-https pool master.example.com destination 192.168.10.101:443
+----
+
+==== Configure for Citrix Netscaler
+Master LB
+
+----
+add serviceGroup ose-console_443_sslbridge SSL_BRIDGE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
+add lb vserver ose-console_443_sslbridge SSL_BRIDGE 192.168.10.101 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
+bind lb vserver ose-console_443_sslbridge ose-console_443_sslbridge
+bind serviceGroup ose-console_443_sslbridge openshift-master-1.example.com 443
+bind serviceGroup ose-console_443_sslbridge openshift-master-2.example.com 443
+bind serviceGroup ose-console_443_sslbridge openshift-master-3.example.com 443
+----
+
+Infra Node / Router LB
+
+----
+add serviceGroup ose-wildcard_443_sslbridge SSL_BRIDGE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
+add lb vserver ose-wildcard_443_sslbridge SSL_BRIDGE 192.168.10.102 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
+bind lb vserver ose-wildcard_443_sslbridge ose-wildcard_443_sslbridge
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-1.example.com 443
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-2.example.com 443
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-3.example.com 443
+
+add serviceGroup ose-wildcard_80 -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
+add lb vserver ose-wildcard_80 192.168.10.102 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
+bind lb vserver ose-wildcard_80 ose-wildcard_80
+bind serviceGroup ose-wildcard_80 openshift-infranode-1.example.com 80
+bind serviceGroup ose-wildcard_80 openshift-infranode-2.example.com 80
+bind serviceGroup ose-wildcard_80 openshift-infranode-3.example.com 80
+
+----
+
+==== Configure for AWS ELB
+
+TODO
+
+==== Configure for OpenStack LBaaS
+
+TODO
+
+End this section at RHEL servers built and an ssh key synced
+
+== Preparing for Install
+
+At this point we can start to treat our ansible file as an Infrastructure as Code type artifact and version it accordingly.
+
+For example:
+
+Create a Git repo to store your Cluster Build artifacts (Optional, Recommended)
+
+commit your ansible hosts file to the new repo
+
+Provided you have named your host file something like "myorgocplabcluster1"
+
+
+----
+TODO SAMPLE GIT Commands
+----
+
+=== Subscribing the Hosts
+
+==== Subscribing using Satellite 6 (Recommended)
+
+Sample ansible command using a host file located at /repository/playbooks-ocplabcluster where the ocplabcluster file is the ansible inventory file that was build in the previous steps.
+
+
+```
+ansible -i repository/playbooks-ocplabcluster nodes -a 'rpm -ivh http://satellite6.example.com/pub/katello-ca-consumer-latest.noarch.rpm'
+ansible -i repository/playbooks-ocplabcluster nodes -a 'subscription-manager register --org="<My_Org>" --activationkey="<my-activation-key>"'
+```
+
+
+==== Subscribing to Custom Yum Repos/Channels
+
+```
+cat /etc/yum.repos.d/ ...
+```
+
+==== Subscribing directly to Red Hat
+
+```
+ansible -i aws-hosts OSEv3 -a 'subscription-manager register --username esauer@redhat.com --password=''
+ansible -i aws-hosts OSEv3 -a 'subscription-manager attach --pool 8a85f98144844aff014488d058bf15be'
+ansible -i aws-hosts OSEv3 -a 'subscription-manager repos --disable "*" --enable rhel-7-server-rpms --enable rhel-7-server-extras-rpms --enable rhel-7-server-ose-3.4-rpms'
+```
+
+
+```
+ansible -i aws-hosts nodes -a 'echo "DEVS=/dev/xvdb" > /etc/sysconfig/docker-storage'
+ansible -i aws-hosts masters -a 'echo "DEVS=/dev/xvdc" > /etc/sysconfig/docker-storage'
+ansible -i aws-hosts nodes -m file -a 'dest=/etc/sysconfig/docker-storage-setup state=touch'
+ansible -i aws-hosts nodes -m file -a 'path=/etc/aws state=directory mode=0700'
+ansible -i aws-hosts nodes -m copy -a 'src=/root/aws.conf dest=/etc/aws/aws.conf owner=root group=root mode=0600'
+ansible-playbook -i aws-custom-hosts hostnames.yml
+```
+
+
+```
+ansible -i aws-hosts OSEv3 -m ping
+```
+
+=== Docker Storage Setup
+
+link:https://docs.openshift.com/container-platform/latest/install_config/install/host_preparation.html#configuring-docker-storage[See Official Docs]
+
+
+```
+ansible -i hosts1 nodes -a 'echo "DEVS=/dev/vdb" > /etc/sysconfig/docker-storage-setup'
+```
+
+=== Configure Etcd Storage
+
+Use lvm on /dev/vdc
+
+----
+ansible -i repository/playbooks-hosts1 etcd -a 'pvcreate /dev/vdc'
+ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'pvcreate /dev/vdc'
+ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'ls /dev/vdc'
+ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'yum -y install lmv2'
+   19  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'yum -y install lvm2'
+   20  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'subscription-manager repos --disable "*" --enable rhel-7-server-rpms --enable rhel-7-server-extras-rpms --enable rhel-7-server-ose-3.4-rpms'
+   21  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'yum repolist'
+   24  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'yum -y install lvm2'
+   25  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'pvcreate /dev/vdc'
+   26  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'vgcreate etcd-vg /dev/vdc'
+   27  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'lvcreate -n etcd-lv -l 100%VG etcd-vg'
+   28  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'lvs'
+   29  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'ls /dev/mapper'
+   30  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'mkfs.xfs /dev/mapper/etcd--vg-etcd--lv'
+   31  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'echo'
+   32  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'echo `ls -1 /dev/disk/by-uuid`'
+   33  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'echo $(ls -1 /dev/disk/by-uuid)'
+   34  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'echo $(ls -1 /dev/disk/by-uuid)'
+   35  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'echo $(ls -l /dev/disk/by-uuid)'
+   36  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'echo $(ls -l /dev/mapper)'
+   37  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'lsblk'
+
+ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m lineinfile -a 'path=/etc/fstab regexp=etcd line="/dev/mapper/etcd--vg-etcd--lv /var/lib/etcd xfs defaults 0 0"'
+ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'cat /etc/fstab'
+ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'mkdir /var/lib/etcd'
+ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'mount -a'
+----
+
+=== Ansible Inventory Review
+
+Create a Git repo to store your Cluster Build artifacts (Optional, Recommended)
+
+commit your ansible hosts file to the new repo
+
+----
+TODO SAMPLE GIT Commands
+----
+
+=== Validating Pre-requisites
+
+
+Link to pre-requisite validation guide
+
+link:/playbooks/installation/pre-validation{outfilesuffix}[OpenShift Pre-Install Validation Checklist]
+
+Or alternatively if comfortable or have already been through the ???
+
+link:
+
+
+== Running the Install
+
+Log into the Ansible Control Host and git clone the
+
+----
+TODO SAMPLE GIT Commands
+----
+
+
+== Validating the Cluster
+
+link:/playbooks/installation/install_validation{outfilesuffix}[Validating an OpenShift Install]
