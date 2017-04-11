@@ -209,41 +209,6 @@ openshift_master_htpasswd_users={'admin': '', 'user2': '<pre-hashed password>'}
 
 == Building the Infrastructure
 
-=== Create Standalone Registry
-
-==== Using `docker-distribution`
-
-
-
-----
-yum install -y docker docker-distribution firewalld
-
-systemctl enable firewalld
-systemctl start firewalld
-
-firewall-cmd --add-port 5000/tcp --permanent
-firewall-cmd --reload
-
-systemctl enable docker-distribution
-systemctl start docker-distribution
-----
-
-==== Using OpenShift Atomic Enterprise Registry
-
-=== Sync RPM Channels
-
-==== Satellite 6
-
-TODO
-
-==== Satellite 5 (Custom Channels)
-
-TODO
-
-==== Custom Yum Repos
-
-The procedure for creating custom yum repos is documented in the link:https://docs.openshift.com/container-platform/latest/install_config/install/disconnected_install.html#disconnected-syncing-repos[Official Documentation]
-
 === Provision Servers
 
 The Smart Start architecture requires the following Servers(VMs) be provisioned:
@@ -276,6 +241,100 @@ The Smart Start architecture requires the following Servers(VMs) be provisioned:
   ** 2 cores
   ** 4 GB Memory
   ** 10 GB Root Drive
+
+=== Create Standalone Registry
+
+During the install, OpenShift will need pull images from Red Hat in order to spin up services like the Integrated Registry and Router as well as some base images for Pods, S2I builders, etc. In most cases, access to the link:https://registry.access.redhat.com[Red Hat Public Registry] is blocked or restricted by web proxies. The link:https://docs.openshift.com/container-platform/3.4/install_config/install/disconnected_install.html#disconnected-syncing-images[Official Documentation] on how to work with this suggests pulling images to some internet accessible machine, and creating a `.tar` file to manually distribute them to all hosts in the cluster. While this works just fine, a more long term solution is to establish a standalone registry and seed it with the images that OpenShift will require. We can then point OpenShift to that standalone registry instead of Red Hat's and allow it to pull those images as it normally would. This allows us to establish a much simpler and more automatable process for updating those images when need be.
+
+We outline two options here for standing up a bootstrap registry. The first is to stand up a very simple docker registry which will have wide-open permissions (no authentication). The second, using OpenShift's Atomic Enterprise Registry, will allow us to require authentication and also provide a simple web console to help manage the images in the registry.
+
+==== Simple Docker Registry (docker-distribution)
+
+For the simple registry, we will stand up a registry on a plain RHEL 7 server, and then run a script to sync images to it. We can spin up a new server for this purpose, or simply use the Ansible Control Host we've already built. We'll also need some host that has internet access and access to `registry-server:5000` from which we can run the script. This can either be the registry server itself, or some other Linux host, laptop, etc.
+
+The process of creating the registry is very simple.
+
+----
+yum install -y docker docker-distribution firewalld
+
+systemctl enable firewalld
+systemctl start firewalld
+
+firewall-cmd --add-port 5000/tcp --permanent
+firewall-cmd --reload
+
+systemctl enable docker-distribution
+systemctl start docker-distribution
+----
+
+Now that we have a registry up and running, we should confirm that we can reach Red Hat's registry and our new standalone registry.
+
+----
+$ curl registry.access.redhat.com
+HTTP/1.1 200 OK
+Cache-Control: no-cache
+Date: Mon, 10 Apr 2017 15:18:09 GMT
+Content-Type: text/plain; charset=utf-8
+
+$ curl registry.test.example.com:5000
+HTTP/1.1 200 OK
+Cache-Control: no-cache
+Date: Mon, 10 Apr 2017 15:18:09 GMT
+Content-Type: text/plain; charset=utf-8
+----
+
+Now we're ready to sync images. To do this, we're going to run link:https://github.com/redhat-cop/openshift-toolkit/blob/master/disconnected_registry/docker-registry-sync.py[this script].
+
+----
+curl -O https://raw.githubusercontent.com/redhat-cop/openshift-toolkit/master/disconnected_registry/docker-registry-sync.py
+curl -O https://raw.githubusercontent.com/redhat-cop/openshift-toolkit/master/disconnected_registry/docker_tags.json
+chmod +x docker-registry-sync.py
+./docker-registry-sync.py --from=registry.access.redhat.com --to=registry.test.example.com:5000 --file=./docker_tags.json --openshift-version=3.4
+----
+
+Finally, we can update our Ansible Inventory file to point OpenShift to our private registry, and disable the default external registries
+
+----
+...
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.4
+
+openshift_master_api_port=443
+openshift_portal_net=172.30.0.0/16
+osm_cluster_network_cidr=10.128.0.0/14
+
+openshift_master_cluster_method=native # <-- NEW LINE
+openshift_master_cluster_hostname=openshift-ansible.test.example.com
+openshift_master_cluster_public_hostname=openshift-ansible.test.example.com
+
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_master_htpasswd_users={'admin': '', 'user2': '<pre-hashed password>'}
+
+openshift_docker_additional_registries=registry.test.example.com
+openshift_docker_insecure_registries=registry.test.example.com
+openshift_docker_blocked_registries=registry.access.redhat.com,docker.io
+...
+----
+
+
+==== Using OpenShift Atomic Enterprise Registry
+
+TODO
+
+=== Sync RPM Channels
+
+==== Satellite 6
+
+TODO
+
+==== Satellite 5 (Custom Channels)
+
+TODO
+
+==== Custom Yum Repos
+
+The procedure for creating custom yum repos is documented in the link:https://docs.openshift.com/container-platform/latest/install_config/install/disconnected_install.html#disconnected-syncing-repos[Official Documentation]
 
 ==== Cloud-Specific Provisioning Guides
 
