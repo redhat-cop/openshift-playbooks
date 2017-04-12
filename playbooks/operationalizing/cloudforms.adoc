@@ -223,6 +223,35 @@ Under *Endpoints*, select the *Hawkular* tab and enter the hawkular-metrics host
 
 Click *Add* to add the container provider.
 
+==== CloudForms 4.2:
+
+In the CloudForms web console, hover over *Compute* in the menu on the left, then *Containers*, then select *Providers*.
+
+Select the *Configuration* button and then *Add a New Containers Provider*.
+
+Enter a name for the provider and select *OpenShift Enterprise* in the type (ignore the zone, this will populate on its own). 
+
+Under *Endpoints*, in the *Default* tab, enter the hostname or address of the HAProxy server (or the master in a single master setup) into the *Hostname* field and enter the token retrieved earlier into the *Token* and *Confirm Token* fields. Click *Validate* to confirm connectivity.
+
+Under *Endpoints*, select the *Hawkular* tab and enter the hawkular-metrics hostname into the *Hostname* field. 
+    *Note* Adding the hawkular-metrics hostname in this field eliminates the need for any special routing to connect CloudForms to Hawkular Metrics.
+
+Click *Add* to add the container provider.
+
+In the upper-right hand corner, click on the dropdown next to your *username* and then click on the *Configuration* menu item.  
+
+In the *Settings* tree, click on the *CFME Region*, then click on *Zones*, the OCP *Zone*, and finally pick the *Server*.
+
+Under the *Server* tab, in the *Server Control* section, under *Server Roles*, turn on the checkboxes *Capacity & Utilization Coordinator*, *Capacity & Utilization Data Collector*, *Capacity & Utilization Data Processor*.
+
+Capacity and Utilization metrics will begin to flow into CFME and will take approximately 24 hours to process data and make the default report generation and visualizations available.
+
+You can verify metrics are flowing to CloudForms by *hovering over* from the left menu *Compute*, then hover over *Containers*, and finally click on *Providers*.
+
+Click *OpenShift Container Platform icon*.
+
+In the *Status* table, verify that *Last metrics collection* has a recent timestamp and that it continues to be updated semi-frequently.
+
 === Verify data collection
 
 After a minute or two, click the *Overview* tab to view the data collected
