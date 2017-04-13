@@ -242,6 +242,29 @@ The Smart Start architecture requires the following Servers(VMs) be provisioned:
   ** 4 GB Memory
   ** 10 GB Root Drive
 
+==== Cloud-Specific Provisioning Guides
+
+* Provisioning infrastructure on OpenStack using the openstack CLI (Coming Soon)
+* Provigioning infrastructure on Amazon EC2 using the awscli (Coming Soon)
+
+==== Ansible Inventory Update
+
+Once we have our hosts created and add to DNS, we can add them to the bottom of our Ansible Inventory file like so.
+
+----
+...
+[masters]
+openshift-master-[1:3].os-lab.example.com
+
+[etcd]
+openshift-master-[1:3].os-lab.example.com
+
+[nodes]
+openshift-infranode-[1:3].os-lab.example.com
+openshift-appnode-1.os-lab.example.com.com
+openshift-appnode-2.os-lab.example.com
+----
+
 === Create Standalone Registry
 
 During the install, OpenShift will need pull images from Red Hat in order to spin up services like the Integrated Registry and Router as well as some base images for Pods, S2I builders, etc. In most cases, access to the link:https://registry.access.redhat.com[Red Hat Public Registry] is blocked or restricted by web proxies. The link:https://docs.openshift.com/container-platform/3.4/install_config/install/disconnected_install.html#disconnected-syncing-images[Official Documentation] on how to work with this suggests pulling images to some internet accessible machine, and creating a `.tar` file to manually distribute them to all hosts in the cluster. While this works just fine, a more long term solution is to establish a standalone registry and seed it with the images that OpenShift will require. We can then point OpenShift to that standalone registry instead of Red Hat's and allow it to pull those images as it normally would. This allows us to establish a much simpler and more automatable process for updating those images when need be.
@@ -317,8 +340,11 @@ openshift_docker_blocked_registries=registry.access.redhat.com,docker.io
 ...
 ----
 
-
 ==== Using OpenShift Atomic Enterprise Registry
+
+TODO
+
+==== Syncing Images using Satellite 6
 
 TODO
 
@@ -336,41 +362,25 @@ TODO
 
 The procedure for creating custom yum repos is documented in the link:https://docs.openshift.com/container-platform/latest/install_config/install/disconnected_install.html#disconnected-syncing-repos[Official Documentation]
 
-==== Cloud-Specific Provisioning Guides
+==== Subscribing Directly to Red Hat
 
-* Provisioning infrastructure on OpenStack using the openstack CLI
-* Provigioning infrastructure on Amazon EC2 using the awscli
-
-==== Ansible Inventory Update
-
-----
-...
-[masters]
-openshift-master-[1:3].os-lab.example.com
-
-[etcd]
-openshift-master-[1:3].os-lab.example.com
-
-[nodes]
-openshift-infranode-[1:3].os-lab.example.com
-openshift-appnode-1.os-lab.example.com.com
-openshift-appnode-2.os-lab.example.com
-----
+The process for subscribing directly to Red Hat is covered in the link:https://docs.openshift.com/container-platform/3.4/install_config/install/host_preparation.html#host-registration[Official Documentation].
 
 === Configure Load Balancer
 
 ==== Configure for F5 Big IP
-Master LB
+
+===== Master LB
 
 ----
 create ltm node openshift-master-1.example.com fqdn { name openshift-master-1.example.com }
 create ltm node openshift-master-2.example.com fqdn { name openshift-master-2.example.com }
 create ltm node openshift-master-3.example.com fqdn { name openshift-master-3.example.com }
 create ltm pool master.example.com monitor https members add { openshift-master-1.example.com:443 openshift-master-2.example.com:443 openshift-master-3.example.com.com:443 }
- create ltm virtual OpenShift-Master persist replace-all-with { source_addr } pool master.example.com destination 192.168.10.100:443
+create ltm virtual OpenShift-Master persist replace-all-with { source_addr } pool master.example.com destination 192.168.10.100:443
 ----
 
-Infra Node / Router LB
+===== Infra Node / Router LB
 
 ----
 create ltm node openshift-infranode-1.example.com fqdn { name openshift-infranode-1.example.com }
@@ -383,7 +393,8 @@ create ltm virtual infra.example.com-https pool master.example.com destination 1
 ----
 
 ==== Configure for Citrix Netscaler
-Master LB
+
+===== Master LB
 
 ----
 add serviceGroup ose-console_443_sslbridge SSL_BRIDGE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
@@ -394,7 +405,7 @@ bind serviceGroup ose-console_443_sslbridge openshift-master-2.example.com 443
 bind serviceGroup ose-console_443_sslbridge openshift-master-3.example.com 443
 ----
 
-Infra Node / Router LB
+===== Infra Node / Router LB
 
 ----
 add serviceGroup ose-wildcard_443_sslbridge SSL_BRIDGE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
