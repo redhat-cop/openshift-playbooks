@@ -7,7 +7,7 @@ v1.0, 2017-03-324
 :toc: macro
 :toc-title:
 
-OpenShift provides a fully functional link:https://docs.openshift.com/container-platform/3.4/architecture/additional_concepts/authorization.html[Role Based Access Control (RBAC)] system to govern the type of access users and groups have within the platform. While the platform does come with a series of roles that attempts to address the types of access applicable to the majority of users, there are cases in which a customization of the roles within OpenShift may be desired.     
+OpenShift provides a fully functional link:https://docs.openshift.com/container-platform/latest/architecture/additional_concepts/authorization.html[Role Based Access Control (RBAC)] system to govern the type of access users and groups have within the platform. While the platform does come with a series of roles that attempts to address the types of access applicable to the majority of users, there are cases in which a customization of the roles within OpenShift may be desired.     
 
 toc::[]
 
@@ -24,7 +24,7 @@ The Role Based Access Controls within OpenShift gives platform administrators th
 * self-provisioner
 * view
 
-A full description of these roles and the concepts provided by roles can be found in the link:https://docs.openshift.com/container-platform/3.4/architecture/additional_concepts/authorization.html#roles[Roles] section of the documentation.
+A full description of these roles and the concepts provided by roles can be found in the link:https://docs.openshift.com/container-platform/latest/architecture/additional_concepts/authorization.html#roles[Roles] section of the documentation.
 
 == Creating a Custom Role
 
