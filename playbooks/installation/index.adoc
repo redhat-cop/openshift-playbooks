@@ -369,6 +369,7 @@ The process for subscribing directly to Red Hat is covered in the link:https://d
 === Configure Load Balancer
 
 ==== Configure for F5 Big IP
+The example configuration below is a basic setup that works, but may not be the optimal configuration for your particular environment. Please consult the F5 documentation and/or your F5 administrator for additional details that may be needed for your setup.
 
 ===== Master LB
 
@@ -377,7 +378,7 @@ create ltm node openshift-master-1.example.com fqdn { name openshift-master-1.ex
 create ltm node openshift-master-2.example.com fqdn { name openshift-master-2.example.com }
 create ltm node openshift-master-3.example.com fqdn { name openshift-master-3.example.com }
 create ltm pool master.example.com monitor https members add { openshift-master-1.example.com:443 openshift-master-2.example.com:443 openshift-master-3.example.com.com:443 }
-create ltm virtual OpenShift-Master persist replace-all-with { source_addr } pool master.example.com destination 192.168.10.100:443
+create ltm virtual OpenShift-Master pool master.example.com source-address-translation { type automap } destination 192.168.10.100:443
 ----
 
 ===== Infra Node / Router LB
@@ -388,8 +389,8 @@ create ltm node openshift-infranode-2.example.com fqdn { name openshift-infranod
 create ltm node openshift-infranode-3.example.com fqdn { name openshift-infranode-3.example.com }
 create ltm pool infra.example.com-http monitor http members add { openshift-infranode-1.example.com:80 openshift-infranode-2.example.com:80 openshift-infranode-3.example.com.com:80 }
 create ltm pool infra.example.com-https monitor https members add { openshift-infranode-1.example.com:443 openshift-infranode-2.example.com:443 openshift-infranode-3.example.com.com:443 }
-create ltm virtual infra.example.com-http  pool master.example.com destination 192.168.10.101:80
-create ltm virtual infra.example.com-https pool master.example.com destination 192.168.10.101:443
+create ltm virtual infra.example.com-http  pool infra.example.com-http  persist replace-all-with { source_addr } source-address-translation { type automap } destination 192.168.10.101:80
+create ltm virtual infra.example.com-https pool infra.example.com-https persist replace-all-with { source_addr } source-address-translation { type automap } destination 192.168.10.101:443
 ----
 
 ==== Configure for Citrix Netscaler
