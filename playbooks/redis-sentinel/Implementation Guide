@@ -1,0 +1,115 @@
+Creating image and pushing to openshift registry.
+
+Execute from image directory:
+
+```bash
+# chmod 777 run.sh
+# docker build -t redis2 .
+# docker build -t redis-sentinel .
+```
+
+From Project File directory:
+
+```bash
+# oc login -u system:admin
+# oc project default
+# oc get service
+# docker tag redis2 172.30.176.178:5000/openshift/redis2
+# docker tag redis-sentinel 172.30.176.178:5000/openshift/redis-sentinel
+# oc create -f image_stream.json -n openshift
+# oc create -f image_stream-sentinel.json -n openshift
+
+# oadm policy add-role-to-user system:image-builder shah -n openshift
+# oadm policy add-role-to-user system:image-puller shah -n openshift
+# oadm policy add-role-to-user system:deployer shah -n openshift
+
+# oc login -u shah
+# oc whoami -t
+# docker login -u shah -e a@b.com -p pqycDOetHoVU8IybkTrezS1_jh2dt8Dx2oS-_ALtw98 172.30.176.178:5000
+# docker push 172.30.176.178:5000/openshift/redis2
+# docker push 172.30.176.178:5000/openshift/redis-sentinel
+
+# oc login -u system:admin
+# oc get images | grep redis
+```
+
+In nfs:
+
+```bash
+#mkdir /opt/nfs/red
+#chown nfsnobody.nfsnobody /opt/nfs/red
+#chown -R nfsnobody.nfsnobody /opt/nfs/red
+#chmod 775 /opt/nfs/red
+
+#mkdir /opt/nfs/redis-sentinel
+#chown nfsnobody.nfsnobody /opt/nfs/redis-sentinel
+#chown -R nfsnobody.nfsnobody /opt/nfs/redis-sentinel
+#chmod 775 /opt/nfs/redis-sentinel
+
+#vi /etc/exports:
+/opt/nfs/red infranode00-640a.oslab.opentlc.com(all_squash,rw,sync) infranode01-640a.oslab.opentlc.com(all_squash,rw,sync)
+/opt/nfs/red node00-640a.oslab.opentlc.com(all_squash,rw,sync) node01-640a.oslab.opentlc.com(all_squash,rw,sync)
+/opt/nfs/redis-sentinel infranode00-640a.oslab.opentlc.com(all_squash,rw,sync) infranode01-640a.oslab.opentlc.com(all_squash,rw,sync)
+/opt/nfs/redis-sentinel node00-640a.oslab.opentlc.com(all_squash,rw,sync) node01-640a.oslab.opentlc.com(all_squash,rw,sync)
+
+#exportfs -a
+
+```
+
+Creating project,pods and services
+
+```bash 
+
+#oc login -u shah
+#oc delete project redis
+
+#oc new-project redis --display-name="Redis Sentinal Cluster" --description="This is the project of Redis Assignment"
+
+#oc create -f redis-master-new.yaml
+#oc create -f redis-sentinel-service.yaml
+#oc create -f redis-service.yaml
+#oc create -f redis-controller-new.yaml
+#oc create -f redis-sentinel-controller-new.yaml
+#oc create -f deploymentconfig-new.json
+
+
+#oc login -u system:admin
+#oc create -f volume_red.yaml
+#oc create -f claim_red.yaml
+#oc volume deploymentconfigs/redis --add --overwrite --name=myclaim2 --mount-path=/redis-master-data --source='{"nfs": { "server": "nfs00-640a", "path": "/opt/nfs/red" }}'
+
+#oc create -f volume_redis-sentinel.yaml
+#oc create -f claim_redis-sentinel.yaml
+#oc volume deploymentconfigs/redis --add --overwrite --name=myclaim3 --mount-path=/redis-sentinel-data --source='{"nfs": { "server": "nfs00-640a", "path": "/opt/nfs/redis-sentinel" }}'
+
+#oc login -u shah
+#oc get pods
+
+#oc expose service redis --hostname=redis.cloudapps-640a.oslab.opentlc.com
+#oc expose service redis-sentinel --hostname=sentinel.cloudapps-640a.oslab.opentlc.com
+
+#oc logs redis -c redis
+#oc logs redis -c sentinel
+
+#oc scale rc redis --replicas=3
+#oc scale rc redis-sentinel --replicas=3
+#oc delete pod redis
+
+#oc get pods
+
+########### TESTING ###########
+
+#oc exec -it redis-XXXX /bin/bash
+#oc exec -it redis-sentinel-XXXX /bin/bash
+
+#oc logs redis-sentinel-XXXX [Check all, anyone of them will hold master]
+
+
+
+#redis-cli -h ${REDIS_SENTINEL_SERVICE_HOST} -p ${REDIS_SENTINEL_SERVICE_PORT} --csv SENTINEL get-master-addr-by-name mymaster | tr ',' ' ' | cut -d' ' -f1
+
+
+############# REPLACING
+
+#sed -i 's/redis2/redis_rhel/g' redis-master-new.yaml
+#sed -i 's/redis-sentinel:latest/redis-sentinel_rhel:latest/g' redis-master-new.yaml
