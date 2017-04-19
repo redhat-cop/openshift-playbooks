@@ -1,0 +1,331 @@
+{
+    "kind": "List",
+    "apiVersion": "v1",
+    "metadata": {},
+    "items": [
+
+
+
+{
+ "apiVersion": "v1",
+ "kind": "ImageStream",
+ "metadata": {
+   "name": "redis2"
+ }
+},
+
+
+
+{
+ "apiVersion": "v1",
+ "kind": "ImageStream",
+ "metadata": {
+   "name": "redis-sentinel"
+ }
+},
+
+
+
+
+{
+  "kind": "Pod", 
+  "spec": {
+    "containers": [
+      {
+        "name": "redis", 
+        "env": [
+          {
+            "name": "MASTER", 
+            "value": "true"
+          }
+        ], 
+        "image": "172.30.162.176:5000/openshift/redis2:latest", 
+        "volumeMounts": [
+          {
+            "mountPath": "/redis-master-data", 
+            "name": "data"
+          }
+        ], 
+        "ports": [
+          {
+            "containerPort": 6379
+          }
+        ], 
+        "resources": {
+          "limits": {
+            "cpu": "0.1"
+          }
+        }
+      }, 
+      {
+        "image": "172.30.162.176:5000/openshift/redis-sentinel:latest", 
+        "volumeMounts": [
+          {
+            "mountPath": "/redis-sentinel-data", 
+            "name": "data"
+          }
+        ], 
+        "name": "sentinel", 
+        "env": [
+          {
+            "name": "SENTINEL", 
+            "value": "true"
+          }
+        ], 
+        "ports": [
+          {
+            "containerPort": 26379
+          }
+        ]
+      }
+    ], 
+    "volumes": [
+      {
+        "emptyDir": {}, 
+        "name": "data"
+      }
+    ]
+  }, 
+  "apiVersion": "v1", 
+  "metadata": {
+    "labels": {
+      "redis-sentinel": "true", 
+      "role": "master", 
+      "name": "redis"
+    }, 
+    "name": "redis"
+  }
+},
+
+
+
+{
+  "kind": "Service", 
+  "spec": {
+    "ports": [
+      {
+        "targetPort": 26379, 
+        "name": "sentinel", 
+        "port": 26379
+      }, 
+      {
+        "targetPort": 6379, 
+        "name": "redis", 
+        "port": 6379
+      }
+    ], 
+    "selector": {
+      "redis-sentinel": "true"
+    }
+  }, 
+  "apiVersion": "v1", 
+  "metadata": {
+    "labels": {
+      "role": "service", 
+      "name": "sentinel"
+    }, 
+    "name": "redis-sentinel"
+  }
+},
+
+
+
+
+{
+  "kind": "Service", 
+  "spec": {
+    "ports": [
+      {
+        "targetPort": 6379, 
+        "port": 6379
+      }
+    ], 
+    "selector": {
+      "name": "redis"
+    }
+  }, 
+  "apiVersion": "v1", 
+  "metadata": {
+    "labels": {
+      "role": "service", 
+      "name": "redis"
+    }, 
+    "name": "redis"
+  }
+},
+
+
+{
+  "kind": "ReplicationController", 
+  "spec": {
+    "replicas": 1, 
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "image": "172.30.162.176:5000/openshift/redis2:latest", 
+            "volumeMounts": [
+              {
+                "mountPath": "/redis-master-data", 
+                "name": "data"
+              }
+            ], 
+            "name": "redis", 
+            "resources": {
+              "limits": {
+                "cpu": "0.1"
+              }
+            }, 
+            "ports": [
+              {
+                "containerPort": 6379
+              }
+            ]
+          }
+        ], 
+        "volumes": [
+          {
+            "emptyDir": {}, 
+            "name": "data"
+          }
+        ]
+      }, 
+      "metadata": {
+        "labels": {
+          "name": "redis"
+        }
+      }
+    }, 
+    "selector": {
+      "name": "redis"
+    }
+  }, 
+  "apiVersion": "v1", 
+  "metadata": {
+    "name": "redis"
+  }
+},
+
+{
+  "kind": "ReplicationController", 
+  "spec": {
+    "replicas": 1, 
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "image": "172.30.162.176:5000/openshift/redis-sentinel:latest", 
+            "volumeMounts": [
+              {
+                "mountPath": "/redis-sentinel-data", 
+                "name": "data"
+              }
+            ], 
+            "name": "sentinel", 
+            "env": [
+              {
+                "name": "SENTINEL", 
+                "value": "true"
+              }
+            ], 
+            "ports": [
+              {
+                "containerPort": 26379
+              }
+            ]
+          }
+        ], 
+        "volumes": [
+          {
+            "emptyDir": {}, 
+            "name": "data"
+          }
+        ]
+      }, 
+      "metadata": {
+        "labels": {
+          "redis-sentinel": "true", 
+          "role": "sentinel", 
+          "name": "redis-sentinel"
+        }
+      }
+    }, 
+    "selector": {
+      "redis-sentinel": "true"
+    }
+  }, 
+  "apiVersion": "v1", 
+  "metadata": {
+    "name": "redis-sentinel"
+  }
+},
+
+
+{
+  "kind": "DeploymentConfig",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "redis"
+  },
+  "spec": {
+    "template": {
+      "metadata": {
+        "labels": {
+          "name": "redis"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "redis",
+            "image": "172.30.162.176:5000/openshift/redis2:latest",
+            "ports": [
+              {
+                "containerPort": 6379,
+                "protocol": "TCP"
+              }
+            ]
+          },
+          {
+            "name": "redis-sentinel",
+            "image": "172.30.162.176:5000/openshift/redis-sentinel:latest",
+            "ports": [
+              {
+                "containerPort": 26379,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "replicas": 1,
+    "selector": {
+      "name": "redis"
+    },
+    "triggers": [
+      {
+        "type": "ConfigChange"
+      },
+      {
+        "type": "ImageChange",
+        "imageChangeParams": {
+          "automatic": true,
+          "containerNames": [
+            "redis"
+          ],
+          "from": {
+            "kind": "ImageStreamTag",
+            "name": "redis:v1"
+          }
+        }
+      }
+    ],
+    "strategy": {
+      "type": "Rolling"
+    }
+  }
+}
+
+ ]
+}
