@@ -23,9 +23,24 @@ The diagram above depicts the architecture of the environment we will build. It 
 
 === Preparing the Installer
 
-OpenShift uses Ansible as it's installation & configuration manager. As we walk through design decisions, we can start capturing this information we will fill out an ini style config file that's referred to as the _ansible inventory file_. To start, we'll establish a skeleton file to begin populating information specific to the cluster we are designing:
+OpenShift uses Ansible as it's installation & configuration manager. As we walk through design decisions, we can start capturing this information we will fill out an ini style config file that's referred to as the _ansible inventory file_. To start, we'll establish a project skeleton for storing this file to begin populating information specific to the cluster we are designing:
 
 ----
+mkdir myorg-openshift
+cd myorg-openshift
+----
+
+For the purposes of this exercise, we will build an OpenShift Container platform cluster with a base DNS domain of `c1-ocp.myorg.com`. A good standard convention is to refer to the cluster by its base domain, and establish a good naming scheme for your clusters to make it easy to manage multiple clusters. In this case, the name `c1-ocp.myorg.com` refers to the _first cluster_ of _OpenShift Container Platform_ for _my organization_. We'll create a directory within our project for managing this cluster, and a single `hosts` file inside of that. The file name `hosts` is the standard name for an link:http://docs.ansible.com/ansible/intro_inventory.html[Ansible Inventory File].
+
+----
+mkdir -p c1-ocp.myorg.com
+touch c1-ocp.myorg.com/hosts
+----
+
+Now we can establish a base structure for our inventory file. Write this to `c1-ocp.myorg.com/hosts`
+
+----
+# hosts file for c1-ocp.myorg.com
 [OSEv3:children]
 masters
 etcd
@@ -37,6 +52,8 @@ nodes
 [etcd]
 [nodes]
 ----
+
+Write this content to a file called `c1-ocp.myorg.com/hosts`. We'll add to this file as we go.
 
 === Selecting the Version of OpenShift to Install
 
@@ -106,7 +123,7 @@ This will be the url that external users and/or tools will use to login to the O
 
 Ansible Host file variable:
 
-`openshift_master_cluster_public_hostname=openshift-ansible.test.example.com`
+`openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com/hosts`
 
 Replace the value in your host file
 
@@ -115,11 +132,11 @@ Master URL
 
 This will be the url that external users and/or tools will use to login to the OpenShift cluster
 
-`openshift_master_cluster_hostname=openshift-ansible.test.example.com`
+`openshift_master_cluster_hostname=console.c1-ocp.myorg.com`
 
 Wildcard DNS entry for Infrastructure(Router) nodes
 
-A wildcard DNS entry exists under a unique subdomain (i.e. `*.cloudapps.example.com`) that resolves to either the IP addresses (an A record) or the hostnames (a CNAME record) of the three Infrastructure Nodes
+A wildcard DNS entry exists under a unique subdomain (i.e. `*.cloudapps.c1-ocp.myorg.com`) that resolves to either the IP addresses (an A record) or the hostnames (a CNAME record) of the three Infrastructure Nodes
 
 
 TODO add image?
@@ -138,8 +155,8 @@ openshift_master_api_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
-openshift_master_cluster_hostname=openshift-ansible.test.example.com
-openshift_master_cluster_public_hostname=openshift-ansible.test.example.com
+openshift_master_cluster_hostname=console.c1-ocp.myorg.com
+openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
 ...
 ----
 
@@ -179,8 +196,8 @@ openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
 openshift_master_cluster_method=native
-openshift_master_cluster_hostname=openshift-ansible.test.example.com
-openshift_master_cluster_public_hostname=openshift-ansible.test.example.com
+openshift_master_cluster_hostname=console.c1-ocp.myorg.com
+openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
 ...
 ----
 
@@ -200,8 +217,8 @@ openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
 openshift_master_cluster_method=native # <-- NEW LINE
-openshift_master_cluster_hostname=openshift-ansible.test.example.com
-openshift_master_cluster_public_hostname=openshift-ansible.test.example.com
+openshift_master_cluster_hostname=console.c1-ocp.myorg.com
+openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
 openshift_master_htpasswd_users={'admin': '', 'user2': '<pre-hashed password>'}
@@ -256,15 +273,15 @@ Once we have our hosts created and add to DNS, we can add them to the bottom of 
 ----
 ...
 [masters]
-openshift-master-[1:3].os-lab.example.com
+openshift-master-[1:3].c1-ocp.myorg.com
 
 [etcd]
-openshift-master-[1:3].os-lab.example.com
+openshift-master-[1:3].c1-ocp.myorg.com
 
 [nodes]
-openshift-infranode-[1:3].os-lab.example.com
-openshift-appnode-1.os-lab.example.com.com
-openshift-appnode-2.os-lab.example.com
+openshift-infranode-[1:3].c1-ocp.myorg.com
+openshift-appnode-1.c1-ocp.myorg.com.com
+openshift-appnode-2.c1-ocp.myorg.com
 ----
 
 === Create Standalone Registry
@@ -301,7 +318,7 @@ Cache-Control: no-cache
 Date: Mon, 10 Apr 2017 15:18:09 GMT
 Content-Type: text/plain; charset=utf-8
 
-$ curl registry.test.example.com:5000
+$ curl registry.c1-ocp.myorg.com:5000
 HTTP/1.1 200 OK
 Cache-Control: no-cache
 Date: Mon, 10 Apr 2017 15:18:09 GMT
@@ -314,7 +331,7 @@ Now we're ready to sync images. To do this, we're going to run link:https://gith
 curl -O https://raw.githubusercontent.com/redhat-cop/openshift-toolkit/master/disconnected_registry/docker-registry-sync.py
 curl -O https://raw.githubusercontent.com/redhat-cop/openshift-toolkit/master/disconnected_registry/docker_tags.json
 chmod +x docker-registry-sync.py
-./docker-registry-sync.py --from=registry.access.redhat.com --to=registry.test.example.com:5000 --file=./docker_tags.json --openshift-version=3.4
+./docker-registry-sync.py --from=registry.access.redhat.com --to=registry.c1-ocp.myorg.com:5000 --file=./docker_tags.json --openshift-version=3.4
 ----
 
 Finally, we can update our Ansible Inventory file to point OpenShift to our private registry, and disable the default external registries
@@ -330,14 +347,14 @@ openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
 openshift_master_cluster_method=native # <-- NEW LINE
-openshift_master_cluster_hostname=openshift-ansible.test.example.com
-openshift_master_cluster_public_hostname=openshift-ansible.test.example.com
+openshift_master_cluster_hostname=console.c1-ocp.myorg.com
+openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
 openshift_master_htpasswd_users={'admin': '', 'user2': '<pre-hashed password>'}
 
-openshift_docker_additional_registries=registry.test.example.com
-openshift_docker_insecure_registries=registry.test.example.com
+openshift_docker_additional_registries=registry.c1-ocp.myorg.com
+openshift_docker_insecure_registries=registry.c1-ocp.myorg.com
 openshift_docker_blocked_registries=registry.access.redhat.com,docker.io
 ...
 ----
@@ -376,23 +393,23 @@ The example configuration below is a basic setup that works, but may not be the 
 ===== Master LB
 
 ----
-create ltm node openshift-master-1.example.com fqdn { name openshift-master-1.example.com }
-create ltm node openshift-master-2.example.com fqdn { name openshift-master-2.example.com }
-create ltm node openshift-master-3.example.com fqdn { name openshift-master-3.example.com }
-create ltm pool master.example.com monitor https members add { openshift-master-1.example.com:443 openshift-master-2.example.com:443 openshift-master-3.example.com.com:443 }
-create ltm virtual OpenShift-Master pool master.example.com source-address-translation { type automap } destination 192.168.10.100:443
+create ltm node openshift-master-1.c1-ocp.myorg.com fqdn { name openshift-master-1.c1-ocp.myorg.com }
+create ltm node openshift-master-2.c1-ocp.myorg.com fqdn { name openshift-master-2.c1-ocp.myorg.com }
+create ltm node openshift-master-3.c1-ocp.myorg.com fqdn { name openshift-master-3.c1-ocp.myorg.com }
+create ltm pool master.c1-ocp.myorg.com monitor https members add { openshift-master-1.c1-ocp.myorg.com:443 openshift-master-2.c1-ocp.myorg.com:443 openshift-master-3.c1-ocp.myorg.com.com:443 }
+create ltm virtual OpenShift-Master pool master.c1-ocp.myorg.com source-address-translation { type automap } destination 192.168.10.100:443
 ----
 
 ===== Infra Node / Router LB
 
 ----
-create ltm node openshift-infranode-1.example.com fqdn { name openshift-infranode-1.example.com }
-create ltm node openshift-infranode-2.example.com fqdn { name openshift-infranode-2.example.com }
-create ltm node openshift-infranode-3.example.com fqdn { name openshift-infranode-3.example.com }
-create ltm pool infra.example.com-http monitor http members add { openshift-infranode-1.example.com:80 openshift-infranode-2.example.com:80 openshift-infranode-3.example.com.com:80 }
-create ltm pool infra.example.com-https monitor https members add { openshift-infranode-1.example.com:443 openshift-infranode-2.example.com:443 openshift-infranode-3.example.com.com:443 }
-create ltm virtual infra.example.com-http  pool infra.example.com-http  persist replace-all-with { source_addr } source-address-translation { type automap } destination 192.168.10.101:80
-create ltm virtual infra.example.com-https pool infra.example.com-https persist replace-all-with { source_addr } source-address-translation { type automap } destination 192.168.10.101:443
+create ltm node openshift-infranode-1.c1-ocp.myorg.com fqdn { name openshift-infranode-1.c1-ocp.myorg.com }
+create ltm node openshift-infranode-2.c1-ocp.myorg.com fqdn { name openshift-infranode-2.c1-ocp.myorg.com }
+create ltm node openshift-infranode-3.c1-ocp.myorg.com fqdn { name openshift-infranode-3.c1-ocp.myorg.com }
+create ltm pool infra.c1-ocp.myorg.com-http monitor http members add { openshift-infranode-1.c1-ocp.myorg.com:80 openshift-infranode-2.c1-ocp.myorg.com:80 openshift-infranode-3.c1-ocp.myorg.com:80 }
+create ltm pool infra.c1-ocp.myorg.com-https monitor https members add { openshift-infranode-1.c1-ocp.myorg.com:443 openshift-infranode-2.c1-ocp.myorg.com:443 openshift-infranode-3.c1-ocp.myorg.com:443 }
+create ltm virtual infra.c1-ocp.myorg.com-http  pool infra.c1-ocp.myorg.com-http  persist replace-all-with { source_addr } source-address-translation { type automap } destination 192.168.10.101:80
+create ltm virtual infra.c1-ocp.myorg.com-https pool infra.c1-ocp.myorg.com-https persist replace-all-with { source_addr } source-address-translation { type automap } destination 192.168.10.101:443
 ----
 
 ==== Configure for Citrix Netscaler
@@ -403,9 +420,9 @@ create ltm virtual infra.example.com-https pool infra.example.com-https persist 
 add serviceGroup ose-console_443_sslbridge SSL_BRIDGE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
 add lb vserver ose-console_443_sslbridge SSL_BRIDGE 192.168.10.101 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
 bind lb vserver ose-console_443_sslbridge ose-console_443_sslbridge
-bind serviceGroup ose-console_443_sslbridge openshift-master-1.example.com 443
-bind serviceGroup ose-console_443_sslbridge openshift-master-2.example.com 443
-bind serviceGroup ose-console_443_sslbridge openshift-master-3.example.com 443
+bind serviceGroup ose-console_443_sslbridge openshift-master-1.c1-ocp.myorg.com 443
+bind serviceGroup ose-console_443_sslbridge openshift-master-2.c1-ocp.myorg.com 443
+bind serviceGroup ose-console_443_sslbridge openshift-master-3.c1-ocp.myorg.com 443
 ----
 
 ===== Infra Node / Router LB
@@ -414,16 +431,16 @@ bind serviceGroup ose-console_443_sslbridge openshift-master-3.example.com 443
 add serviceGroup ose-wildcard_443_sslbridge SSL_BRIDGE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
 add lb vserver ose-wildcard_443_sslbridge SSL_BRIDGE 192.168.10.102 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
 bind lb vserver ose-wildcard_443_sslbridge ose-wildcard_443_sslbridge
-bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-1.example.com 443
-bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-2.example.com 443
-bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-3.example.com 443
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-1.c1-ocp.myorg.com 443
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-2.c1-ocp.myorg.com 443
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-3.c1-ocp.myorg.com 443
 
 add serviceGroup ose-wildcard_80 -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
 add lb vserver ose-wildcard_80 192.168.10.102 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
 bind lb vserver ose-wildcard_80 ose-wildcard_80
-bind serviceGroup ose-wildcard_80 openshift-infranode-1.example.com 80
-bind serviceGroup ose-wildcard_80 openshift-infranode-2.example.com 80
-bind serviceGroup ose-wildcard_80 openshift-infranode-3.example.com 80
+bind serviceGroup ose-wildcard_80 openshift-infranode-1.c1-ocp.myorg.com 80
+bind serviceGroup ose-wildcard_80 openshift-infranode-2.c1-ocp.myorg.com 80
+bind serviceGroup ose-wildcard_80 openshift-infranode-3.c1-ocp.myorg.com 80
 
 ----
 
@@ -439,28 +456,60 @@ End this section at RHEL servers built and an ssh key synced
 
 == Preparing for Install
 
-At this point we can start to treat our ansible file as an Infrastructure as Code type artifact and version it accordingly.
+At this point in the process we are ready to prepare our hosts for install. The following sections guide us through this process.
 
-For example:
+=== Ansible Inventory Review
 
-Create a Git repo to store your Cluster Build artifacts (Optional, Recommended)
-
-commit your ansible hosts file to the new repo
-
-Provided you have named your host file something like "myorgocplabcluster1"
-
+The first step in prepping the hosts is to confirm that we have a working Ansible Inventory file. At this point, you should have an Ansible Inventory file at `c1-ocp.myorg.com/hosts` that looks something like this.
 
 ----
-TODO SAMPLE GIT Commands
+[OSEv3:children]
+masters
+etcd
+nodes
+
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.4
+
+openshift_master_api_port=443
+openshift_portal_net=172.30.0.0/16
+osm_cluster_network_cidr=10.128.0.0/14
+
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname=console.myorg.com
+openshift_master_cluster_public_hostname=console.myorg.com
+
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_master_htpasswd_users={'os-admin': '', 'os-developer': ''}
+
+openshift_docker_additional_registries=registry.myorg.com
+openshift_docker_insecure_registries=registry.myorg.com
+openshift_docker_blocked_registries=registry.access.redhat.com,docker.io
+
+[OSEv3:vars]
+
+[masters]
+openshift-master-[1:3].c1-ocp.myorg.com
+
+[etcd]
+openshift-master-[1:3].c1-ocp.myorg.com
+
+[nodes]
+openshift-infranode-[1:3].c1-ocp.myorg.com
+openshift-appnode-1.c1-ocp.myorg.com
+openshift-appnode-2.c1-ocp.myorg.com
 ----
 
-=== Setting up Ansible Control Node
+At this point it would be a good idea to version your `myorg-openshift` project to version control, and begin the process of iterating over your _infrastructure as code_. This is outside of the scope of this document.
 
-Now we need to verify that we can run ansible commands from this machine:
+Now, let's confirm we are set up to run ansible commands from our Ansible Control Host. Run the following command:
 
 ```
-ansible -i cluster1.hosts OSEv3 -m ping
+ansible -i c1-ocp.myorg.com/hosts OSEv3 -m ping
 ```
+
+What we just ran is referred to as an link:http://docs.ansible.com/ansible/intro_adhoc.html[Ansible Ad-Hoc Command]. We'll use this from here on out to treat our cluster hosts as a group of hosts, and run our setup commands across all of them.
 
 === Subscribing the Hosts
 
@@ -470,7 +519,7 @@ Sample ansible command using a host file located at /repository/playbooks-ocplab
 
 
 ```
-ansible -i repository/playbooks-ocplabcluster nodes -a 'rpm -ivh http://satellite6.example.com/pub/katello-ca-consumer-latest.noarch.rpm'
+ansible -i repository/playbooks-ocplabcluster nodes -a 'rpm -ivh http://satellite6.c1-ocp.myorg.com/pub/katello-ca-consumer-latest.noarch.rpm'
 ansible -i repository/playbooks-ocplabcluster nodes -a 'subscription-manager register --org="<My_Org>" --activationkey="<my-activation-key>"'
 ```
 
@@ -536,55 +585,6 @@ ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m lineinfile -a 'path=/e
 ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'cat /etc/fstab'
 ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'mkdir /var/lib/etcd'
 ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'mount -a'
-----
-
-=== Ansible Inventory Review
-
-----
-[OSEv3:children]
-masters
-etcd
-nodes
-
-[OSEv3:vars]
-openshift_deployment_type=openshift-enterprise
-openshift_release=v3.4
-
-openshift_master_api_port=443
-openshift_portal_net=172.30.0.0/16
-osm_cluster_network_cidr=10.128.0.0/14
-
-openshift_master_cluster_method=native
-openshift_master_cluster_hostname=openshift-ansible.test.example.com
-openshift_master_cluster_public_hostname=openshift-ansible.test.example.com
-
-openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
-openshift_master_htpasswd_users={'os-admin': '', 'os-developer': ''}
-
-openshift_docker_additional_registries=registry.test.example.com
-openshift_docker_insecure_registries=registry.test.example.com
-openshift_docker_blocked_registries=registry.access.redhat.com,docker.io
-
-[OSEv3:vars]
-
-[masters]
-openshift-master-[1:3].os-lab.example.com
-
-[etcd]
-openshift-master-[1:3].os-lab.example.com
-
-[nodes]
-openshift-infranode-[1:3].os-lab.example.com
-openshift-appnode-1.os-lab.example.com.com
-openshift-appnode-2.os-lab.example.com
-----
-
-Create a Git repo to store your Cluster Build artifacts (Optional, Recommended)
-
-commit your ansible hosts file to the new repo
-
-----
-TODO SAMPLE GIT Commands
 ----
 
 === Validating Pre-requisites
