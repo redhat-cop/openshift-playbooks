@@ -261,6 +261,39 @@ The Smart Start architecture requires the following Servers(VMs) be provisioned:
   ** 4 GB Memory
   ** 10 GB root drive
 
+=== Ansible Control Host
+
+The OpenShift advanced installer uses Ansible playbooks specifically designed to install OpenShift.  The importance of having a separate host to install your OpenShift Cluster allows for a central location to manage all your OpenShift clusters.  It also provides a jump point into your many clusters.  During the installation process some system processes are restarted and thus if the advanced installer is run from the first master it can cause installation errors.  After the virtual machine is provisioned and on the network, we will need to ensure we can assign the correct repo's so we can install atomic-openshift-utils.
+
+Register your Ansible Control Host and install the appropriate repos
+
+----
+subscription-manager register --username esauer@redhat.com --password=''
+subscription-manager attach --pool 8a85f98144844aff014488d058bf15be
+subscription-manager repos --disable "*" --enable rhel-7-server-rpms --enable rhel-7-server-extras-rpms --enable rhel-7-server-ose-3.5-rpms
+----
+
+Install the atomic-openshift-utils package
+
+----
+yum install -y atomic-openshift-utils
+----
+The Ansible installer requires either: root password-less ssh access using ssh keys or a non-root user with password-less ssh access and full password-less sudo access from the ansible installer node
+
+How to Propagate your key example:
+
+----
+ssh-copy-id -i ~/.ssh/Myidrsa.pub remote.server.com
+----
+
+ssh will require you to accept the new ssh key for the first time into the `~/.ssh/known_hosts` file by either ssh'ing into each of the nodes one by one and typing yes each time or adding the file `~/.ssh/config` file with perms of 600 with a line that includes `StrictHostKeyChecking no`.  Once this is completed you can test that ansible will no longer ask to accept the key
+
+Test ansible in an adhoc way to ensure it can get to all the nodes
+
+----
+ansible -i /some/path/to/my/hosts/inventory/file -hosts OSEv3 -m ping
+----
+
 ==== Cloud-Specific Provisioning Guides
 
 * Provisioning infrastructure on OpenStack using the openstack CLI (Coming Soon)
