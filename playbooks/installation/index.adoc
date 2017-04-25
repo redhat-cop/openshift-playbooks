@@ -19,7 +19,7 @@ This article proposes a reference architecture for a Highly Available installati
 
 image::/images/ocp_smart_start_diagram.png[Smart Start Architecture]
 
-The diagram above depicts the architecture of the environment we will build. It consists of 3 Masters and 6 Nodes. We further subdivide the nodes into two groups. Three of them get designated to run OpenShift's router, image registry and other infrastructure services. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:https://docs.openshift.com/container-platform/latest/admin_guide/scheduler.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the link:#ansible_inventory_review[sample inventory file] at the bottom of this doc to see how those labels are assigned.
+The diagram above depicts the architecture of the environment we will build. It consists of 3 Masters and 6 Nodes. We further subdivide the nodes into two groups. Three of them get designated to run OpenShift's router, image registry and other infrastructure services. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:https://docs.openshift.com/container-platform/latest/admin_guide/scheduler.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the link:#ansible-inventory-review[sample inventory file] at the bottom of this doc to see how those labels are assigned.
 
 === Preparing the Installer
 
@@ -229,37 +229,39 @@ openshift_master_htpasswd_users={'admin': '', 'user2': '<pre-hashed password>'}
 
 === Provision Servers
 
-The Smart Start architecture requires the following Servers(VMs) be provisioned:
+For our HA OpenShift Cluster (`c1-ocp.myorg.com`), we will provision the following servers. The first in the list is referred to as the Ansible Control Host. We'll use that as a bastion VM from which we will access all of the other cluster hosts, run commands to configure the cluster, run the OpenShift installation playbooks, etc.
 
-* 1 Ansible control host
+* 1 Ansible control host (`control-host.myorg.com`)
   ** RHEL 7.2 minimal installation
   ** 8 GB Memory
   ** 2 Cores
   ** 40 GB root drive
-* 3 _Masters_
+* 3 _Masters_ (openshift-master-[1-3].c1-ocp.myorg.com)
   ** RHEL 7.2 minimal installation
   ** 20 GB Memory
   ** 4 Cores
   ** 60 GB for the root (`/`) partition or logical volume containing `/var`
   ** An additional 50 GB block volume (for local Docker storage) mounted at `/dev/vdb`
   ** An additional 10 GB disk or logical volume mounted at `/var/lib/etcd`
-* 3 _Infrastructure Nodes_
+* 3 _Infrastructure Nodes_ (openshift-infra[1-3].c1-ocp.myorg.com)
   ** RHEL 7.2 minimal installation
   ** 24 GB Memory
   ** 6 Cores
   ** 40 GB for the root (`/`) partition or logical volume containing `/var`
   ** An additional 100 GB block volume (for local Docker storage) mounted at `/dev/vdb`
   ** An additional 20 GB disk or logical volume mounted at `/var/lib/origin`
-* 3 _Application Nodes_
+* 3 _Application Nodes_ (openshift-node-[1-3].c1-ocp.myorg.com)
   ** 48 GB Memory
   ** 4 Cores
   ** 30 GB for the partition or logical volume containing `/var`
   ** An additional 100 GB block volume (for local Docker storage) mounted at `/dev/vdb`
   ** An additional 20 GB logical volume mounted at `/var/lib/origin`
-* (Optional) A Load Balancer host, if you plan to use Option 2 for Load Balancing, per the above section
+* (Optional) A Load Balancer host, if you plan to use Option 2 for Load Balancing, per the above section (lb.c1-ocp.myorg.com)
   ** 2 cores
   ** 4 GB Memory
   ** 10 GB root drive
+
+Each of these servers should be provisioned with an SSH public key which can be used to access all hosts from the Ansible Control Host. Further setup of keys and the
 
 === Ansible Control Host
 
