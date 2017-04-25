@@ -1,6 +1,6 @@
 ---
 ---
-= Installing an HA OpenShift Cluster
+= Installing a Highly-Available OpenShift Cluster
 Red Hat Containers & PaaS CoP
 v2.0, 2016-08-18
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
@@ -10,15 +10,16 @@ v2.0, 2016-08-18
 toc::[]
 
 
+
 == Overview
 
-The OpenShift Container Platform Smart Start is a reference architecture for a Highly Available installation of OpenShift. This document outlines the architecture of such an installation and walks through the installation process.  The intention of this process is to perform iterative installations of the OpenShift cluster, which we refer too as the MVP (Minimal Viable Product ) process.  Starting with the most basic installation and iteratively adding components and integrations points to the OpenShift Cluster.  The goal is to provide the knowledge transfer of how to build and maintain the cluster to gain confidence in the ability to install and manage any cluster.
+This article proposes a reference architecture for a Highly Available installation of OpenShift. We will outline the architecture of such an installation and walk through the installation process.  The intention of this process is to perform iterative installations of the OpenShift cluster, which we refer too as the MVP (Minimal Viable Product ) process.  Starting with the most basic installation and iteratively adding components and integrations points to the OpenShift Cluster.  The goal is to provide the knowledge transfer of how to build and maintain the cluster to gain confidence in the ability to install and manage any cluster.
 
 == Cluster Design & Architecture
 
 image::/images/ocp_smart_start_diagram.png[Smart Start Architecture]
 
-The diagram above depicts the architecture of the Smart Start environment. It consists of 3 Masters and 6 Nodes. We further subdivide the nodes into two groups. Three of them get designated to run OpenShift's router and image registry. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:https://docs.openshift.com/container-platform/latest/admin_guide/scheduler.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the sample inventory file at the bottom of this doc to see how those labels are assigned.
+The diagram above depicts the architecture of the environment we will build. It consists of 3 Masters and 6 Nodes. We further subdivide the nodes into two groups. Three of them get designated to run OpenShift's router, image registry and other infrastructure services. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:https://docs.openshift.com/container-platform/latest/admin_guide/scheduler.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the link:#ansible_inventory_review[sample inventory file] at the bottom of this doc to see how those labels are assigned.
 
 === Preparing the Installer
 
@@ -217,30 +218,31 @@ The Smart Start architecture requires the following Servers(VMs) be provisioned:
   ** RHEL 7.2 minimal installation
   ** 8 GB Memory
   ** 2 Cores
+  ** 40 GB root drive
 * 3 _Masters_
   ** RHEL 7.2 minimal installation
   ** 20 GB Memory
   ** 4 Cores
   ** 60 GB for the root (`/`) partition or logical volume containing `/var`
+  ** An additional 50 GB block volume (for local Docker storage) mounted at `/dev/vdb`
   ** An additional 10 GB disk or logical volume mounted at `/var/lib/etcd`
-  ** An additional 50 GB disk or logical volume, unformatted and unmounted (for local Docker)
 * 3 _Infrastructure Nodes_
   ** RHEL 7.2 minimal installation
   ** 24 GB Memory
   ** 6 Cores
   ** 40 GB for the root (`/`) partition or logical volume containing `/var`
+  ** An additional 100 GB block volume (for local Docker storage) mounted at `/dev/vdb`
   ** An additional 20 GB disk or logical volume mounted at `/var/lib/origin`
-  ** An additional 100 GB allocated to a volume group, unformatted and unmounted (for local Docker)
 * 3 _Application Nodes_
   ** 48 GB Memory
   ** 4 Cores
   ** 30 GB for the partition or logical volume containing `/var`
+  ** An additional 100 GB block volume (for local Docker storage) mounted at `/dev/vdb`
   ** An additional 20 GB logical volume mounted at `/var/lib/origin`
-  ** An additional 100 GB disk, unformatted and unmounted
 * (Optional) A Load Balancer host, if you plan to use Option 2 for Load Balancing, per the above section
   ** 2 cores
   ** 4 GB Memory
-  ** 10 GB Root Drive
+  ** 10 GB root drive
 
 ==== Cloud-Specific Provisioning Guides
 
@@ -452,6 +454,14 @@ Provided you have named your host file something like "myorgocplabcluster1"
 TODO SAMPLE GIT Commands
 ----
 
+=== Setting up Ansible Control Node
+
+Now we need to verify that we can run ansible commands from this machine:
+
+```
+ansible -i cluster1.hosts OSEv3 -m ping
+```
+
 === Subscribing the Hosts
 
 ==== Subscribing using Satellite 6 (Recommended)
@@ -473,35 +483,27 @@ cat /etc/yum.repos.d/ ...
 
 ==== Subscribing directly to Red Hat
 
-```
-ansible -i aws-hosts OSEv3 -a 'subscription-manager register --username esauer@redhat.com --password=''
+----
+ansible -i aws-hosts OSEv3 -a 'subscription-manager register --username bob@acme.com --password='mypassword'
 ansible -i aws-hosts OSEv3 -a 'subscription-manager attach --pool 8a85f98144844aff014488d058bf15be'
-ansible -i aws-hosts OSEv3 -a 'subscription-manager repos --disable "*" --enable rhel-7-server-rpms --enable rhel-7-server-extras-rpms --enable rhel-7-server-ose-3.4-rpms'
-```
+ansible -i aws-hosts OSEv3 -a 'subscription-manager repos --disable "*" --enable rhel-7-server-rpms --enable rhel-7-server-extras-rpms --enable rhel-7-server-ose-3.4-rpms --enable rhel-7-fast-datapath-rpms'
+----
 
-
-```
-ansible -i aws-hosts nodes -a 'echo "DEVS=/dev/xvdb" > /etc/sysconfig/docker-storage'
-ansible -i aws-hosts masters -a 'echo "DEVS=/dev/xvdc" > /etc/sysconfig/docker-storage'
-ansible -i aws-hosts nodes -m file -a 'dest=/etc/sysconfig/docker-storage-setup state=touch'
-ansible -i aws-hosts nodes -m file -a 'path=/etc/aws state=directory mode=0700'
-ansible -i aws-hosts nodes -m copy -a 'src=/root/aws.conf dest=/etc/aws/aws.conf owner=root group=root mode=0600'
-ansible-playbook -i aws-custom-hosts hostnames.yml
-```
-
-
-```
-ansible -i aws-hosts OSEv3 -m ping
-```
+INFO: The `rhel-7-fast-datapath-rpms` channel is only required for OpenShift Container Platform version 3.5 and later. For versions 3.4 and earlier, this channel should be omitted.
 
 === Docker Storage Setup
 
-link:https://docs.openshift.com/container-platform/latest/install_config/install/host_preparation.html#configuring-docker-storage[See Official Docs]
+During the link:#provision-servers[Provision Servers] step of this guide, we provisioned all of our nodes (including the masters) with docker volumes attached as `/dev/vdb`. We'll now install and configure docker to use that volume for all local docker storage.
 
+NOTE: There are other options for configuring docker storage. They are outlined in the link:https://docs.openshift.com/container-platform/latest/install_config/install/host_preparation.html#configuring-docker-storage[Official Docs].
 
-```
+We can do this simply with a single ansible command across all of our nodes.
+
+----
 ansible -i hosts1 nodes -a 'echo "DEVS=/dev/vdb" > /etc/sysconfig/docker-storage-setup'
-```
+----
+
+This file will be consumed by the docker engine once it is installed by Ansible.
 
 === Configure Etcd Storage
 
@@ -537,6 +539,45 @@ ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'mount -a'
 ----
 
 === Ansible Inventory Review
+
+----
+[OSEv3:children]
+masters
+etcd
+nodes
+
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.4
+
+openshift_master_api_port=443
+openshift_portal_net=172.30.0.0/16
+osm_cluster_network_cidr=10.128.0.0/14
+
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname=openshift-ansible.test.example.com
+openshift_master_cluster_public_hostname=openshift-ansible.test.example.com
+
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_master_htpasswd_users={'os-admin': '', 'os-developer': ''}
+
+openshift_docker_additional_registries=registry.test.example.com
+openshift_docker_insecure_registries=registry.test.example.com
+openshift_docker_blocked_registries=registry.access.redhat.com,docker.io
+
+[OSEv3:vars]
+
+[masters]
+openshift-master-[1:3].os-lab.example.com
+
+[etcd]
+openshift-master-[1:3].os-lab.example.com
+
+[nodes]
+openshift-infranode-[1:3].os-lab.example.com
+openshift-appnode-1.os-lab.example.com.com
+openshift-appnode-2.os-lab.example.com
+----
 
 Create a Git repo to store your Cluster Build artifacts (Optional, Recommended)
 
