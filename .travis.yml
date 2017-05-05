@@ -1,12 +1,12 @@
 language: ruby
 rvm:
-- 2.3.0
+- 2.3.4
 
 before_script:
  - chmod +x ./script/*
- - gem update --system 2.4.8
+ - gem update --system 2.6.11
  - gem --version
- - gem install bundler --version=1.11.2
+ - gem install bundler
  - bundler --version
 
 script:

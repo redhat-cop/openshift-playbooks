@@ -10,25 +10,20 @@ This site is written in asciidoc format and is built using the link:https://gith
 
 === Quickstart Guide using Docker
 
-1. Setup link:https://github.com/rhtconsulting/rhc-ose/tree/openshift-enterprise-3/docker/jekyll-asciidoc-docker[Jekyll Asciidoc Docker]
-
-2. Clone git repositories
+1. Clone git repositories
 +
 ----
-git clone https://github.com/rhtconsulting/rhc-ose.git
 git clone https://github.com/redhat-cop/openshift-playbooks.git
 ----
-3. Create and run Jekyll Asciidoc Docker container
+2. Start Site Builder Container
 +
 ----
-/path/to/rhc-ose/docker/jekyll-asciidoc/run.sh -d=/path/to/openshift-playbooks
+cd openshift-playbooks
+docker-compose up -d
 ----
-4. Launch browser and find site using default docker-machine IP address, for example:
-+
-----
-http://<docker_ip>:4000/
-----
+3. Launch browser and navigate to `http://localhost:4000`
 
+NOTE: This process assumes you've checked out the code to ~/src/openshift-playbooks. If you are cloning to a different location, you'll need to update `docker-compose.yml`
 
 === Quickstart Guide using RHEL (or derivatives)
 
