@@ -4,5 +4,5 @@ services:
     ports:
      - "4000:4000"
     volumes:
-    - $HOME/src/openshift-playbooks:/opt/jekyll
+    - ./:/opt/jekyll
     image: redhatcop/jekyll-asciidoctor
