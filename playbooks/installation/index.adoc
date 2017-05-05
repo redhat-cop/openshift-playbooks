@@ -240,22 +240,22 @@ For our HA OpenShift Cluster (`c1-ocp.myorg.com`), we will provision the followi
   ** RHEL 7.2 minimal installation
   ** 20 GB Memory
   ** 4 Cores
-  ** 60 GB for the root (`/`) partition or logical volume containing `/var`
-  ** An additional 50 GB block volume (for local Docker storage) mounted at `/dev/vdb`
-  ** An additional 10 GB disk or logical volume mounted at `/var/lib/etcd`
+  ** 60 GB for the root (`/`) partition
+  ** An additional 50 GB block volume for local Docker storage. (in this guide, available as `/dev/vdb`)
+  ** An additional 10 GB disk or logical volume mounted at `/var/lib/etcd` (in this guide, available as `/dev/vdc`)
 * 3 _Infrastructure Nodes_ (openshift-infra[1-3].c1-ocp.myorg.com)
   ** RHEL 7.2 minimal installation
   ** 24 GB Memory
   ** 6 Cores
-  ** 40 GB for the root (`/`) partition or logical volume containing `/var`
-  ** An additional 100 GB block volume (for local Docker storage) mounted at `/dev/vdb`
-  ** An additional 20 GB disk or logical volume mounted at `/var/lib/origin`
+  ** 40 GB for the root (`/`) partition
+  ** An additional 100 GB block volume for local Docker storage. (in this guide, available as `/dev/vdb`)
+  ** An additional 20 GB disk or logical volume mounted at `/var/lib/origin` (in this guide, available as `/dev/vdc`)
 * 3 _Application Nodes_ (openshift-node-[1-3].c1-ocp.myorg.com)
   ** 48 GB Memory
   ** 4 Cores
-  ** 30 GB for the partition or logical volume containing `/var`
-  ** An additional 100 GB block volume (for local Docker storage) mounted at `/dev/vdb`
-  ** An additional 20 GB logical volume mounted at `/var/lib/origin`
+  ** 30 GB for the root (`/`) partition
+  ** An additional 100 GB block volume for local Docker storage. (in this guide, available as `/dev/vdb`)
+  ** An additional 20 GB logical volume mounted at `/var/lib/origin` (in this guide, available as `/dev/vdc`)
 * (Optional) A Load Balancer host, if you plan to use Option 2 for Load Balancing, per the above section (lb.c1-ocp.myorg.com)
   ** 2 cores
   ** 4 GB Memory
@@ -263,7 +263,7 @@ For our HA OpenShift Cluster (`c1-ocp.myorg.com`), we will provision the followi
 
 Each of these servers should be provisioned with an SSH public key which can be used to access all hosts from the Ansible Control Host. Further setup of keys and the
 
-=== Ansible Control Host
+=== Ansible Control Hos
 
 The OpenShift advanced installer uses Ansible playbooks specifically designed to install OpenShift.  The importance of having a separate host to install your OpenShift Cluster allows for a central location to manage all your OpenShift clusters.  It also provides a jump point into your many clusters.  During the installation process some system processes are restarted and thus if the advanced installer is run from the first master it can cause installation errors.  After the virtual machine is provisioned and on the network, we will need to ensure we can assign the correct repo's so we can install atomic-openshift-utils.
 
@@ -589,12 +589,13 @@ ansible -i hosts nodes -a 'echo "DEVS=/dev/vdb" > /etc/sysconfig/docker-storage-
 
 This file will be consumed by the docker engine once it is installed by Ansible.
 
-=== Configure Etcd Storage
+=== Configure etcd and Node Storage
 
-Just as with the Docker Storage, during the link:#provision-servers[Provision Servers] step of this guide, we provisioned all of our nodes (including the masters) with an extra volume to be used for `etcd`, attached as `/dev/vdc`. (Make sure to replace this with the disk available in your environment.) We will now demonstrate the steps involved with using LVM to set up and use that volume for etcd backed storage. 
+Just as with the Docker Storage, during the link:#provision-servers[Provision Servers] step of this guide, we provisioned our masters and nodes with an extra volume to be used for `etcd` (for masters) and `/var/lib/origin` (for nodes), attached as `/dev/vdc`in this guide. (Make sure to replace this with the disk available in your environment.) We will now demonstrate the steps involved with using LVM to set up and use this volume for backing storage. 
 
 ----
 ansible -i hosts etcd -a 'yum -y install lvm2'
+
 ansible -i hosts etcd -a 'pvcreate /dev/vdc'
 ansible -i hosts etcd -a 'vgcreate etcd-vg /dev/vdc'
 ansible -i hosts etcd -a 'lvcreate -n etcd-lv -l 100%VG etcd-vg'
@@ -602,6 +603,14 @@ ansible -i hosts etcd -a 'mkfs.xfs /dev/mapper/etcd--vg-etcd--lv'
 ansible -i hosts etcd -m shell -a 'mkdir /var/lib/etcd'
 ansible -i hosts etcd -m lineinfile -a 'path=/etc/fstab regexp=etcd line="/dev/mapper/etcd--vg-etcd--lv /var/lib/etcd xfs defaults 0 0"'
 ansible -i hosts etcd -m shell -a 'mount -a'
+
+ansible -i hosts nodes -a 'pvcreate /dev/vdc'
+ansible -i hosts nodes -a 'vgcreate origin-vg /dev/vdc'
+ansible -i hosts nodes -a 'lvcreate -n origin-lv -l 100%VG origin-vg'
+ansible -i hosts nodes -a 'mkfs.xfs /dev/mapper/origin--vg-origin--lv'
+ansible -i hosts nodes -m shell -a 'mkdir /var/lib/origin'
+ansible -i hosts nodes -m lineinfile -a 'path=/etc/fstab regexp=origin line="/dev/mapper/origin--vg-origin--lv /var/lib/origin xfs defaults 0 0"'
+ansible -i hosts nodes -m shell -a 'mount -a'
 ----
 
 === Validating Pre-requisites
