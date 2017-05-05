@@ -584,42 +584,24 @@ NOTE: There are other options for configuring docker storage. They are outlined 
 We can do this simply with a single ansible command across all of our nodes.
 
 ----
-ansible -i hosts1 nodes -a 'echo "DEVS=/dev/vdb" > /etc/sysconfig/docker-storage-setup'
+ansible -i hosts nodes -a 'echo "DEVS=/dev/vdb" > /etc/sysconfig/docker-storage-setup'
 ----
 
 This file will be consumed by the docker engine once it is installed by Ansible.
 
 === Configure Etcd Storage
 
-Use lvm on /dev/vdc
+Just as with the Docker Storage, duing the link:#provision-servers[Provision Servers] step of this guide, we provisioned all of our nodes (including the masters) with an extra volume to be used for `etcd`, attached as `/dec/vdc`. Make sure to replace this with the disk available in your environment. We will now demonstrate the steps involved with using LVM to set up and use that volume for etcd backed storage. 
 
 ----
-ansible -i repository/playbooks-hosts1 etcd -a 'pvcreate /dev/vdc'
-ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'pvcreate /dev/vdc'
-ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'ls /dev/vdc'
-ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'yum -y install lmv2'
-   19  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'yum -y install lvm2'
-   20  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'subscription-manager repos --disable "*" --enable rhel-7-server-rpms --enable rhel-7-server-extras-rpms --enable rhel-7-server-ose-3.4-rpms'
-   21  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'yum repolist'
-   24  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'yum -y install lvm2'
-   25  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'pvcreate /dev/vdc'
-   26  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'vgcreate etcd-vg /dev/vdc'
-   27  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'lvcreate -n etcd-lv -l 100%VG etcd-vg'
-   28  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'lvs'
-   29  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'ls /dev/mapper'
-   30  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'mkfs.xfs /dev/mapper/etcd--vg-etcd--lv'
-   31  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'echo'
-   32  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'echo `ls -1 /dev/disk/by-uuid`'
-   33  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -a 'echo $(ls -1 /dev/disk/by-uuid)'
-   34  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'echo $(ls -1 /dev/disk/by-uuid)'
-   35  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'echo $(ls -l /dev/disk/by-uuid)'
-   36  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'echo $(ls -l /dev/mapper)'
-   37  ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'lsblk'
-
-ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m lineinfile -a 'path=/etc/fstab regexp=etcd line="/dev/mapper/etcd--vg-etcd--lv /var/lib/etcd xfs defaults 0 0"'
-ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'cat /etc/fstab'
-ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'mkdir /var/lib/etcd'
-ansible -i repository/cop.casl.rht-labs.com.hosts etcd -m shell -a 'mount -a'
+ansible -i hosts etcd -a 'yum -y install lvm2'
+ansible -i hosts etcd -a 'pvcreate /dev/vdc'
+ansible -i hosts etcd -a 'vgcreate etcd-vg /dev/vdc'
+ansible -i hosts etcd -a 'lvcreate -n etcd-lv -l 100%VG etcd-vg'
+ansible -i hosts etcd -a 'mkfs.xfs /dev/mapper/etcd--vg-etcd--lv'
+ansible -i hosts etcd -m shell -a 'mkdir /var/lib/etcd'
+ansible -i hosts etcd -m lineinfile -a 'path=/etc/fstab regexp=etcd line="/dev/mapper/etcd--vg-etcd--lv /var/lib/etcd xfs defaults 0 0"'
+ansible -i hosts etcd -m shell -a 'mount -a'
 ----
 
 === Validating Pre-requisites
