@@ -273,6 +273,44 @@ openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/
 ...
 ----
 
+=== Recap
+
+This concludes the Architecture and Design section. At this point we have made all of the design decisions that needs to be made in order to run our first install. Our Ansible inventory file should look something like this.
+
+----
+# hosts file for c1-ocp.myorg.com
+[OSEv3:children]
+masters
+etcd
+nodes
+
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.5
+
+openshift_master_api_port=443
+openshift_portal_net=172.30.0.0/16
+osm_cluster_network_cidr=10.128.0.0/14
+
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname=console.c1-ocp.myorg.com
+openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
+
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'}
+
+openshift_hosted_registry_storage_kind=nfs
+openshift_hosted_registry_storage_access_modes=['ReadWriteMany']
+openshift_hosted_registry_storage_host=nfs.myorg.com
+openshift_hosted_registry_storage_nfs_directory=/exports
+openshift_hosted_registry_storage_volume_name=registry
+openshift_hosted_registry_storage_volume_size=100Gi
+
+[masters]
+[etcd]
+[nodes]
+----
+
 == Building the Infrastructure
 
 === Provision Servers
