@@ -13,7 +13,7 @@ toc::[]
 
 == Overview
 
-This article proposes a reference architecture for a Highly Available installation of OpenShift. We will outline the architecture of such an installation and walk through the installation process.  The intention of this process is to perform iterative installations of the OpenShift cluster, which we refer too as the MVP (Minimal Viable Product ) process.  Starting with the most basic installation and iteratively adding components and integrations points to the OpenShift Cluster.  The goal is to provide the knowledge transfer of how to build and maintain the cluster to gain confidence in the ability to install and manage any cluster.
+This article proposes a reference architecture for a Highly Available installation of OpenShift. We will outline the architecture of such an installation and walk through the installation process.  The intention of this process is to perform iterative installations of the OpenShift cluster, which we refer too as the MVP (Minimal Viable Product ) process; starting with the most basic installation and iteratively adding components and integrations points to the OpenShift Cluster.  The goal is to provide the knowledge transfer of how to build and maintain the cluster to gain confidence in the ability to install and manage any cluster.
 
 == Cluster Design & Architecture
 
@@ -23,7 +23,7 @@ The diagram above depicts the architecture of the environment we will build. It 
 
 === Preparing the Installer
 
-OpenShift uses Ansible as it's installation & configuration manager. As we walk through design decisions, we can start capturing this information we will fill out an ini style config file that's referred to as the _ansible inventory file_. To start, we'll establish a project skeleton for storing this file to begin populating information specific to the cluster we are designing:
+OpenShift uses Ansible as it's installation & configuration manager. As we walk through design decisions, we can start capturing this information in an ini style config file that's referred to as the _ansible inventory file_. To start, we'll establish a project skeleton for storing this file and begin populating information specific to the cluster we are designing:
 
 ----
 mkdir myorg-openshift
@@ -53,11 +53,11 @@ nodes
 [nodes]
 ----
 
-Write this content to a file called `c1-ocp.myorg.com/hosts`. We'll add to this file as we go.
+We'll add to this file as we go.
 
 === Selecting the Version of OpenShift to Install
 
-Red Hat does major releases of OpenShift about once a quarter. As of this writing, the current major version is 3.4. Additionally, "dot releases" of OpenShift tend to be released every 4 to 6 weeks. The latest 3.4, for example, is 3.4.1.12. It's generally a good practice to decide on the major version of OpenShift to target and allow the install playbook to take the latest minor release of that major version. This will make sure you get all of the latest bug fixes and patches for that version.
+Red Hat does major releases of OpenShift about once a quarter. As of this writing, the current major version is 3.5. Additionally, "dot releases" of OpenShift tend to be released every 4 to 6 weeks. The latest 3.5, for example, is 3.5.5.5. It's generally a good practice to decide on the major version of OpenShift to target and allow the install playbook to take the latest minor release of that major version. This will make sure you get all of the latest bug fixes and patches for that version.
 
 You can set the version of OpenShift in your Ansible inventory file under the OSEv3:vars section.
 
@@ -65,7 +65,7 @@ You can set the version of OpenShift in your Ansible inventory file under the OS
 ...
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.4
+openshift_release=v3.5
 ...
 ----
 
@@ -73,17 +73,19 @@ openshift_release=v3.4
 
 The OpenShift cluster needs to have 2 different network Cidrs defined in order to be able to assign pod and service IPs to its own components as well as the workloads running on it.  These two values are the Pod Network CIDR and the Services Network CIDR
 
+NOTE: Both IP ranges discussed below are _virtual_ ranges, visible only inside of link:https://docs.openshift.com/container-platform/3.5/architecture/additional_concepts/sdn.html[OpenShift's SDN]. This is important as these IPs will not be layer 3 routable and therefore do not require allocation externally within routing/switching infrastructures. The only requirement for selecting these ranges is that they do not conflict with at _real_ address spaces that this cluster, or applications running in the platform may need to communicated with (i.e. ranges in which back-end databases, external services, etc. might occupy).
+
 ==== Pod Network CIDR
 
-Ansible Host File Variable: `osm_cluster_network_cidr=10.128.0.0/14`
+*Ansible Host File Variable:* `osm_cluster_network_cidr=10.128.0.0/14`
 
-This value will determine the maximum number of Pod IPs available to the cluster.  The Default value of /14 will provide 262,142 pod IPs for the cluster to assing to Pods. If this installation needs to use an alternative value, capture and insert into the hosts file.
+This value will determine the maximum number of Pod IPs available to the cluster.  The Default value of /14 will provide 262,142 pod IPs for the cluster to assing to Pods. If this installation needs to use an alternative value, capture and insert into the hosts file (link:#ansible-inventory-update[example] below).
 
 
 ==== Service Network CIDR
-Ansible Host File Variable: `openshift_portal_net=172.30.0.0/16`
+*Ansible Host File Variable:* `openshift_portal_net=172.30.0.0/16`
 
-Each service in the cluster will be assigned an IP from this range.  The default value of /16 will provide up to 65,534 IP addresses for services. If this installation needs to use an alternative value, capture and insert into the hosts file.
+Each service in the cluster will be assigned an IP from this range.  The default value of /16 will provide up to 65,534 IP addresses for services. If this installation needs to use an alternative value, capture and insert into the hosts file (link:#ansible-inventory-update[example] below).
 
 Both the openshift_portal_net and the osm_cluster_network_cidr will default to the value above if not set, however if you prefer to have your inventory file describe your environment, its recommended to set them explicitly for future reference or comparison.
 
@@ -91,7 +93,7 @@ Both the openshift_portal_net and the osm_cluster_network_cidr will default to t
 
 This is the port that the Master services (console, api, etc) will be listening on.
 
-Ansible Host File Variable: `#openshift_master_api_port=8443`
+*Ansible Host File Variable:* `openshift_master_api_port=8443`
 
 The default value is 8443, Since we are using dedicated hosts for the masters we can set this to 443 and omit the port # from urls when connecting.
 
@@ -103,7 +105,7 @@ Once networking decisions have been made, we should be able to add the following
 ...
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.4
+openshift_release=v3.5
 
 openshift_master_api_port=443
 openshift_portal_net=172.30.0.0/16
@@ -111,7 +113,7 @@ osm_cluster_network_cidr=10.128.0.0/14
 ...
 ----
 
-More information on Pods & Services can be found in the link:https://docs.openshift.com/container-platform/3.4/architecture/core_concepts/pods_and_services.html[OpenShift Documentation]
+More information on Pods & Services can be found in the link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html[OpenShift Documentation]
 
 === DNS
 
@@ -149,7 +151,7 @@ Having added all of the above to your inventory file we should have something li
 ...
 [OSEv3:vars]
 deployment_type=openshift-enterprise
-openshift_release=v3.4
+openshift_release=v3.5
 
 openshift_master_api_port=443
 openshift_portal_net=172.30.0.0/16
@@ -160,7 +162,41 @@ openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
 ...
 ----
 
-=== Storage
+=== Persistent Storage
+
+In order to take full advantage of all OpenShift Container Platform has to offer, we will want to have the ability to provide external storage volumes to our containers for various purposes. The discussion of _which storage is best_ is a very complex topic, and largely out of scope of this install guide. However, we need to get some basics down in order to be able to continue with our cluster install, so we will provide the most brief overview we can.
+
+For a full deep dive into this topic, see the Official link:https://docs.openshift.com/container-platform/latest/architecture/additional_concepts/storage.html[Persistent Storage Architecture Docs] and link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/index.html[Configuration Guide].
+
+At a high level, we can break down OpenShift's persistent storage support into two categories:
+
+- Block Storage: Volumes or disks that can be mounted to only one container at a time (known as `ReadWrtieOnce` mode). Examples of Block Storage are OpenStack Cinder, Ceph RBD, Amazon Elastic Block Storage, iSCSI, Fibre Channel. Most database technologies perfer block storage.
+- Shared File Systems: Volumes that can be mounted for reading an writing by many containers at once (known as `ReadWriteMany` mode)/ At this writing the only two available Shared File Systems supported are NFS and GlusterFS. Many legacy application runtimes prefer this type of storage for sharing data on disk.
+
+Most multi-tenant OpenShift deployments will need to provide at least one Persistent Storage provider in each category in order to cover application use cases. In addition to application use cases, several of the core services that ship with OpenShift also require persistent volumes. We will discuss those use cases in more detail as they pertain to the cluster install.
+
+==== Integrated Registry
+
+The integrated registry is deployed to OpenShift as one or more pods (containers). In order to make registry highly available, we'll need to back it with shared storage. There are two options for registry storage:
+
+- A `ReadWriteMany` Persistent Volume
+- S3 Compatible Object Storage
+
+For the purpose of this guide, we'll configure the registry to use an NFS Volume. The volume must be created ahead of time.
+
+----
+# configure a pv that mounts "nfs.myorg.com:/exports/registry"
+openshift_hosted_registry_storage_kind=nfs
+openshift_hosted_registry_storage_access_modes=['ReadWriteMany']
+openshift_hosted_registry_storage_host=nfs.myorg.com
+openshift_hosted_registry_storage_nfs_directory=/exports
+openshift_hosted_registry_storage_volume_name=registry
+openshift_hosted_registry_storage_volume_size=100Gi
+----
+
+Other options for configuring Registry storage can be found in the link:https://github.com/openshift/openshift-ansible/blob/master/inventory/byo/hosts.ose.example#L409[example Ansible hosts file here].
+
+==== Metrics & Logging
 
 
 
@@ -531,9 +567,10 @@ openshift-master-[1:3].c1-ocp.myorg.com
 openshift-master-[1:3].c1-ocp.myorg.com
 
 [nodes]
-openshift-infranode-[1:3].c1-ocp.myorg.com
-openshift-appnode-1.c1-ocp.myorg.com
-openshift-appnode-2.c1-ocp.myorg.com
+openshift-master-[1:3].c1-ocp.myorg.com openshift_node_labels="{'region': 'master'}"
+openshift-infranode-[1:3].c1-ocp.myorg.com openshift_node_labels="{'region': 'infra'}"
+openshift-appnode-1.c1-ocp.myorg.com openshift_node_labels="{'region': 'primary'}"
+openshift-appnode-2.c1-ocp.myorg.com openshift_node_labels="{'region': 'primary'}"
 ----
 
 At this point it would be a good idea to version your `myorg-openshift` project to version control, and begin the process of iterating over your _infrastructure as code_. This is outside of the scope of this document.
@@ -591,7 +628,7 @@ This file will be consumed by the docker engine once it is installed by Ansible.
 
 === Configure etcd and Node Storage
 
-Just as with the Docker Storage, during the link:#provision-servers[Provision Servers] step of this guide, we provisioned our masters and nodes with an extra volume to be used for `etcd` (for masters) and `/var/lib/origin` (for nodes), attached as `/dev/vdc`in this guide. (Make sure to replace this with the disk available in your environment.) We will now demonstrate the steps involved with using LVM to set up and use this volume for backing storage. 
+Just as with the Docker Storage, during the link:#provision-servers[Provision Servers] step of this guide, we provisioned our masters and nodes with an extra volume to be used for `etcd` (for masters) and `/var/lib/origin` (for nodes), attached as `/dev/vdc`in this guide. (Make sure to replace this with the disk available in your environment.) We will now demonstrate the steps involved with using LVM to set up and use this volume for backing storage.
 
 ----
 ansible -i hosts etcd -a 'yum -y install lvm2'
