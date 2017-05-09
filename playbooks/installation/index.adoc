@@ -225,7 +225,7 @@ The OpenShift installer has the ability to configure a Linux host as a load bala
 ...
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.4
+openshift_release=v3.5
 
 openshift_master_api_port=443
 openshift_portal_net=172.30.0.0/16
@@ -239,25 +239,37 @@ openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
 
 === Authentication
 
-For the initial installation we are going to simply use htpasswd for simple authentication and seed it with a sample user to allow us to login to the OpenShift Console and validate the installation. We will add integration in a later iteration of the
+For the initial installation we are going to simply use htpasswd for simple authentication and seed it with a couple of sample users to allow us to login to the OpenShift Console and validate the installation. In a follow-up to this initial install, we will add LDAP Integration.
 
+For now, let's generate a username/password combination for an `admin` and `developer` user.
+
+----
+$ htpasswd -nb admin adm-password
+admin:$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/
+
+$ htpasswd -nb developer devel-password
+developer:$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1
+
+----
+
+Now we can feed those values into our hosts file.
 
 ----
 ...
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.4
+openshift_release=v3.5
 
 openshift_master_api_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
-openshift_master_cluster_method=native # <-- NEW LINE
+openshift_master_cluster_method=native
 openshift_master_cluster_hostname=console.c1-ocp.myorg.com
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
-openshift_master_htpasswd_users={'admin': '', 'user2': '<pre-hashed password>'}
+openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'}
 ...
 ----
 
@@ -306,8 +318,8 @@ The OpenShift advanced installer uses Ansible playbooks specifically designed to
 Register your Ansible Control Host and install the appropriate repos
 
 ----
-subscription-manager register --username esauer@redhat.com --password=''
-subscription-manager attach --pool 8a85f98144844aff014488d058bf15be
+subscription-manager register --username bob@myorg.com --password='mypassword'
+subscription-manager attach --pool 8a85f...
 subscription-manager repos --disable "*" --enable rhel-7-server-rpms --enable rhel-7-server-extras-rpms --enable rhel-7-server-ose-3.5-rpms
 ----
 
