@@ -415,7 +415,7 @@ openshift-appnode-2.c1-ocp.myorg.com
 
 === Create Standalone Registry
 
-During the install, OpenShift will need pull images from Red Hat in order to spin up services like the Integrated Registry and Router as well as some base images for Pods, S2I builders, etc. In most cases, access to the link:https://registry.access.redhat.com[Red Hat Public Registry] is blocked or restricted by web proxies. The link:https://docs.openshift.com/container-platform/3.4/install_config/install/disconnected_install.html#disconnected-syncing-images[Official Documentation] on how to work with this suggests pulling images to some internet accessible machine, and creating a `.tar` file to manually distribute them to all hosts in the cluster. While this works just fine, a more long term solution is to establish a standalone registry and seed it with the images that OpenShift will require. We can then point OpenShift to that standalone registry instead of Red Hat's and allow it to pull those images as it normally would. This allows us to establish a much simpler and more automatable process for updating those images when need be.
+During the install, OpenShift will need pull images from Red Hat in order to spin up services like the Integrated Registry and Router as well as some base images for Pods, S2I builders, etc. In most cases, access to the link:https://registry.access.redhat.com[Red Hat Public Registry] is blocked or restricted by web proxies. The link:https://docs.openshift.com/container-platform/latest/install_config/install/disconnected_install.html#disconnected-syncing-images[Official Documentation] on how to work with this suggests pulling images to some internet accessible machine, and creating a `.tar` file to manually distribute them to all hosts in the cluster. While this works just fine, a more long term solution is to establish a standalone registry and seed it with the images that OpenShift will require. We can then point OpenShift to that standalone registry instead of Red Hat's and allow it to pull those images as it normally would. This allows us to establish a much simpler and more automatable process for updating those images when need be.
 
 We outline two options here for standing up a bootstrap registry. The first is to stand up a very simple docker registry which will have wide-open permissions (no authentication). The second, using OpenShift's Atomic Enterprise Registry, will allow us to require authentication and also provide a simple web console to help manage the images in the registry.
 
@@ -469,7 +469,7 @@ Finally, we can update our Ansible Inventory file to point OpenShift to our priv
 ...
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.4
+openshift_release=v3.5
 
 openshift_master_api_port=443
 openshift_portal_net=172.30.0.0/16
@@ -480,13 +480,16 @@ openshift_master_cluster_hostname=console.c1-ocp.myorg.com
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
-openshift_master_htpasswd_users={'admin': '', 'user2': '<pre-hashed password>'}
+openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'}
 
-openshift_docker_additional_registries=registry.c1-ocp.myorg.com
-openshift_docker_insecure_registries=registry.c1-ocp.myorg.com
-openshift_docker_blocked_registries=registry.access.redhat.com,docker.io
+openshift_docker_additional_registries=registry.c1-ocp.myorg.com:5000 <1>
+openshift_docker_insecure_registries=registry.c1-ocp.myorg.com:5000 <2>
+openshift_docker_blocked_registries=registry.access.redhat.com,docker.io <3>
 ...
 ----
+<1> Adding our new registry
+<2> Our new registry is insecure (no https)
+<3> Blocking external registries so we know where our images come from
 
 ==== Using OpenShift Atomic Enterprise Registry
 
@@ -512,7 +515,7 @@ The procedure for creating custom yum repos is documented in the link:https://do
 
 ==== Subscribing Directly to Red Hat
 
-The process for subscribing directly to Red Hat is covered in the link:https://docs.openshift.com/container-platform/3.4/install_config/install/host_preparation.html#host-registration[Official Documentation].
+The process for subscribing directly to Red Hat is covered in the link:https://docs.openshift.com/container-platform/latest/install_config/install/host_preparation.html#host-registration[Official Documentation].
 
 === Configure Load Balancer
 
@@ -599,7 +602,7 @@ nodes
 
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.4
+openshift_release=v3.5
 
 openshift_master_api_port=443
 openshift_portal_net=172.30.0.0/16
@@ -610,7 +613,7 @@ openshift_master_cluster_hostname=console.myorg.com
 openshift_master_cluster_public_hostname=console.myorg.com
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
-openshift_master_htpasswd_users={'os-admin': '', 'os-developer': ''}
+openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'}
 
 openshift_docker_additional_registries=registry.myorg.com
 openshift_docker_insecure_registries=registry.myorg.com
@@ -665,10 +668,10 @@ cat /etc/yum.repos.d/ ...
 ----
 ansible -i aws-hosts OSEv3 -a 'subscription-manager register --username bob@acme.com --password='mypassword'
 ansible -i aws-hosts OSEv3 -a 'subscription-manager attach --pool 8a85f98144844aff014488d058bf15be'
-ansible -i aws-hosts OSEv3 -a 'subscription-manager repos --disable "*" --enable rhel-7-server-rpms --enable rhel-7-server-extras-rpms --enable rhel-7-server-ose-3.4-rpms --enable rhel-7-fast-datapath-rpms'
+ansible -i aws-hosts OSEv3 -a 'subscription-manager repos --disable "*" --enable rhel-7-server-rpms --enable rhel-7-server-extras-rpms --enable rhel-7-server-ose-3.5-rpms --enable rhel-7-fast-datapath-rpms'
 ----
 
-INFO: The `rhel-7-fast-datapath-rpms` channel is only required for OpenShift Container Platform version 3.5 and later. For versions 3.4 and earlier, this channel should be omitted.
+INFO: The `rhel-7-fast-datapath-rpms` channel is only required for OpenShift Container Platform version 3.5 and later. For versions 3.5 and earlier, this channel should be omitted.
 
 === Docker Storage Setup
 
