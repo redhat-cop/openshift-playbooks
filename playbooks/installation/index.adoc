@@ -586,6 +586,12 @@ TODO
 
 End this section at RHEL servers built and an ssh key synced
 
+==== Application Builds
+
+One of the primary functions of OpenShift is to build applications and to produce new images. As part of the image building process, access to resources to satisfy the build process must be in available and include the source code (from a git repository) along with any dependencies the build process may need.
+
+OpenShift includes a number of application link:https://docs.openshift.com/container-platform/latest/dev_guide/templates.html[templates] to allow developer to quickly take advantage of the build and deployment features provided by the platform. The examples make use of repositories located on GitHub. As mentioned previously, access to these repositories must be available in order for their usability. In some cases where OpenShift is fully running in a disconnected environment, it may be necessary to synchronize the contents from GitHub to a repository accessible by the OpenShift cluster. Additional steps would need to be taken to either modify the default templates provided by OpenShift or include proper documentation for developer who are looking to leverage the default templates.
+
 == Preparing for Install
 
 At this point in the process we are ready to prepare our hosts for install. The following sections guide us through this process.
