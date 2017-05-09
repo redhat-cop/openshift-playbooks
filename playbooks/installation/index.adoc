@@ -23,14 +23,14 @@ The diagram above depicts the architecture of the environment we will build. It 
 
 === Preparing the Installer
 
-OpenShift uses Ansible as it's installation & configuration manager. As we walk through design decisions, we can start capturing this information in an ini style config file that's referred to as the _ansible inventory file_. To start, we'll establish a project skeleton for storing this file and begin populating information specific to the cluster we are designing:
+OpenShift uses Ansible as it's installation & configuration manager. As we walk through design decisions, we can start capturing this information in an ini style config file that's referred to as the link:http://docs.ansible.com/ansible/intro_inventory.html[_ansible inventory file_]. To start, we'll establish a project skeleton for storing this file and begin populating information specific to the cluster we are designing:
 
 ----
 mkdir myorg-openshift
 cd myorg-openshift
 ----
 
-For the purposes of this exercise, we will build an OpenShift Container platform cluster with a base DNS domain of `c1-ocp.myorg.com`. A good standard convention is to refer to the cluster by its base domain, and establish a good naming scheme for your clusters to make it easy to manage multiple clusters. In this case, the name `c1-ocp.myorg.com` refers to the _first cluster_ of _OpenShift Container Platform_ for _my organization_. We'll create a directory within our project for managing this cluster, and a single `hosts` file inside of that. The file name `hosts` is the standard name for an link:http://docs.ansible.com/ansible/intro_inventory.html[Ansible Inventory File].
+For the purposes of this exercise, we will build an OpenShift Container platform cluster with a base DNS domain of `c1-ocp.myorg.com`. A good standard convention is to refer to the cluster by its base domain, and establish a good naming scheme for your clusters to make it easy to manage multiple clusters. In this case, the name `c1-ocp.myorg.com` refers to the _first cluster_ of _OpenShift Container Platform_ for _my organization_. We'll create a directory within our project for managing this cluster, and a single `hosts` file inside of that. The file name `hosts` is the standard name for an Ansible Inventory File.
 
 ----
 mkdir -p c1-ocp.myorg.com
@@ -64,14 +64,16 @@ You can set the version of OpenShift in your Ansible inventory file under the OS
 ----
 ...
 [OSEv3:vars]
-openshift_deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_deployment_type=openshift-enterprise <1>
+openshift_release=v3.5 <2>
 ...
 ----
+<1> Specifies a deployment type of the OpenShift product (OpenShift Container Platform) vs the open source version (OpenShift Origin)
+<2> Specifies the major version we want to install
 
 === Networking
 
-The OpenShift cluster needs to have 2 different network Cidrs defined in order to be able to assign pod and service IPs to its own components as well as the workloads running on it.  These two values are the Pod Network CIDR and the Services Network CIDR
+The OpenShift cluster needs to have 2 different network CIDRs defined in order to be able to assign pod and service IPs to its own components as well as the workloads running on it.  These two values are the Pod Network CIDR and the Services Network CIDR
 
 NOTE: Both IP ranges discussed below are _virtual_ ranges, visible only inside of link:https://docs.openshift.com/container-platform/3.5/architecture/additional_concepts/sdn.html[OpenShift's SDN]. This is important as these IPs will not be layer 3 routable and therefore do not require allocation externally within routing/switching infrastructures. The only requirement for selecting these ranges is that they do not conflict with at _real_ address spaces that this cluster, or applications running in the platform may need to communicated with (i.e. ranges in which back-end databases, external services, etc. might occupy).
 
@@ -107,11 +109,14 @@ Once networking decisions have been made, we should be able to add the following
 openshift_deployment_type=openshift-enterprise
 openshift_release=v3.5
 
-openshift_master_api_port=443
-openshift_portal_net=172.30.0.0/16
-osm_cluster_network_cidr=10.128.0.0/14
+openshift_master_api_port=443 <1>
+openshift_portal_net=172.30.0.0/16 <2>
+osm_cluster_network_cidr=10.128.0.0/14 <3>
 ...
 ----
+<1> Master API Port
+<2> Service address space
+<3> Pod address space
 
 More information on Pods & Services can be found in the link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html[OpenShift Documentation]
 
@@ -157,48 +162,12 @@ openshift_master_api_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
-openshift_master_cluster_hostname=console.c1-ocp.myorg.com
-openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
+openshift_master_cluster_hostname=console.c1-ocp.myorg.com <1>
+openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com <2>
 ...
 ----
-
-=== Persistent Storage
-
-In order to take full advantage of all OpenShift Container Platform has to offer, we will want to have the ability to provide external storage volumes to our containers for various purposes. The discussion of _which storage is best_ is a very complex topic, and largely out of scope of this install guide. However, we need to get some basics down in order to be able to continue with our cluster install, so we will provide the most brief overview we can.
-
-For a full deep dive into this topic, see the Official link:https://docs.openshift.com/container-platform/latest/architecture/additional_concepts/storage.html[Persistent Storage Architecture Docs] and link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/index.html[Configuration Guide].
-
-At a high level, we can break down OpenShift's persistent storage support into two categories:
-
-- Block Storage: Volumes or disks that can be mounted to only one container at a time (known as `ReadWrtieOnce` mode). Examples of Block Storage are OpenStack Cinder, Ceph RBD, Amazon Elastic Block Storage, iSCSI, Fibre Channel. Most database technologies perfer block storage.
-- Shared File Systems: Volumes that can be mounted for reading an writing by many containers at once (known as `ReadWriteMany` mode)/ At this writing the only two available Shared File Systems supported are NFS and GlusterFS. Many legacy application runtimes prefer this type of storage for sharing data on disk.
-
-Most multi-tenant OpenShift deployments will need to provide at least one Persistent Storage provider in each category in order to cover application use cases. In addition to application use cases, several of the core services that ship with OpenShift also require persistent volumes. We will discuss those use cases in more detail as they pertain to the cluster install.
-
-==== Integrated Registry
-
-The integrated registry is deployed to OpenShift as one or more pods (containers). In order to make registry highly available, we'll need to back it with shared storage. There are two options for registry storage:
-
-- A `ReadWriteMany` Persistent Volume
-- S3 Compatible Object Storage
-
-For the purpose of this guide, we'll configure the registry to use an NFS Volume. The volume must be created ahead of time.
-
-----
-# configure a pv that mounts "nfs.myorg.com:/exports/registry"
-openshift_hosted_registry_storage_kind=nfs
-openshift_hosted_registry_storage_access_modes=['ReadWriteMany']
-openshift_hosted_registry_storage_host=nfs.myorg.com
-openshift_hosted_registry_storage_nfs_directory=/exports
-openshift_hosted_registry_storage_volume_name=registry
-openshift_hosted_registry_storage_volume_size=100Gi
-----
-
-Other options for configuring Registry storage can be found in the link:https://github.com/openshift/openshift-ansible/blob/master/inventory/byo/hosts.ose.example#L409[example Ansible hosts file here].
-
-==== Metrics & Logging
-
-
+<1> Hostname used by nodes and other cluster internals
+<2> Hostname used by platform users
 
 === Load Balancing & HA
 
@@ -231,11 +200,12 @@ openshift_master_api_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
-openshift_master_cluster_method=native
+openshift_master_cluster_method=native <1>
 openshift_master_cluster_hostname=console.c1-ocp.myorg.com
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
 ...
 ----
+<1> Clustering method for OpenShift
 
 === Authentication
 
@@ -268,10 +238,48 @@ openshift_master_cluster_method=native
 openshift_master_cluster_hostname=console.c1-ocp.myorg.com
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
 
-openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
-openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'}
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}] <1>
+openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'} <2>
 ...
 ----
+<1> Identity provider
+<2> Initial users being created in the cluster
+
+=== Persistent Storage
+
+In order to take full advantage of all OpenShift Container Platform has to offer, we will want to have the ability to provide external storage volumes to our containers for various purposes. The discussion of _which storage is best_ is a very complex topic, and largely out of scope of this install guide. However, we need to get some basics down in order to be able to continue with our cluster install, so we will provide the most brief overview we can.
+
+For a full deep dive into this topic, see the Official link:https://docs.openshift.com/container-platform/latest/architecture/additional_concepts/storage.html[Persistent Storage Architecture Docs] and link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/index.html[Configuration Guide].
+
+At a high level, we can break down OpenShift's persistent storage support into two categories:
+
+- Block Storage: Volumes or disks that can be mounted to only one container at a time (known as `ReadWrtieOnce` mode). Examples of Block Storage are link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_cinder.html[OpenStack Cinder], link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_ceph_rbd.html[Ceph RBD], link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_aws.html[Amazon Elastic Block Storage], link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_iscsi.html[iSCSI], link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_fibre_channel.html[Fibre Channel]. Most database technologies perfer block storage.
+- Shared File Systems: Volumes that can be mounted for reading an writing by many containers at once (known as `ReadWriteMany` mode)/ At this writing the only two available Shared File Systems supported are link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_nfs.html[NFS] and link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_glusterfs.html[GlusterFS]. Many legacy application runtimes prefer this type of storage for sharing data on disk.
+
+Most multi-tenant OpenShift deployments will need to provide at least one Persistent Storage provider in each category in order to cover application use cases. In addition to application use cases, several of the core services that ship with OpenShift also require persistent volumes. We will discuss those use cases in more detail as they pertain to the cluster install.
+
+==== Integrated Registry
+
+The integrated registry is deployed to OpenShift as one or more pods (containers). In order to make registry highly available, we'll need to back it with shared storage. There are two options for registry storage:
+
+- A `ReadWriteMany` Persistent Volume
+- S3 Compatible Object Storage
+
+For the purpose of this guide, we'll configure the registry to use an NFS Volume. The volume must be created ahead of time.
+
+----
+# configure a pv that mounts "nfs.myorg.com:/exports/registry"
+openshift_hosted_registry_storage_kind=nfs
+openshift_hosted_registry_storage_access_modes=['ReadWriteMany']
+openshift_hosted_registry_storage_host=nfs.myorg.com
+openshift_hosted_registry_storage_nfs_directory=/exports
+openshift_hosted_registry_storage_volume_name=registry
+openshift_hosted_registry_storage_volume_size=100Gi
+----
+
+Other options for configuring Registry storage can be found in the link:https://github.com/openshift/openshift-ansible/blob/master/inventory/byo/hosts.ose.example#L409[example Ansible hosts file here].
+
+This is all we need for persistent storage for now. We'll revisit this topic when we add Metrics & Logging.
 
 === Recap
 
@@ -349,9 +357,9 @@ For our HA OpenShift Cluster (`c1-ocp.myorg.com`), we will provision the followi
 
 Each of these servers should be provisioned with an SSH public key which can be used to access all hosts from the Ansible Control Host. Further setup of keys and the
 
-=== Ansible Control Hos
+=== Ansible Control Host
 
-The OpenShift advanced installer uses Ansible playbooks specifically designed to install OpenShift.  The importance of having a separate host to install your OpenShift Cluster allows for a central location to manage all your OpenShift clusters.  It also provides a jump point into your many clusters.  During the installation process some system processes are restarted and thus if the advanced installer is run from the first master it can cause installation errors.  After the virtual machine is provisioned and on the network, we will need to ensure we can assign the correct repo's so we can install atomic-openshift-utils.
+The OpenShift advanced installer uses Ansible playbooks specifically designed to install OpenShift.  The importance of having a separate host to install your OpenShift Cluster allows for a central location to manage all your OpenShift clusters.  It also provides a jump point into your many clusters.  During the installation process some system processes are restarted and thus if the advanced installer is run from the first master it can cause installation errors.  After the virtual machine is provisioned and on the network, we will need to ensure we can assign the correct repository so we can install `atomic-openshift-utils`.
 
 Register your Ansible Control Host and install the appropriate repos
 
@@ -374,7 +382,7 @@ How to Propagate your key example:
 ssh-copy-id -i ~/.ssh/Myidrsa.pub remote.server.com
 ----
 
-ssh will require you to accept the new ssh key for the first time into the `~/.ssh/known_hosts` file by either ssh'ing into each of the nodes one by one and typing yes each time or adding the file `~/.ssh/config` file with perms of 600 with a line that includes `StrictHostKeyChecking no`.  Once this is completed you can test that ansible will no longer ask to accept the key
+ssh will require you to accept the new ssh key for the first time into the `~/.ssh/known_hosts` file by either shelling into each of the nodes one by one and typing yes each time or adding the file `~/.ssh/config` file with perms of 600 with a line that includes `StrictHostKeyChecking no`.  Once this is completed you can test that ansible will no longer ask to accept the key
 
 Test ansible in an adhoc way to ensure it can get to all the nodes
 
@@ -452,7 +460,7 @@ Now we're ready to sync images. To do this, we're going to run link:https://gith
 curl -O https://raw.githubusercontent.com/redhat-cop/openshift-toolkit/master/disconnected_registry/docker-registry-sync.py
 curl -O https://raw.githubusercontent.com/redhat-cop/openshift-toolkit/master/disconnected_registry/docker_tags.json
 chmod +x docker-registry-sync.py
-./docker-registry-sync.py --from=registry.access.redhat.com --to=registry.c1-ocp.myorg.com:5000 --file=./docker_tags.json --openshift-version=3.4
+./docker-registry-sync.py --from=registry.access.redhat.com --to=registry.c1-ocp.myorg.com:5000 --file=./docker_tags.json --openshift-version=3.5
 ----
 
 Finally, we can update our Ansible Inventory file to point OpenShift to our private registry, and disable the default external registries
@@ -467,7 +475,7 @@ openshift_master_api_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
-openshift_master_cluster_method=native # <-- NEW LINE
+openshift_master_cluster_method=native
 openshift_master_cluster_hostname=console.c1-ocp.myorg.com
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
 
