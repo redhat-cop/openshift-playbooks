@@ -281,11 +281,35 @@ Other options for configuring Registry storage can be found in the link:https://
 
 This is all we need for persistent storage for now. We'll revisit this topic when we add Metrics & Logging.
 
-=== Application Builds
+=== Design for Disconnected Environments
+
+Much of the out of the box configuration for OpenShift assumes that your clusters will have full uninhibited access to the internet. Many organizations either do not allow connectivity out of their own private network, or allow access out only through a web proxy. Removing external dependencies has additional benefits beyond connectibity issues such as better management of content releases and more control over environment availability. Because of all of this, we propose a design that does not require internet connectivity, which we recommend even for an org that may have it.
+
+The following sub sections outline the various types of content to consider when preparing for a disconnected install, and discuss how we plan to address that type of content.
+
+==== RPM Content
+
+This proposed architecture installs OpenShift via RPM. This is the most common way to install the platform. In this guide, we offer several options for syncing RPM content internally.
+
+* Syncing subscription-manager channels via Satellite 6 (Recommended. link:#satellite-6[See below])
+* Creating and syncing custom channels via Satellite 5 (Coming soon)
+* Creating and syncing a custom RPM server (link:#custom-yum-repos[See below])
+
+==== Container Image Content
+
+In addition to RPM content, OpenShift requires the ability to pull container images from an external image registry. In order to bring this in house we suggest the following options to build and sync a Standalone Registry.
+
+* A Simple Bootstrap Registry (link:#simple-docker-registry-docker-distribution[See below.])
+* Using the OpenShift Standalone Registry (Coming soon)
+* Syncing image content to Satellite 6 (Coming soon)
+
+==== Application Content
 
 One of the primary functions of OpenShift is to build applications and to produce new images. As part of the image building process, access to resources to satisfy the build process must be in available and include the source code (from a git repository) along with any dependencies the build process may need.
 
 OpenShift includes a number of application link:https://docs.openshift.com/container-platform/latest/dev_guide/templates.html[templates] to allow developer to quickly take advantage of the build and deployment features provided by the platform. The examples make use of repositories located on GitHub. As mentioned previously, access to these repositories must be available in order for their usability. In some cases where OpenShift is fully running in a disconnected environment, it may be necessary to synchronize the contents from GitHub to a repository accessible by the OpenShift cluster. Additional steps would need to be taken to either modify the default templates provided by OpenShift or include proper documentation for developer who are looking to leverage the default templates.
+
+This topic is not covered in this guide.
 
 === Recap
 
