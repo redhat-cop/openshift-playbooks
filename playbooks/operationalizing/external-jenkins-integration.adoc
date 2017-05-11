@@ -11,7 +11,7 @@ toc::[]
 
 == Overview
 
-The OpenShift Container Platform provides a number of features to support Continuous Integration and Continuous Delivery. Aside from its native build and deployment capabilities, OpenShift contains tight integration with the link:Jenkins Continuous Integration server[https://jenkins.io/]. Not only can users deploy supported instances within the platform, but they can take advantage of such features such as first class support for the Jenkins "pipeline as code concept" as well as leveraging dynamically allocated slave instances for the execution of Jenkins jobs. A full list of features that are provided by the provided image can be found link:https://docs.openshift.com/container-platform/latest/using_images/other_images/jenkins.html[here]. While running the entire Jenkins ecosystem within OpenShift simplifies the configuration and management of a CI environment, many organizations have an existing Jenkins environment which they would like to make use of.
+The OpenShift Container Platform provides a number of features to support Continuous Integration and Continuous Delivery. Aside from its native build and deployment capabilities, OpenShift contains tight integration with the link:https://jenkins.io/[Jenkins Continuous Integration server]. Not only can users deploy supported instances within the platform, but they can take advantage of such features such as first class support for the Jenkins "pipeline as code concept" as well as leveraging dynamically allocated slave instances for the execution of Jenkins jobs. A full list of features that are provided by the provided image can be found link:https://docs.openshift.com/container-platform/latest/using_images/other_images/jenkins.html[here]. While running the entire Jenkins ecosystem within OpenShift simplifies the configuration and management of a CI environment, many organizations have an existing Jenkins environment which they would like to make use of.
 
 This article describes the process for integrating an existing Jenkins instance located outside of the OpenShift cluster with OpenShift to be able to take advantage of many of the Jenkins related features provided by the platform.
 
@@ -39,6 +39,7 @@ The majority of the capabilities provided by the integration between OpenShift a
 * link:https://wiki.jenkins-ci.org/display/JENKINS/OpenShift+Pipeline+Plugin[OpenShift Pipeline] - The ability to trigger actions in OpenShift, such as starting a build or deployment. 
 * link:https://wiki.jenkins-ci.org/display/JENKINS/OpenShift+Sync+Plugin[OpenShift Sync] - Synchronizing the state of Jenkins jobs and OpenShift objects (BuildConfigs) in order to facilitate integrated pipelines. 
 * link:https://wiki.jenkins-ci.org/display/JENKINS/Kubernetes+Plugin[Kubernetes Plugin] - The ability to trigger actions in OpenShift, such as starting a build or deployment. 
+* link:https://wiki.jenkins-ci.org/display/JENKINS/OpenShift+Client+Plugin[OpenShift Client Plugin] - Jenkins Pipeline DSL for interacting with OpenShift.
 
 NOTE: Starting in OpenShift version 3.4, the included Jenkins image provided by the platform began to leverage the link:https://wiki.jenkins-ci.org/display/JENKINS/OpenShift+Login+Plugin[OpenShift Login Plugin]  which enabled integrated authentication between OpenShift and Jenkins. The process for configuring this plugin in an externally facing Jenkins instance will not be covered in this article 
 
@@ -320,7 +321,7 @@ Jenkins should automatically pick up the creation of the BuildConfig and create 
 
 image::images/external-jenkins-synced-job.png[title=Synchronized Jenkins Job from an OpenShift BuildConfig]
 
-=== Dynamic Save Execution
+=== Dynamic Slave Execution
 
 Using either the sample Jenkins job created in the previous section or another job, perform the following steps to validate slaves are dynamically being utilized.
 
