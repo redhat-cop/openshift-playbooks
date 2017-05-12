@@ -67,7 +67,7 @@ oc new-project ci
 Create a new service account called jenkins
 
 ----
-oc create serviceaccount Jenkins
+oc create serviceaccount jenkins
 ----
 
 The service account will need to have project level access to each of the projects it will manage The _edit_ role provides a sufficient level of access needed by Jenkins.
@@ -303,7 +303,7 @@ spec:
     jenkinsPipelineStrategy:
       jenkinsfile: |-
         node("maven") {
-          stage(""echo") {
+          stage("echo") {
             println("Hello World")
           }            
         }
