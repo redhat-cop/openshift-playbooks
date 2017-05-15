@@ -533,7 +533,20 @@ TODO
 
 ==== Satellite 6
 
-TODO
+For a successful install and avoid potential challenges with internet connectivity during the pull of new software during installation, it is recommended to use Satellite to sync RPM Channels (repositories). This provides an "offline" option for installation of the OpenShift Container Platform. Below is a set of commands that can be used on the Satellite server command line to enable and sync repositories. Note that it is recommended to also enable a sync plan, for periodic updates, although this is outside of the scope of the current write-up.
+
+----
+hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat Enterprise Linux 7 Server (RPMs)" --releasever "7Server" --basearch "x86_64"
+hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat Enterprise Linux 7 Server - Extras (RPMs)" --releasever "" --basearch "x86_64"
+hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat OpenShift Container Platform 3.5 (RPMs)" --releasever "" --basearch "x86_64"
+hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat Enterprise Linux Fast Datapath (RHEL 7 Server) (RPMs)" --releasever "7Server" --basearch "x86_64"
+
+hammer repository synchronize --name "Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server" --organization "c1-ocp.myorg.com"
+hammer repository synchronize --name "Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64" --organization "c1-ocp.myorg.com"
+hammer repository synchronize --name "Red Hat OpenShift Container Platform 3.5 RPMs x86_64" --organization "c1-ocp.myorg.com"
+hammer repository synchronize --name "Red Hat Enterprise Linux Fast Datapath RHEL 7 Server RPMs x86_64 7Server" --organization "c1-ocp.myorg.com"
+----
+
 
 ==== Satellite 5 (Custom Channels)
 
@@ -719,7 +732,7 @@ This file will be consumed by the docker engine once it is installed by Ansible.
 
 === Configure etcd and Node Storage
 
-Just as with the Docker Storage, during the link:#provision-servers[Provision Servers] step of this guide, we provisioned our masters and nodes with an extra volume to be used for `etcd` (for masters) and `/var/lib/origin` (for nodes), attached as `/dev/vdc`in this guide. (Make sure to replace this with the disk available in your environment.) We will now demonstrate the steps involved with using LVM to set up and use this volume for backing storage.
+Just as with the Docker Storage, during the link:#provision-servers[Provision Servers] step of this guide, we provisioned our masters and nodes with an extra volume to be used for `/var/lib/etcd` (for masters) and `/var/lib/origin` (for nodes), attached as `/dev/vdc` in this guide. (Make sure to replace this with the disk available in your environment.) We will now demonstrate the steps involved with using LVM to set up and use this volume for backing storage.
 
 ----
 ansible -i c1-ocp.myorg.com/hosts etcd -a 'yum -y install lvm2'
