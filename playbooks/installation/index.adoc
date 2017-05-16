@@ -1,27 +1,790 @@
 ---
 ---
-= OSE 3 SmartStart (Production-Ready Installation and Configuration)
+= Installing a Highly-Available OpenShift Cluster
+Red Hat Containers & PaaS CoP
+v2.0, 2016-08-18
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
 
-The SmartStart playbook provides guidance on deploying a production-ready pilot of OpenShift Enterprise 3. The resulting deployment goes beyond a simple OSE proof-of-concept and can be used to run a representative sample of enterprise workloads in PaaS. It may not address the full catalog of expected workloads and production use cases such as multi-data center approaches, application development workflows, and specialized network configuration.
+toc::[]
 
-== Implementer Guide
 
-A guide for implementing the OSE 3 SmartStart described above.
 
-* link:./pre-validation{outfilesuffix}[Pre Validation Checklist]
-* link:./installation{outfilesuffix}[Initial Installation]
-* link:./disconnected_environments{outfilesuffix}[Enterprise Environments]
-* link:./load_balancing{outfilesuffix}[Integrating with External Load Balancing]
-* Routers
-* Docker Registry Setup
-* link:./logging{outfilesuffix}[Log Management]
-* link:./install_validation{outfilesuffix}[Validating the Install]
-* link:./ldap_integration{outfilesuffix}[Integrating with LDAP & Active Directory]
-* link:./admin_overview{outfilesuffix}[An Overview of OpenShift for System Administrators]
-* link:./satellite_info{outfilesuffix}[Consuming socket-based subscriptions]
+== Overview
 
-== Presenter Guide
+This article proposes a reference architecture for a Highly Available installation of OpenShift. We will outline the architecture of such an installation and walk through the installation process.  The intention of this process is to perform iterative installations of the OpenShift cluster, which we refer too as the MVP (Minimal Viable Product ) process; starting with the most basic installation and iteratively adding components and integrations points to the OpenShift Cluster.  The goal is to provide the knowledge transfer of how to build and maintain the cluster to gain confidence in the ability to install and manage any cluster.
 
-A guide to producing a demo that showcases the concepts described in the Implementation Guide.
+== Cluster Design & Architecture
 
-* link:./presenter_guide{outfilesuffix}[Presenter Guide]
+image::/images/ocp_smart_start_diagram.png[Smart Start Architecture]
+
+The diagram above depicts the architecture of the environment we will build. It consists of 3 Masters and 6 Nodes. We further subdivide the nodes into two groups. Three of them get designated to run OpenShift's router, image registry and other infrastructure services. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:https://docs.openshift.com/container-platform/latest/admin_guide/scheduler.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the link:#ansible-inventory-review[sample inventory file] at the bottom of this doc to see how those labels are assigned.
+
+=== Preparing the Installer
+
+OpenShift uses Ansible as it's installation & configuration manager. As we walk through design decisions, we can start capturing this information in an ini style config file that's referred to as the link:http://docs.ansible.com/ansible/intro_inventory.html[_ansible inventory file_]. To start, we'll establish a project skeleton for storing this file and begin populating information specific to the cluster we are designing:
+
+----
+mkdir myorg-openshift
+cd myorg-openshift
+----
+
+For the purposes of this exercise, we will build an OpenShift Container platform cluster with a base DNS domain of `c1-ocp.myorg.com`. A good standard convention is to refer to the cluster by its base domain, and establish a good naming scheme for your clusters to make it easy to manage multiple clusters. In this case, the name `c1-ocp.myorg.com` refers to the _first cluster_ of _OpenShift Container Platform_ for _my organization_. We'll create a directory within our project for managing this cluster, and a single `hosts` file inside of that. The file name `hosts` is the standard name for an Ansible Inventory File.
+
+----
+mkdir -p c1-ocp.myorg.com
+touch c1-ocp.myorg.com/hosts
+----
+
+Now we can establish a base structure for our inventory file. Write this to `c1-ocp.myorg.com/hosts`
+
+----
+# hosts file for c1-ocp.myorg.com
+[OSEv3:children]
+masters
+etcd
+nodes
+
+[OSEv3:vars]
+
+[masters]
+[etcd]
+[nodes]
+----
+
+We'll add to this file as we go.
+
+=== Selecting the Version of OpenShift to Install
+
+Red Hat does major releases of OpenShift about once a quarter. As of this writing, the current major version is 3.5. Additionally, "dot releases" of OpenShift tend to be released every 4 to 6 weeks. The latest 3.5, for example, is 3.5.5.5. It's generally a good practice to decide on the major version of OpenShift to target and allow the install playbook to take the latest minor release of that major version. This will make sure you get all of the latest bug fixes and patches for that version.
+
+You can set the version of OpenShift in your Ansible inventory file under the OSEv3:vars section.
+
+----
+...
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise <1>
+openshift_release=v3.5 <2>
+...
+----
+<1> Specifies a deployment type of the OpenShift product (OpenShift Container Platform) vs the open source version (OpenShift Origin)
+<2> Specifies the major version we want to install
+
+=== Networking
+
+The OpenShift cluster needs to have 2 different network CIDRs defined in order to be able to assign pod and service IPs to its own components as well as the workloads running on it.  These two values are the Pod Network CIDR and the Services Network CIDR
+
+NOTE: Both IP ranges discussed below are _virtual_ ranges, visible only inside of link:https://docs.openshift.com/container-platform/3.5/architecture/additional_concepts/sdn.html[OpenShift's SDN]. This is important as these IPs will not be layer 3 routable and therefore do not require allocation externally within routing/switching infrastructures. The only requirement for selecting these ranges is that they do not conflict with at _real_ address spaces that this cluster, or applications running in the platform may need to communicated with (i.e. ranges in which back-end databases, external services, etc. might occupy).
+
+==== Pod Network CIDR
+
+*Ansible Host File Variable:* `osm_cluster_network_cidr=10.128.0.0/14`
+
+This value will determine the maximum number of Pod IPs available to the cluster.  The Default value of /14 will provide 262,142 pod IPs for the cluster to assing to Pods. If this installation needs to use an alternative value, capture and insert into the hosts file (link:#ansible-inventory-update[example] below).
+
+
+==== Service Network CIDR
+*Ansible Host File Variable:* `openshift_portal_net=172.30.0.0/16`
+
+Each service in the cluster will be assigned an IP from this range.  The default value of /16 will provide up to 65,534 IP addresses for services. If this installation needs to use an alternative value, capture and insert into the hosts file (link:#ansible-inventory-update[example] below).
+
+Both the openshift_portal_net and the osm_cluster_network_cidr will default to the value above if not set, however if you prefer to have your inventory file describe your environment, its recommended to set them explicitly for future reference or comparison.
+
+==== Master API Port
+
+This is the port that the Master services (console, api, etc) will be listening on.
+
+*Ansible Host File Variable:* `openshift_master_api_port=8443`
+
+The default value is 8443, Since we are using dedicated hosts for the masters we can set this to 443 and omit the port # from urls when connecting.
+
+==== Ansible Inventory Update
+
+Once networking decisions have been made, we should be able to add the following to the Ansible inventory file for the cluster:
+
+----
+...
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.5
+
+openshift_master_api_port=443 <1>
+openshift_portal_net=172.30.0.0/16 <2>
+osm_cluster_network_cidr=10.128.0.0/14 <3>
+...
+----
+<1> Master API Port
+<2> Service address space
+<3> Pod address space
+
+More information on Pods & Services can be found in the link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html[OpenShift Documentation]
+
+=== DNS
+
+All of the hosts in the cluster need to be resolveable via DNS.  Additionally if using a control node to serve as the ansible installer it too should be able to resolve all hosts in your cluster. 
+
+In an HA cluster there will also be a DNS name for the Load Balanced URL that points to the 3 master servers for access to the API, CLI and Console services.  This value should also resolve, and will be placed in the ansible Hosts file for the variables. 
+
+Public Master URL
+
+This will be the url that external users and/or tools will use to login to the OpenShift cluster
+
+Ansible Host file variable:
+
+*Master Public Hostname Variable :* `openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com`
+
+Replace the value in your host file
+
+
+Master URL
+
+This will be the url that external users and/or tools will use to login to the OpenShift cluster
+
+*Master Hostname Variable:*`openshift_master_cluster_hostname=console.c1-ocp.myorg.com`
+
+Wildcard DNS entry for Infrastructure(Router) nodes
+
+In addition to the hostnames for the master console and API, A wildcard DNS entry needs to exist under a unique subdomain (i.e. `*.cloudapps.c1-ocp.myorg.com`) that resolves to either the IP addresses (an A record) or the hostnames (a CNAME record) of the three Infrastructure Nodes.   This entry allows new routes to be automatically routable to the cluster under the subdomain such as mynewapp.cloudapps.c1-ocp.myorg.com.   Alternatively, every exposed route would require the entry to be created in order to route it to the OpenShift cluster. 
+
+----
+# default subdomain to use for exposed routes
+openshift_master_default_subdomain=cloudapps.c1-ocp.myorg.com
+----
+
+image::/images/dnsmasterinfra.png[DNS Diagram]
+
+
+Having added all of the above to your inventory file we should have something like the following in your inventory file.
+
+==== Ansible Inventory Update
+
+----
+...
+[OSEv3:vars]
+deployment_type=openshift-enterprise
+openshift_release=v3.5
+
+openshift_master_api_port=443
+openshift_portal_net=172.30.0.0/16
+osm_cluster_network_cidr=10.128.0.0/14
+
+openshift_master_cluster_hostname=console.c1-ocp.myorg.com <1>
+openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com <2>
+
+openshift_master_default_subdomain=cloudapps.c1-ocp.myorg.com
+...
+----
+<1> Hostname used by nodes and other cluster internals
+<2> Hostname used by platform users
+
+=== Load Balancing & HA
+
+In order to run a fully HA OpenShift cluster, load balancing will be required across the 3 master hosts, and the 3 infrastructure node hosts respectively. We recommend choosing one of the following options:
+
+==== Option 1: Integrate with an External Loadbalancer (Recommended)
+
+Even if you don't go this route initially, we highly recommend you plan to eventually bring an Enterprise-grade load balancer into your OpenShift environment. The primary reason we recommend this is for failover. Most Enterprise load balancers have built-in, proven capabilities to fail over a single VIP between two or more physical or virtual appliances. While this _can_ be done with software load balancers, like HAProxy, the resiliency and management simplicity just isn't quite the same.
+
+To integrate with an external load balancer, at minimum, you'll need to create:
+
+* A passthrough VIP and back-end pool for the Master hosts
+* A passthrough VIP and back-end pool for the Infrastructure hosts
+
+See our link:/playbooks/installation/load_balancing{outfilesuffix}[Integrating External Loadbalancers] guide for more details on this.
+
+==== Option 2: Use the Integrated HAProxy Balancer
+
+The OpenShift installer has the ability to configure a Linux host as a load balancer for your master servers. This has the disadvantage of being a single point of failure out of the box, and also doesn't meet the need for loadbalancing the infrastructure nodes. Additional, manual work will be needed post-install to rectify these shortcomings. Again, ultimately we recommend you go with Option 1, but this is a reasonable workaround so that you can continue with the install.
+
+==== Ansible Inventory Update
+
+----
+...
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.5
+
+openshift_master_api_port=443
+openshift_portal_net=172.30.0.0/16
+osm_cluster_network_cidr=10.128.0.0/14
+
+openshift_master_cluster_method=native <1>
+openshift_master_cluster_hostname=console.c1-ocp.myorg.com
+openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
+...
+----
+<1> Clustering method for OpenShift
+
+=== Authentication
+
+For the initial installation we are going to simply use htpasswd for simple authentication and seed it with a couple of sample users to allow us to login to the OpenShift Console and validate the installation. In a follow-up to this initial install, we will add LDAP Integration.
+
+For now, let's generate a username/password combination for an `admin` and `developer` user.
+
+----
+$ htpasswd -nb admin adm-password
+admin:$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/
+
+$ htpasswd -nb developer devel-password
+developer:$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1
+
+----
+
+Now we can feed those values into our hosts file.
+
+----
+...
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.5
+
+openshift_master_api_port=443
+openshift_portal_net=172.30.0.0/16
+osm_cluster_network_cidr=10.128.0.0/14
+
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname=console.c1-ocp.myorg.com
+openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
+
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}] <1>
+openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'} <2>
+...
+----
+<1> Identity provider
+<2> Initial users being created in the cluster
+
+=== Persistent Storage
+
+In order to take full advantage of all OpenShift Container Platform has to offer, we will want to have the ability to provide external storage volumes to our containers for various purposes. The discussion of _which storage is best_ is a very complex topic, and largely out of scope of this install guide. However, we need to get some basics down in order to be able to continue with our cluster install, so we will provide the most brief overview we can.
+
+For a full deep dive into this topic, see the Official link:https://docs.openshift.com/container-platform/latest/architecture/additional_concepts/storage.html[Persistent Storage Architecture Docs] and link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/index.html[Configuration Guide].
+
+At a high level, we can break down OpenShift's persistent storage support into two categories:
+
+- Block Storage: Volumes or disks that can be mounted to only one container at a time (known as `ReadWrtieOnce` mode). Examples of Block Storage are link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_cinder.html[OpenStack Cinder], link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_ceph_rbd.html[Ceph RBD], link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_aws.html[Amazon Elastic Block Storage], link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_iscsi.html[iSCSI], link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_fibre_channel.html[Fibre Channel]. Most database technologies perfer block storage.
+- Shared File Systems: Volumes that can be mounted for reading an writing by many containers at once (known as `ReadWriteMany` mode)/ At this writing the only two available Shared File Systems supported are link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_nfs.html[NFS] and link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_glusterfs.html[GlusterFS]. Many legacy application runtimes prefer this type of storage for sharing data on disk.
+
+Most multi-tenant OpenShift deployments will need to provide at least one Persistent Storage provider in each category in order to cover application use cases. In addition to application use cases, several of the core services that ship with OpenShift also require persistent volumes. We will discuss those use cases in more detail as they pertain to the cluster install.
+
+==== Integrated Registry
+
+The integrated registry is deployed to OpenShift as one or more pods (containers). In order to make registry highly available, we'll need to back it with shared storage. There are two options for registry storage:
+
+- A `ReadWriteMany` Persistent Volume
+- S3 Compatible Object Storage
+
+For the purpose of this guide, we'll configure the registry to use an NFS Volume. The volume must be created ahead of time.
+
+----
+# configure a pv that mounts "nfs.myorg.com:/exports/registry"
+openshift_hosted_registry_storage_kind=nfs
+openshift_hosted_registry_storage_access_modes=['ReadWriteMany']
+openshift_hosted_registry_storage_host=nfs.myorg.com
+openshift_hosted_registry_storage_nfs_directory=/exports
+openshift_hosted_registry_storage_volume_name=registry
+openshift_hosted_registry_storage_volume_size=100Gi
+----
+
+Other options for configuring Registry storage can be found in the link:https://github.com/openshift/openshift-ansible/blob/master/inventory/byo/hosts.ose.example#L409[example Ansible hosts file here].
+
+This is all we need for persistent storage for now. We'll revisit this topic when we add Metrics & Logging.
+
+=== Design for Disconnected Environments
+
+Much of the out of the box configuration for OpenShift assumes that your clusters will have full uninhibited access to the internet. Many organizations either do not allow connectivity out of their own private network, or allow access out only through a web proxy. Removing external dependencies has additional benefits beyond connectibity issues such as better management of content releases and more control over environment availability. Because of all of this, we propose a design that does not require internet connectivity, which we recommend even for an org that may have it.
+
+The following sub sections outline the various types of content to consider when preparing for a disconnected install, and discuss how we plan to address that type of content.
+
+==== RPM Content
+
+This proposed architecture installs OpenShift via RPM. This is the most common way to install the platform. In this guide, we offer several options for syncing RPM content internally.
+
+* Syncing subscription-manager channels via Satellite 6 (Recommended. link:#satellite-6[See below])
+* Creating and syncing custom channels via Satellite 5 (Coming soon)
+* Creating and syncing a custom RPM server (link:#custom-yum-repos[See below])
+
+==== Container Image Content
+
+In addition to RPM content, OpenShift requires the ability to pull container images from an external image registry. In order to bring this in house we suggest the following options to build and sync a Standalone Registry.
+
+* A Simple Bootstrap Registry (link:#simple-docker-registry-docker-distribution[See below.])
+* Using the OpenShift Standalone Registry (Coming soon)
+* Syncing image content to Satellite 6 (Coming soon)
+
+==== Application Content
+
+One of the primary functions of OpenShift is to build applications and to produce new images. As part of the image building process, access to resources to satisfy the build process must be in available and include the source code (from a git repository) along with any dependencies the build process may need.
+
+OpenShift includes a number of application link:https://docs.openshift.com/container-platform/latest/dev_guide/templates.html[templates] to allow developer to quickly take advantage of the build and deployment features provided by the platform. The examples make use of repositories located on GitHub. As mentioned previously, access to these repositories must be available in order for their usability. In some cases where OpenShift is fully running in a disconnected environment, it may be necessary to synchronize the contents from GitHub to a repository accessible by the OpenShift cluster. Additional steps would need to be taken to either modify the default templates provided by OpenShift or include proper documentation for developer who are looking to leverage the default templates.
+
+This topic is not covered in this guide.
+
+=== Recap
+
+This concludes the Architecture and Design section. At this point we have made all of the design decisions that needs to be made in order to run our first install. Our Ansible inventory file should look something like this.
+
+----
+# hosts file for c1-ocp.myorg.com
+[OSEv3:children]
+masters
+etcd
+nodes
+
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.5
+
+openshift_master_api_port=443
+openshift_portal_net=172.30.0.0/16
+osm_cluster_network_cidr=10.128.0.0/14
+
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname=console.c1-ocp.myorg.com
+openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
+
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'}
+
+openshift_hosted_registry_storage_kind=nfs
+openshift_hosted_registry_storage_access_modes=['ReadWriteMany']
+openshift_hosted_registry_storage_host=nfs.myorg.com
+openshift_hosted_registry_storage_nfs_directory=/exports
+openshift_hosted_registry_storage_volume_name=registry
+openshift_hosted_registry_storage_volume_size=100Gi
+
+[masters]
+[etcd]
+[nodes]
+----
+
+== Building the Infrastructure
+
+=== Provision Servers
+
+For our HA OpenShift Cluster (`c1-ocp.myorg.com`), we will provision the following servers. The first in the list is referred to as the Ansible Control Host. We'll use that as a bastion VM from which we will access all of the other cluster hosts, run commands to configure the cluster, run the OpenShift installation playbooks, etc.
+
+* 1 Ansible control host (`control-host.myorg.com`)
+  ** RHEL 7.2 minimal installation
+  ** 8 GB Memory
+  ** 2 Cores
+  ** 40 GB root drive
+* 3 _Masters_ (openshift-master-[1-3].c1-ocp.myorg.com)
+  ** RHEL 7.2 minimal installation
+  ** 20 GB Memory
+  ** 4 Cores
+  ** 60 GB for the root (`/`) partition
+  ** An additional 50 GB block volume for local Docker storage. (in this guide, available as `/dev/vdb`)
+  ** An additional 10 GB disk or logical volume mounted at `/var/lib/etcd` (in this guide, available as `/dev/vdc`)
+* 3 _Infrastructure Nodes_ (openshift-infra[1-3].c1-ocp.myorg.com)
+  ** RHEL 7.2 minimal installation
+  ** 24 GB Memory
+  ** 6 Cores
+  ** 40 GB for the root (`/`) partition
+  ** An additional 100 GB block volume for local Docker storage. (in this guide, available as `/dev/vdb`)
+  ** An additional 20 GB disk or logical volume mounted at `/var/lib/origin` (in this guide, available as `/dev/vdc`)
+* 3 _Application Nodes_ (openshift-node-[1-3].c1-ocp.myorg.com)
+  ** 48 GB Memory
+  ** 4 Cores
+  ** 30 GB for the root (`/`) partition
+  ** An additional 100 GB block volume for local Docker storage. (in this guide, available as `/dev/vdb`)
+  ** An additional 20 GB logical volume mounted at `/var/lib/origin` (in this guide, available as `/dev/vdc`)
+* (Optional) A Load Balancer host, if you plan to use Option 2 for Load Balancing, per the above section (lb.c1-ocp.myorg.com)
+  ** 2 cores
+  ** 4 GB Memory
+  ** 10 GB root drive
+
+Each of these servers should be provisioned with an SSH public key which can be used to access all hosts from the Ansible Control Host. Further setup of keys and the
+
+=== Ansible Control Host
+
+The OpenShift advanced installer uses Ansible playbooks specifically designed to install OpenShift.  The importance of having a separate host to install your OpenShift Cluster allows for a central location to manage all your OpenShift clusters.  It also provides a jump point into your many clusters.  During the installation process some system processes are restarted and thus if the advanced installer is run from the first master it can cause installation errors.  After the virtual machine is provisioned and on the network, we will need to ensure we can assign the correct repository so we can install `atomic-openshift-utils`.
+
+Register your Ansible Control Host and install the appropriate repos
+
+----
+subscription-manager register --username bob@myorg.com --password='mypassword'
+subscription-manager attach --pool 8a85f...
+subscription-manager repos --disable "*" --enable rhel-7-server-rpms --enable rhel-7-server-extras-rpms --enable rhel-7-server-ose-3.5-rpms
+----
+
+Install the atomic-openshift-utils package
+
+----
+yum install -y atomic-openshift-utils
+----
+The Ansible installer requires either: root password-less ssh access using ssh keys or a non-root user with password-less ssh access and full password-less sudo access from the ansible installer node
+
+How to Propagate your key example:
+
+----
+ssh-copy-id -i ~/.ssh/Myidrsa.pub remote.server.com
+----
+
+ssh will require you to accept the new ssh key for the first time into the `~/.ssh/known_hosts` file by either shelling into each of the nodes one by one and typing yes each time or adding the file `~/.ssh/config` file with perms of 600 with a line that includes `StrictHostKeyChecking no`.  Once this is completed you can test that ansible will no longer ask to accept the key
+
+Test ansible in an adhoc way to ensure it can get to all the nodes
+
+----
+ansible -i /some/path/to/my/hosts/inventory/file -hosts OSEv3 -m ping
+----
+
+==== Cloud-Specific Provisioning Guides
+
+* Provisioning infrastructure on OpenStack using the openstack CLI (Coming Soon)
+* Provigioning infrastructure on Amazon EC2 using the awscli (Coming Soon)
+
+==== Ansible Inventory Update
+
+Once we have our hosts created and add to DNS, we can add them to the bottom of our Ansible Inventory file like so.
+
+----
+...
+[masters]
+openshift-master-[1:3].c1-ocp.myorg.com
+
+[etcd]
+openshift-master-[1:3].c1-ocp.myorg.com
+
+[nodes]
+openshift-infranode-[1:3].c1-ocp.myorg.com
+openshift-appnode-1.c1-ocp.myorg.com.com
+openshift-appnode-2.c1-ocp.myorg.com
+----
+
+=== Create Standalone Registry
+
+During the install, OpenShift will need pull images from Red Hat in order to spin up services like the Integrated Registry and Router as well as some base images for Pods, S2I builders, etc. In most cases, access to the link:https://registry.access.redhat.com[Red Hat Public Registry] is blocked or restricted by web proxies. The link:https://docs.openshift.com/container-platform/latest/install_config/install/disconnected_install.html#disconnected-syncing-images[Official Documentation] on how to work with this suggests pulling images to some internet accessible machine, and creating a `.tar` file to manually distribute them to all hosts in the cluster. While this works just fine, a more long term solution is to establish a standalone registry and seed it with the images that OpenShift will require. We can then point OpenShift to that standalone registry instead of Red Hat's and allow it to pull those images as it normally would. This allows us to establish a much simpler and more automatable process for updating those images when need be.
+
+We outline two options here for standing up a bootstrap registry. The first is to stand up a very simple docker registry which will have wide-open permissions (no authentication). The second, using OpenShift's Atomic Enterprise Registry, will allow us to require authentication and also provide a simple web console to help manage the images in the registry.
+
+==== Simple Docker Registry (docker-distribution)
+
+For the simple registry, we will stand up a registry on a plain RHEL 7 server, and then run a script to sync images to it. We can spin up a new server for this purpose, or simply use the Ansible Control Host we've already built. We'll also need some host that has internet access and access to `registry-server:5000` from which we can run the script. This can either be the registry server itself, or some other Linux host, laptop, etc.
+
+The process of creating the registry is very simple.
+
+----
+yum install -y docker docker-distribution firewalld
+
+systemctl enable firewalld
+systemctl start firewalld
+
+firewall-cmd --add-port 5000/tcp --permanent
+firewall-cmd --reload
+
+systemctl enable docker-distribution
+systemctl start docker-distribution
+----
+
+Now that we have a registry up and running, we should confirm that we can reach Red Hat's registry and our new standalone registry.
+
+----
+$ curl registry.access.redhat.com
+HTTP/1.1 200 OK
+Cache-Control: no-cache
+Date: Mon, 10 Apr 2017 15:18:09 GMT
+Content-Type: text/plain; charset=utf-8
+
+$ curl registry.c1-ocp.myorg.com:5000
+HTTP/1.1 200 OK
+Cache-Control: no-cache
+Date: Mon, 10 Apr 2017 15:18:09 GMT
+Content-Type: text/plain; charset=utf-8
+----
+
+Now we're ready to sync images. To do this, we're going to run link:https://github.com/redhat-cop/openshift-toolkit/blob/master/disconnected_registry/docker-registry-sync.py[this script].
+
+----
+curl -O https://raw.githubusercontent.com/redhat-cop/openshift-toolkit/master/disconnected_registry/docker-registry-sync.py
+curl -O https://raw.githubusercontent.com/redhat-cop/openshift-toolkit/master/disconnected_registry/docker_tags.json
+chmod +x docker-registry-sync.py
+./docker-registry-sync.py --from=registry.access.redhat.com --to=registry.c1-ocp.myorg.com:5000 --file=./docker_tags.json --openshift-version=3.5
+----
+
+Finally, we can update our Ansible Inventory file to point OpenShift to our private registry, and disable the default external registries
+
+----
+...
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.5
+
+openshift_master_api_port=443
+openshift_portal_net=172.30.0.0/16
+osm_cluster_network_cidr=10.128.0.0/14
+
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname=console.c1-ocp.myorg.com
+openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
+
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'}
+
+openshift_docker_additional_registries=registry.c1-ocp.myorg.com:5000 <1>
+openshift_docker_insecure_registries=registry.c1-ocp.myorg.com:5000 <2>
+openshift_docker_blocked_registries=registry.access.redhat.com,docker.io <3>
+...
+----
+<1> Adding our new registry
+<2> Our new registry is insecure (no https)
+<3> Blocking external registries so we know where our images come from
+
+==== Using OpenShift Atomic Enterprise Registry
+
+TODO
+
+==== Syncing Images using Satellite 6
+
+TODO
+
+=== Sync RPM Channels
+
+==== Satellite 6
+
+For a successful install and avoid potential challenges with internet connectivity during the pull of new software during installation, it is recommended to use Satellite to sync RPM Channels (repositories). This provides an "offline" option for installation of the OpenShift Container Platform. Below is a set of commands that can be used on the Satellite server command line to enable and sync repositories. Note that it is recommended to also enable a sync plan, for periodic updates, although this is outside of the scope of the current write-up.
+
+----
+hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat Enterprise Linux 7 Server (RPMs)" --releasever "7Server" --basearch "x86_64"
+hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat Enterprise Linux 7 Server - Extras (RPMs)" --releasever "" --basearch "x86_64"
+hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat OpenShift Container Platform 3.5 (RPMs)" --releasever "" --basearch "x86_64"
+hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat Enterprise Linux Fast Datapath (RHEL 7 Server) (RPMs)" --releasever "7Server" --basearch "x86_64"
+
+hammer repository synchronize --name "Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server" --organization "c1-ocp.myorg.com"
+hammer repository synchronize --name "Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64" --organization "c1-ocp.myorg.com"
+hammer repository synchronize --name "Red Hat OpenShift Container Platform 3.5 RPMs x86_64" --organization "c1-ocp.myorg.com"
+hammer repository synchronize --name "Red Hat Enterprise Linux Fast Datapath RHEL 7 Server RPMs x86_64 7Server" --organization "c1-ocp.myorg.com"
+----
+
+
+==== Satellite 5 (Custom Channels)
+
+TODO
+
+==== Custom Yum Repos
+
+The procedure for creating custom yum repos is documented in the link:https://docs.openshift.com/container-platform/latest/install_config/install/disconnected_install.html#disconnected-syncing-repos[Official Documentation]
+
+==== Subscribing Directly to Red Hat
+
+The process for subscribing directly to Red Hat is covered in the link:https://docs.openshift.com/container-platform/latest/install_config/install/host_preparation.html#host-registration[Official Documentation].
+
+=== Configure Load Balancer
+
+==== Configure for F5 Big IP
+The example configuration below is a basic setup that works, but may not be the optimal configuration for your particular environment. Please consult the F5 documentation and/or your F5 administrator for additional details that may be needed for your setup.
+
+===== Master LB
+
+----
+create ltm node openshift-master-1.c1-ocp.myorg.com fqdn { name openshift-master-1.c1-ocp.myorg.com }
+create ltm node openshift-master-2.c1-ocp.myorg.com fqdn { name openshift-master-2.c1-ocp.myorg.com }
+create ltm node openshift-master-3.c1-ocp.myorg.com fqdn { name openshift-master-3.c1-ocp.myorg.com }
+create ltm pool master.c1-ocp.myorg.com monitor https members add { openshift-master-1.c1-ocp.myorg.com:443 openshift-master-2.c1-ocp.myorg.com:443 openshift-master-3.c1-ocp.myorg.com.com:443 }
+create ltm virtual OpenShift-Master pool master.c1-ocp.myorg.com source-address-translation { type automap } destination 192.168.10.100:443
+----
+
+===== Infra Node / Router LB
+
+----
+create ltm node openshift-infranode-1.c1-ocp.myorg.com fqdn { name openshift-infranode-1.c1-ocp.myorg.com }
+create ltm node openshift-infranode-2.c1-ocp.myorg.com fqdn { name openshift-infranode-2.c1-ocp.myorg.com }
+create ltm node openshift-infranode-3.c1-ocp.myorg.com fqdn { name openshift-infranode-3.c1-ocp.myorg.com }
+create ltm pool infra.c1-ocp.myorg.com-http monitor http members add { openshift-infranode-1.c1-ocp.myorg.com:80 openshift-infranode-2.c1-ocp.myorg.com:80 openshift-infranode-3.c1-ocp.myorg.com:80 }
+create ltm pool infra.c1-ocp.myorg.com-https monitor https members add { openshift-infranode-1.c1-ocp.myorg.com:443 openshift-infranode-2.c1-ocp.myorg.com:443 openshift-infranode-3.c1-ocp.myorg.com:443 }
+create ltm virtual infra.c1-ocp.myorg.com-http  pool infra.c1-ocp.myorg.com-http  persist replace-all-with { source_addr } source-address-translation { type automap } destination 192.168.10.101:80
+create ltm virtual infra.c1-ocp.myorg.com-https pool infra.c1-ocp.myorg.com-https persist replace-all-with { source_addr } source-address-translation { type automap } destination 192.168.10.101:443
+----
+
+==== Configure for Citrix Netscaler
+
+===== Master LB
+
+----
+add serviceGroup ose-console_443_sslbridge SSL_BRIDGE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
+add lb vserver ose-console_443_sslbridge SSL_BRIDGE 192.168.10.101 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
+bind lb vserver ose-console_443_sslbridge ose-console_443_sslbridge
+bind serviceGroup ose-console_443_sslbridge openshift-master-1.c1-ocp.myorg.com 443
+bind serviceGroup ose-console_443_sslbridge openshift-master-2.c1-ocp.myorg.com 443
+bind serviceGroup ose-console_443_sslbridge openshift-master-3.c1-ocp.myorg.com 443
+----
+
+===== Infra Node / Router LB
+
+----
+add serviceGroup ose-wildcard_443_sslbridge SSL_BRIDGE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
+add lb vserver ose-wildcard_443_sslbridge SSL_BRIDGE 192.168.10.102 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
+bind lb vserver ose-wildcard_443_sslbridge ose-wildcard_443_sslbridge
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-1.c1-ocp.myorg.com 443
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-2.c1-ocp.myorg.com 443
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-3.c1-ocp.myorg.com 443
+
+add serviceGroup ose-wildcard_80 -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
+add lb vserver ose-wildcard_80 192.168.10.102 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
+bind lb vserver ose-wildcard_80 ose-wildcard_80
+bind serviceGroup ose-wildcard_80 openshift-infranode-1.c1-ocp.myorg.com 80
+bind serviceGroup ose-wildcard_80 openshift-infranode-2.c1-ocp.myorg.com 80
+bind serviceGroup ose-wildcard_80 openshift-infranode-3.c1-ocp.myorg.com 80
+
+----
+
+==== Configure for AWS ELB
+
+TODO
+
+==== Configure for OpenStack LBaaS
+
+TODO
+
+End this section at RHEL servers built and an ssh key synced
+
+== Preparing for Install
+
+At this point in the process we are ready to prepare our hosts for install. The following sections guide us through this process.
+
+=== Ansible Inventory Review
+
+The first step in prepping the hosts is to confirm that we have a working Ansible Inventory file. At this point, you should have an Ansible Inventory file at `c1-ocp.myorg.com/hosts` that looks something like this.
+
+----
+[OSEv3:children]
+masters
+etcd
+nodes
+
+[OSEv3:vars]
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.5
+
+openshift_master_api_port=443
+openshift_portal_net=172.30.0.0/16
+osm_cluster_network_cidr=10.128.0.0/14
+
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname=console.myorg.com
+openshift_master_cluster_public_hostname=console.myorg.com
+
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'}
+
+openshift_docker_additional_registries=registry.myorg.com
+openshift_docker_insecure_registries=registry.myorg.com
+openshift_docker_blocked_registries=registry.access.redhat.com,docker.io
+
+[OSEv3:vars]
+
+[masters]
+openshift-master-[1:3].c1-ocp.myorg.com
+
+[etcd]
+openshift-master-[1:3].c1-ocp.myorg.com
+
+[nodes]
+openshift-master-[1:3].c1-ocp.myorg.com openshift_node_labels="{'region': 'master'}"
+openshift-infranode-[1:3].c1-ocp.myorg.com openshift_node_labels="{'region': 'infra'}"
+openshift-appnode-1.c1-ocp.myorg.com openshift_node_labels="{'region': 'primary'}"
+openshift-appnode-2.c1-ocp.myorg.com openshift_node_labels="{'region': 'primary'}"
+----
+
+At this point it would be a good idea to version your `myorg-openshift` project to version control, and begin the process of iterating over your _infrastructure as code_. This is outside of the scope of this document.
+
+Now, let's confirm we are set up to run ansible commands from our Ansible Control Host. Run the following command:
+
+```
+ansible -i c1-ocp.myorg.com/hosts OSEv3 -m ping
+```
+
+What we just ran is referred to as an link:http://docs.ansible.com/ansible/intro_adhoc.html[Ansible Ad-Hoc Command]. We'll use this from here on out to treat our cluster hosts as a group of hosts, and run our setup commands across all of them.
+
+=== Subscribing the Hosts
+
+==== Subscribing using Satellite 6 (Recommended)
+
+Sample ansible command using a host file located at /repository/playbooks-ocplabcluster where the ocplabcluster file is the ansible inventory file that was build in the previous steps.
+
+
+```
+ansible -i c1-ocp.myorg.com/hosts nodes -a 'rpm -ivh http://satellite6.c1-ocp.myorg.com/pub/katello-ca-consumer-latest.noarch.rpm'
+ansible -i c1-ocp.myorg.com/hosts nodes -a 'subscription-manager register --org="<My_Org>" --activationkey="<my-activation-key>"'
+```
+
+
+==== Subscribing to Custom Yum Repos/Channels
+
+```
+cat /etc/yum.repos.d/ ...
+```
+
+==== Subscribing directly to Red Hat
+
+----
+ansible -i c1-ocp.myorg.com/hosts OSEv3 -a 'subscription-manager register --username bob@acme.com --password='mypassword'
+ansible -i c1-ocp.myorg.com/hosts OSEv3 -a 'subscription-manager attach --pool 8a85f98144844aff014488d058bf15be'
+ansible -i c1-ocp.myorg.com/hosts OSEv3 -a 'subscription-manager repos --disable "*" --enable rhel-7-server-rpms --enable rhel-7-server-extras-rpms --enable rhel-7-server-ose-3.5-rpms --enable rhel-7-fast-datapath-rpms'
+----
+
+INFO: The `rhel-7-fast-datapath-rpms` channel is only required for OpenShift Container Platform version 3.5 and later. For versions 3.5 and earlier, this channel should be omitted.
+
+=== Docker Storage Setup
+
+During the link:#provision-servers[Provision Servers] step of this guide, we provisioned all of our nodes (including the masters) with docker volumes attached as `/dev/vdb`. We'll now install and configure docker to use that volume for all local docker storage.
+
+NOTE: There are other options for configuring docker storage. They are outlined in the link:https://docs.openshift.com/container-platform/latest/install_config/install/host_preparation.html#configuring-docker-storage[Official Docs].
+
+We can do this simply with a single ansible command across all of our nodes.
+
+----
+ansible -i c1-ocp.myorg.com/hosts nodes -a 'echo "DEVS=/dev/vdb" > /etc/sysconfig/docker-storage-setup'
+----
+
+This file will be consumed by the docker engine once it is installed by Ansible.
+
+=== Configure etcd and Node Storage
+
+Just as with the Docker Storage, during the link:#provision-servers[Provision Servers] step of this guide, we provisioned our masters and nodes with an extra volume to be used for `/var/lib/etcd` (for masters) and `/var/lib/origin` (for nodes), attached as `/dev/vdc` in this guide. (Make sure to replace this with the disk available in your environment.) We will now demonstrate the steps involved with using LVM to set up and use this volume for backing storage.
+
+----
+ansible -i c1-ocp.myorg.com/hosts etcd -a 'yum -y install lvm2'
+
+ansible -i c1-ocp.myorg.com/hosts etcd -a 'pvcreate /dev/vdc'
+ansible -i c1-ocp.myorg.com/hosts etcd -a 'vgcreate etcd-vg /dev/vdc'
+ansible -i c1-ocp.myorg.com/hosts etcd -a 'lvcreate -n etcd-lv -l 100%VG etcd-vg'
+ansible -i c1-ocp.myorg.com/hosts etcd -a 'mkfs.xfs /dev/mapper/etcd--vg-etcd--lv'
+ansible -i c1-ocp.myorg.com/hosts etcd -m shell -a 'mkdir /var/lib/etcd'
+ansible -i c1-ocp.myorg.com/hosts etcd -m lineinfile -a 'path=/etc/fstab regexp=etcd line="/dev/mapper/etcd--vg-etcd--lv /var/lib/etcd xfs defaults 0 0"'
+ansible -i c1-ocp.myorg.com/hosts etcd -m shell -a 'mount -a'
+
+ansible -i c1-ocp.myorg.com/hosts nodes -a 'pvcreate /dev/vdc'
+ansible -i c1-ocp.myorg.com/hosts nodes -a 'vgcreate origin-vg /dev/vdc'
+ansible -i c1-ocp.myorg.com/hosts nodes -a 'lvcreate -n origin-lv -l 100%VG origin-vg'
+ansible -i c1-ocp.myorg.com/hosts nodes -a 'mkfs.xfs /dev/mapper/origin--vg-origin--lv'
+ansible -i c1-ocp.myorg.com/hosts nodes -m shell -a 'mkdir /var/lib/origin'
+ansible -i c1-ocp.myorg.com/hosts nodes -m lineinfile -a 'path=/etc/fstab regexp=origin line="/dev/mapper/origin--vg-origin--lv /var/lib/origin xfs defaults 0 0"'
+ansible -i c1-ocp.myorg.com/hosts nodes -m shell -a 'mount -a'
+----
+
+=== Validating Pre-requisites
+
+Once we have everything prepped, it's a good idea to run through our link:/playbooks/installation/pre-validation{outfilesuffix}[OpenShift Pre-Install Validation Checklist].
+
+Or alternatively, you could just run this link:https://github.com/redhat-cop/openshift-toolkit/tree/master/validation/[pre-install validation script].
+
+Assuming everything comes up clean, we can move on to running the installer.
+
+== Running the Install
+
+At this point, running the install is just a single command from the Ansible control host.
+
+----
+ansible-playbook -i c1-ocp.myorg.com/hosts /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
+----
+
+The install will run for 15-20 minutes. Good time for a coffee break.
+
+== Validating the Cluster
+
+link:/playbooks/installation/install_validation{outfilesuffix}[Validating an OpenShift Install]
+
+== What's Next?
+
+Adding LDAP for Authentication (Coming soon!)
