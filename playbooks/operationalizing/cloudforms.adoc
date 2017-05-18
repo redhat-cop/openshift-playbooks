@@ -242,9 +242,9 @@ In the upper-right hand corner, click on the dropdown next to your *username* an
 
 In the *Settings* tree, click on the *CFME Region*, then click on *Zones*, the OCP *Zone*, and finally pick the *Server*.
 
-Under the *Server* tab, in the *Server Control* section, under *Server Roles*, turn on the checkboxes *Capacity & Utilization Coordinator*, *Capacity & Utilization Data Collector*, *Capacity & Utilization Data Processor*.
+Under the *Server* tab, in the *Server Control* section, under *Server Roles*, turn on the checkboxes *Capacity & Utilization Coordinator*, *Capacity & Utilization Data Collector*, *Capacity & Utilization Data Processor*.   Capacity and Utilization metrics will begin to flow into CFME.
 
-Capacity and Utilization metrics will begin to flow into CFME and will take approximately 24 hours to process data and make the default report generation and visualizations available.  For chargeback reports, it takes approximately a total of 48 hours for the report data to become available.  Additionally, chargeback data is not available for the current day (only prior day, 24 hour lag) because it has not been analyzed yet.
+WARNING: Capacity and Utilization metrics will take approximately 24 hours to process data and make the default report generation and visualizations available.  For chargeback reports, it takes approximately a total of 48 hours for the report data to become available.  Additionally, chargeback data is not available for the current day (only prior day, 24 hour lag) because it has not been analyzed yet.
 
 You can verify metrics are flowing to CloudForms by *hovering over* from the left menu *Compute*, then hover over *Containers*, and finally click on *Providers*.
 
