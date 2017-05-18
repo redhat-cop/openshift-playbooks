@@ -231,7 +231,7 @@ Select the *Configuration* button and then *Add a New Containers Provider*.
 
 Enter a name for the provider and select *OpenShift Enterprise* in the type (ignore the zone, this will populate on its own). 
 
-Under *Endpoints*, in the *Default* tab, enter the hostname or address of the HAProxy server (or the master in a single master setup) into the *Hostname* field and enter the token retrieved earlier into the *Token* and *Confirm Token* fields. Click *Validate* to confirm connectivity.
+Under *Endpoints*, in the *Default* tab, enter the cluster public hostname (openshift_master_cluster_public_hostname in `/etc/ansible/hosts`) into the *Hostname* field and enter the token retrieved earlier into the *Token* and *Confirm Token* fields. Click *Validate* to confirm connectivity.
 
 Under *Endpoints*, select the *Hawkular* tab and enter the hawkular-metrics hostname into the *Hostname* field. 
     *Note* Adding the hawkular-metrics hostname in this field eliminates the need for any special routing to connect CloudForms to Hawkular Metrics.
