@@ -233,8 +233,9 @@ Enter a name for the provider and select *OpenShift Enterprise* in the type (ign
 
 Under *Endpoints*, in the *Default* tab, enter the address of the OpenShift Master API  into the *Hostname* field and enter the token retrieved earlier into the *Token* and *Confirm Token* fields. Click *Validate* to confirm connectivity.
 
-Under *Endpoints*, select the *Hawkular* tab and enter the hawkular-metrics hostname into the *Hostname* field. 
-    *Note* Adding the hawkular-metrics hostname in this field eliminates the need for any special routing to connect CloudForms to Hawkular Metrics.
+Under *Endpoints*, select the *Hawkular* tab and enter the hawkular-metrics hostname into the *Hostname* field.
+
+NOTE: Adding the hawkular-metrics hostname in this field eliminates the need for any special routing to connect CloudForms to Hawkular Metrics.
 
 Click *Add* to add the container provider.
 
