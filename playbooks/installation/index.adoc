@@ -756,13 +756,15 @@ ansible -i c1-ocp.myorg.com/hosts etcd -m shell -a 'mkdir /var/lib/etcd'
 ansible -i c1-ocp.myorg.com/hosts etcd -m lineinfile -a 'path=/etc/fstab regexp=etcd line="/dev/mapper/etcd--vg-etcd--lv /var/lib/etcd xfs defaults 0 0"'
 ansible -i c1-ocp.myorg.com/hosts etcd -m shell -a 'mount -a'
 
-ansible -i c1-ocp.myorg.com/hosts nodes -a 'pvcreate /dev/vdc'
-ansible -i c1-ocp.myorg.com/hosts nodes -a 'vgcreate origin-vg /dev/vdc'
-ansible -i c1-ocp.myorg.com/hosts nodes -a 'lvcreate -n origin-lv -l 100%VG origin-vg'
-ansible -i c1-ocp.myorg.com/hosts nodes -a 'mkfs.xfs /dev/mapper/origin--vg-origin--lv'
-ansible -i c1-ocp.myorg.com/hosts nodes -m shell -a 'mkdir /var/lib/origin'
-ansible -i c1-ocp.myorg.com/hosts nodes -m lineinfile -a 'path=/etc/fstab regexp=origin line="/dev/mapper/origin--vg-origin--lv /var/lib/origin xfs defaults 0 0"'
-ansible -i c1-ocp.myorg.com/hosts nodes -m shell -a 'mount -a'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -a 'yum -y install lvm2'
+
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -a 'pvcreate /dev/vdc'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -a 'vgcreate origin-vg /dev/vdc'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -a 'lvcreate -n origin-lv -l 100%VG origin-vg'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -a 'mkfs.xfs /dev/mapper/origin--vg-origin--lv'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -m shell -a 'mkdir /var/lib/origin'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -m lineinfile -a 'path=/etc/fstab regexp=origin line="/dev/mapper/origin--vg-origin--lv /var/lib/origin xfs defaults 0 0"'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -m shell -a 'mount -a'
 ----
 
 === Validating Pre-requisites
