@@ -6,5 +6,6 @@ The OpenShift Enterprise 3 Application Development playbook provides guidance on
 
 Completed sections:
 
+* link:app_onboarding{outfilesuffix}[Application On-Boarding]
 * link:builds{outfilesuffix}[Builds]
 * link:binary_deployment_howto{outfilesuffix}[Tutorial: Binary Deployments to Tomcat in OpenShift]

@@ -1,0 +1,169 @@
+== Application Onboarding Process
+
+The result of an onboarding process should be:
+
+ * A reproducible process to create the necessary docker images and push them to the chose docker registry.
+ * A set of openshift objects that are needed to correctly deploy the application.
+
+Below is a suggested methodology to execute the onboarding tasks and a set of considerations to apply when doing it. +
+
+Here is the high-level process:
+
+<insert image here>
+
+Each of the steps are explained below:
+
+==== Assess high-level compatibility
+In this step, we make sure the solution (consisting of several components) can run on OpenShift. This involves:
+
+ 1. Ensuring the components can run on Linux.
+ 2. If the solution comprises commercial products, ensuring these products will be supported by the respective vendors when containerized and ensuring the final solution will be compliant from a licensing perspective.
+
+==== Identify  components
+In this step, we identify all the components that comprise the solution. We also:
+
+ * Determine the architectural topology of the solution.
+ * Determine which components should be co-located in the same Kubernetes pods.
+
+Once the components and the topology of the solution is defined (i.e. the design of how to deploy the solution in OpenShift), we will proceed to containerize each component. For each component of the solution, we will execute the following steps:
+
+==== Identify needed runtime software
+
+ * Identify the most appropriate base image to start with,
+ * Identify any additional software that needs to be installed via a package manager or other means.
+
+==== Identify kernel requirements
+Some applications require special kernel features. Once these requirements have been identified we will:
+
+ * Verify that those features are supported by OpenShift containers.
+ * Create an link:https://docs.openshift.com/container-platform/latest/admin_guide/manage_scc.html[SCC] (or use one of the existing ones) that is adequate to run containers with special access to kernel features.
+ * Create a link:https://docs.openshift.com/container-platform/3.3/dev_guide/service_accounts.html[service account] that will run with the previously created SCC.
+
+Application software should never need to run in a privileged SCC. +
+Here is an example of how you can add scc to a service account:
+```
+oc adm policy add-scc-to-user hostnetwork -z default
+```
+
+==== Identify required privileges
+By default images in OpenShift run under a user with a random ID and belong to the root group. It is critical to identify all the files and directories this user will need to access and provide the necessary permissions. A link:https://github.com/sclorg/s2i-base-container/blob/master/bin/fix-permissions[script] has been created to simplify this task. If an image needs to run with a specific user, then a non-default SCC will be required (see previous step).
+
+==== Identify required storage
+Some containers need storage beyond the filesystem provided by the container image. There are several link:http://kubernetes.io/docs/user-guide/volumes/[types of volumes] available in OpenShift. This step involves the following subtasks:
+
+ * Identify the right type of volume required.
+ * Ensure the application has knowledge of where the volume is being mounted.
+ * If the required volume is the Kubernetes emptyDir volume type (an initially empty volume created when a pod is assigned to a node), ensure the volume cannot grow indefinitely, as OpenShift does not quota control that type of volume.
+ * If the required volume is a Kubernetes secret or configMap volume type, ensure the corresponding objects are created and a process exists to propagate these objects (or a modified instance) across all the environments.
+ * If the required volume is a Kubernetes persistentVolume volume type:
+ ** Ensure the correct provider of persistent volume is chosen (link:https://insights.ubuntu.com/2015/05/18/what-are-the-different-types-of-storage-block-object-and-file/[file storage vs block storage vs object storage]) for the solution.
+ ** Ensure a persistent volume claim (PVC) with the correct access mode and size has been created. Also ensure there is a process to propagate these objects (or a modified instance) across all the environments.
+ ** Ensure the application has the correct access permission for the mounted volume, potentially adding link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_nfs.html#nfs-user-ids[supplementalGroups]
+
+Here is an example on how to configure volumes for a pod:
+```
+spec:
+  containers:
+  - name: ceph-pv-busybox
+    image: busybox
+    command: ["sleep", "60000"]
+    volumeMounts:
+    - name: ceph-vol1
+      mountPath: /var/lib/busybox
+      readOnly: false
+  volumes:
+  - name: ceph-vol1
+    persistentVolumeClaim:
+      claimName: ceph-pv-claim
+```
+
+==== Identify dependencies
+This step is partially done when we define the application topology. This time, we also want to include the following types of dependencies:
+
+ * External dependencies: dependencies that are external to the OpenShift cluster
+ * Infrastructure dependencies such as: application monitoring, log aggregator, distributed tracing, circuit breaker dashboard, and others.
+
+==== Identify inbound connections
+
+ * Identify all the ports that a pod needs to expose. Note for container-to-container communication within a pod, there is no need to expose the port.
+ * Identify which ports should become part of the OpenShift service governing the pods and which are only pod specific.
+ * Identify which service port should be exposed as routes. Identify the route name and type (SSL or clear)
+ * If SSL is needed, determine how certificate will be managed. Certificates can be managed at the container level or at the router level.
+ * If there an inbound connection from external to the cluster that does not use HTTP or SSL+SNI, consider using one of the alternative methods for link:https://docs.openshift.com/container-platform/latest/dev_guide/getting_traffic_into_cluster.html[routing connection inside the cluster].
+
+==== Identify outbound connections
+
+ * Define what the outbound endpoint discovery mechanism will be. OpenShift supports DNS based discovery out of the box.
+ * Define what the outbound load balancing mechanism will be. OpenShift supports infrastructure-level load balancing out of the box.
+ * Identify the authentication mechanism that will be used. Secrets may be needed to manage the needed credentials. Important: if certificates are used, ensure there is a strategy in place to renew them when close to expiration.
+ * For external endpoints:
+ ** Ensure connectivity is possible from any of the cluster nodes.
+ ** If IP based firewall rules are in place, consider using an link:https://docs.openshift.com/container-platform/latest/admin_guide/managing_pods.html#admin-guide-controlling-egress-traffic[egress pod].
+
+==== Identify clustering requirements
+Some applications need to run as cluster in which not all the members are the same. Some clusters require only one active member while other member remain passive. Some require a cluster coordinator. These situations may require Kubernetes Pet Sets - check support for this feature in the current release of OpenShift. +
+
+NOTE: Managing and configuring stateful software is outside the scope of this document.
+
+==== Manage application logs
+Application logs not logged to standard output will not be automatically collected by OpenShift. It is critical to collect application logs, because when the pod dies those logs become unavailable (and when a pod dies is when you want to see what was going on in the logs).
+
+ * Define which log aggregator you want to use, the enterprise one or the one that comes with OpenShift
+ * Make sure all the logs are directed to the selected log aggregator.
+
+==== Manage application properties
+The application will need to be injected with properties to manage environment-dependent configuration and credentials.
+
+It is appropriate to use:
+
+ * https://docs.openshift.com/container-platform/latest/dev_guide/secrets.html[Secrets] for credentials
+ * https://docs.openshift.com/container-platform/latest/dev_guide/configmaps.html[Configmaps] or environment variables for properties
+
+Ensure you have a process to propagate these objects across your environments.
+
+==== Identify application monitoring requirements
+Identify whether you need application monitoring and/or distributed tracing for your application. In some cases you may also want to integrate a circuit breaker dashboard. Make sure the necessary agents are loaded in the image and receive the correct configurations.
+
+==== Define the container startup process
+Often containers need to do some work before the main process can start. Examples of these are:
+
+ * Check dependency availability. Define your failure strategy when you have missing dependencies.
+ * Initialize any uninitialized storage.
+ * Read environment variables and other injected properties and set up properties the way the application expects them.
+ * Initialize monitoring agents/container (in case of multi container pods),
+
+NOTE: Initialization steps can be done in a startup script or in link:https://docs.openshift.com/container-platform/latest/dev_guide/deployments.html#lifecycle-hooks[lifecycle hooks]
+
+==== Defined container health checks
+Health checks help OpenShift determine the health status of a container. It is a good practice to define both the readiness check and the health check.
+
+The readiness check is used during deployments. A good readiness check will check that all the dependencies are available and therefore the application is ready to operate. +
+
+The health checks are used to determine if the container is alive. A good health check will make sure that the application is running in good condition.
+
+Here is an example of readiness and health checks:
+```
+        livenessProbe:
+          tcpSocket:
+            port: 6789
+          initialDelaySeconds: 60
+          timeoutSeconds: 5
+        readinessProbe:
+          tcpSocket:
+            port: 6789
+          timeoutSeconds: 5
+```
+
+==== Define the container resource requirements
+Container resource requests and limits are used by OpenShift to schedule pods. This information is vital for optimal pod allocation within the cluster. It is recommended that you take sometime to study your application resource consumption pattern and configure your containers appropriately.
+
+Here is an example of setting container resource requirements:
+```
+          resources:
+            requests:
+              memory: "50Mi"
+              cpu: "1000m"
+            limits:
+              memory: "100Mi"
+              cpu: "2000m"
+```
