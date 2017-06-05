@@ -1,0 +1,318 @@
+== CI/CD Application Onboarding Process
+
+The result of the CI/CD onboarding process should be an MVP pipeline that is capable of promoting the application through the various environment up to production.
+Such a pipeline can be represented by the following image:
+
+<insert image here>
+
+NOTE: Validation of each phase is outside the scope of this document.
+
+In order to mechanically promote an application through the various environments, the following strategies must be decided:
+
+ * Image migration strategy
+ * Openshift object migration strategy
+ * Environment property management strategy
+ * Credential management strategy.
+
+These strategies are discussed in the following sections.
+
+For this discussion we assume that an application environment will be modeled as an OpenShift project in an OpenShift cluster.
+
+These strategies are tool agnostic, however examples are provided for Jenkins as the pipeline orchestrator and Spring are the application framework.
+
+=== Image Migration Strategies
+The canonical workflow needed to move images across cluster can be described by the below picture:
+
+<insert picture here>
+
+This workflow can be implemented by the following lists of commands:
+```
+ 1. docker login <source_reg>
+ 2. docker pull <source_pull_spec>
+ 3. docker tag <source_pull_pec> <dest_pull_spec>
+ 4. docker login <dest_reg>
+ 5. docker push <dest_pull_spec>
+```
+To support this approach, the following must be satisfied:
+
+ * The docker server must be able to connect to the source and destination registries.
+ * The docker server must be configured with either the insecure-registry flag or the correct certificates in order to talk to the registries.
+ * We must have valid credentials to authenticate with both the source and destination registry.
+
+If we want to automate the process we can assume that the previous list of commands will be issued as one of the steps of our delivery pipeline.
+
+The pipeline steps are represented by the following code snippet:
+```
+  stage ‘pull’
+    sh 'oc login -p <password> -u <username> --insecure-skip-tls-verify=true <source-cluster>’
+    sh 'docker -p `oc whoami -t` -u `oc whoami` <source-registry>'
+    sh 'docker <source-pull-spec>'
+
+  stage 'push'
+    sh 'docker tag <source-pull-spec> <dest-pull-spec>’
+    sh 'oc login -p <password> -u <username> --insecure-skip-tls-verify=true <dest-cluster>’
+    sh 'docker -p `oc whoami -t` -u `oc whoami` <dest-registry>'
+    sh 'docker push <dest-pull-spec>'
+```
+
+While there are several ways to implement this architecture, three of them are presented below.
+
+==== External Pipeline Tool and Docker Server
+The pipeline tool is installed outside of OpenShift and has access to a local docker daemon (via linux socket as it is the default).
+
+<insert image here>
+
+It is the responsibility of the system administrator of the external server to setup the docker server correctly.
+
+In this type of infrastructure, the CI/CD tool is installed together with the docker daemon. +
+This link:https://blog.openshift.com/remotely-push-pull-container-images-openshift/[article] presents a step by step tutorial on how to setup this configuration.
+
+While there is no technical cause for concern regarding this approach, a significant portion of the infrastructure is not running in OpenShift. From a strategic standpoint this presents an issue, because the roadmap for container adoption should encompass that the CI/CD pipeline runs inside the container cluster.
+
+==== Internal Pipeline Tool and Docker Running in a Pod
+In this implementation, the pipeline tool runs inside OpenShift as a pod and connects to a docker server also running inside the cluster as a pod.
+
+<insert image here>
+
+You can create the docker pod with this:
+```
+oc create -f https://raw.githubusercontent.com/raffaelespazzoli/containers-quickstarts/dind/dind/docker-is.yaml
+oc create serviceaccount docker
+oc adm policy add-scc-to-user privileged system:serviceaccount:`oc project -q`:docker
+oc create -f https://raw.githubusercontent.com/raffaelespazzoli/containers-quickstarts/dind/dind/docker-dc.yaml
+oc expose dc docker
+```
+Notice that this way of creating a docker pod is not officially supported in OpenShift and uses an alpine-based image from docker hub. Additional support from internal technical teams may be required.
+
+If Jenkins is used as a pipeline tool, you can create a docker-jenkins-slave to be able to communicate to the docker server pod as follow:
+```
+oc new-build --code=https://github.com/raffaelespazzoli/containers-quickstarts#dind --context-dir=dind/jenkins-docker --strategy=docker --name=docker-jenkins-slave
+```
+You will also have to specify the values for the docker-jenkins-slave for the Kubernetes plugin within the Jenkins server configuration:
+
+<insert image here>
+
+At this point you can code the pipeline as follows:
+```
+node('docker-jenkins-slave') {
+
+  stage 'pull'
+    sh 'oc login -p <user> -u <pwd> --insecure-skip-tls-verify=true <source cluster>'
+    sh 'docker -H docker:2375 login -p `oc whoami -t` -u admin -e me@me.com <source registry>'
+    sh 'docker -H docker:2375 pull <source pull spec>'
+
+  stage 'push'
+    sh 'oc login -p <user> -u <pwd> --insecure-skip-tls-verify=true <dest cluster>'
+    sh 'docker -H docker:2375 login -p `oc whoami -t` -u admin -e me@me.com <dest registry>'
+    sh 'docker -H docker:2375 tag <source pull spec> <dest pull spec>'
+    sh 'docker -H docker:2375 push <dest pull spec>'
+}
+```
+Notice that we have to define a node with the same name as the pod definition in the Jenkins configuration to make sure that the steps will be executed in the container that we have prepared with the docker client.
+Also note that now all the docker commands have the -H option which specifies where the docker server is.
+
+With this approach, all our systems run in OpenShift. The issue with this approach is that the docker storage of the docker pod will tend to grow indefinitely, so a strategy should be devised to prevent filling the disk space. Since an emptyDir volume has been defined for the docker storage, simply restarting the pod would be enough to avoid filling up the disk.
+
+==== Use an Openshift Build as a Means to Move Images
+It is possible to trick an OpenShift build config into effectively becoming a means for moving images.
+
+The following is an example:
+```
+oc new-build --strategy=docker --dockerfile=’FROM <source pull spec>’ --to-docker=true --to=<dest-pull-spec> --name=image-mover
+```
+In this case, the docker server used for the move will be one of the docker servers running in the OpenShift nodes.
+
+<insert image here>
+
+This approach at first sight may look even more elegant than the previous one. In reality, because the build can be spawned in any of the cluster nodes, all the nodes will have to be configured to talk with the source registry (in this example).
+
+This type of configuration is usually done at cluster setup. Therefore this approach requires a good amount of upfront planning.
+
+All the above presented approaches have pro and cons, but they all share a common issue: having access to a docker server is essentially equivalent to being root on the server (or pod) running that docker server.
+
+In the case of the delivery pipeline, which are usually written by developers, this setup is equivalent to giving root access to a machine to all the developers who are authorized to write pipelines. For many enterprises this represents a risk that they cannot tolerate. Although there are ways to minimize the risks in all of the above approaches, the following approach removes this risk altogether.
+
+==== Using skopeo
+A docker registry exposes a REST api. +
+We don't need the docker client to consume that API, as it can be consumed directly. +
+Removing docker  from the client perspective removes many of the risks presented earlier. +
+There are tools such as link:https://github.com/projectatomic/skopeo[skopeo] that can talk to docker registries directly and perform download and upload operations.
+
+<insert image here>
+
+Using skopeo, the Jenkins pipeline would look like the following:
+```
+node('skopeo-jenkins-slave') {
+
+  stage  ‘move-image’
+    sh 'oc login -p <user> -u <pwd> --insecure-skip-tls-verify=true <source cluster>'
+    sh ‘src-creds=`oc whoami`:`oc whoami -t`’
+    sh 'oc login -p <user> -u <pwd> --insecure-skip-tls-verify=true <dest cluster>'
+    sh ‘dest-creds=`oc whoami`:`oc whoami -t`’
+    sh ‘skopeo --tls-verify=false copy --dest-creds $dest-creds --src-creds $src-creds <src-pull-spec> <dest-pull-spec>
+}
+```
+If you are running Jenkins inside OpenShift you can create a skopeo-jenkins-slave as follows:
+```
+oc new-build --code=https://github.com/raffaelespazzoli/containers-quickstarts#dind --context-dir=dind/jenkins-skopeo --strategy=docker --name=skopeo-jenkins-slave
+```
+You will have to configure your Jenkins cloud plugin as for the docker-jenkins-slave.
+
+=== OpenShift API Object Migration Strategies
+By OpenShift API object we mean DeploymentConfig, Kubernetes deployments, DaemonSet’s, petsets, jobs, services, buildconfig and so on.
+
+A set of these API objects needs to be defined in a project for an application or a solution to be deployed.
+
+So, if your application goes through a promotion workflow these OpenShift API objects that are necessary to defined it must exist in all the environments that comprise the promotion path.
+
+These objects can change over time. They can change in the value of their fields and they can even change in the structure, by adding and removing fields. Examples of situations that require a change are:
+
+ * Build number or tag version change
+ * Environment variable value change
+ * Environment variable added removed
+ * Health check added removed
+ * Request and limits added / tuned
+
+Overall, a mature pipeline needs a strategy to manage the promotion workflow for OpenShift objects.
+
+The following are a several approaches that have proven to be successful:.
+
+==== Patch
+The `oc patch` command allows you to update any section of an OpenShift object provided it is not read-only. This approach works if you know in advance what are the sections of your OpenShift objects that will change.
+
+For example, if image tags are being managed explicitly, or if there are updates to the  value of an environment variable, oc patch is a good approach.
+```
+oc patch bc mybuild -p '{ "spec": { "output": { "to": { "name": "myexternalrepo:5000http://alsac-ose-images.dev.alsac.stjude.org:6443/$[http://alsac-ose-images.dev.alsac.stjude.org:6443/$[/]]reponame/imagename:v1.2.3" } } } }'
+```
+
+==== Apply
+If you want a more general approach capable of managing unpredictable updates to your OpenShift objects, then `oc apply` may be a more viable option.
+
+`oc apply` will compare the object you are passing with the current object, compute the differences, and pass the results as a patch.
+
+`oc apply` works best with templates. You would process a template applying the current environment/build configuration and the pipe it into an `oc apply` command. Here is an example:
+```
+oc process mytemplate BUILD_NUMBER=v1.2.3 CONFIG_FILE=/a/b/c | oc apply --save-config
+```
+The `--save-config` option creates an annotation with the exact value of the object that were passed, before the default and output fields are applied. This simplifies the work of future `oc apply` commands.
+
+The `--force` flag can be used to force the update of read only fields. This causes OpenShift to delete and create the object as opposed to using patch. This may trigger cascading events which may or may not appropriate for you promotion workflow.
+
+=== Environment properties management strategies
+How an application expects to read its configurations is completely application dependent. That said over the course of several projects we have seen some patterns emerge that we have found to be successful.  There is no better or worse approach, it is the responsibility of the pipeline designer to choose the best approach for a given context.
+
+This section focuses on environment dependent properties because they are the most likely to change during a promotion workflow.
+
+==== Using environment variables
+The properties are passed by OpenShift as environment variable. The following  is a fragment of how a such a pod template (or higher structures such as replication controllers and deployment configs) would be represented:
+```
+  env:
+    - name: MY_EXTERNAL_ENDPOINT
+      value:http://xxx.yyy.zzz[ http://xxx.yyy.zzz]
+```
+Your application needs to trained to read its properties this way. If you are using spring, there are several way of achieving this here is one example:
+```
+@Value("#{systemEnvironment['MY_EXTERNAL_ENDPOINT']}")
+private String myExternalEndpoint;
+```
+If the value of a property changes, your CI/CD workflow needs to be able to change it in the pod template.
+
+If a property is added or removed your CI/CD workflow needs to be able to manage this event appropriately.
+
+In general this approach does not scale well when you have more than a dozen of properties.
+
+==== Using one environment variable to determine the environment
+In this approach we use an environment variable to determine in which environment the application is being deployed. The pod template would like the following:
+```
+  env:
+    - name: ENV
+      value: {IT|QA|PROD}
+```
+The docker image of your application will need to contain all the properties for each environment and to be able to select the right configuration file based on the ENV environment variable.
+
+Using Spring, this can be elegantly achieved using profiles. Here is an example.
+
+You will have several config classes, one per environment with the following annotations:
+```
+@Configuration +
+@PropertySource("file:///<well-known-location>/application-dev.properties") +
+@Profile("dev")
+```
+Then some logic to activate the right profile:
+```
+  env:
+    - name: SPRING_ACTIVE_PROFILE
+      value: dev
+```
+NOTE: In this case, we don’t even need the ENV variable
+
+This approach makes your CI/CD easier to implement because now you don’t have to manage the changing values of the properties or for adding and removing properties.
+
+This approach falls short when the number and type of your environment starts to change (for example because you start provisioning environment dynamically).
+
+==== ConfigMap
+ConfigMap is an object manages by openshift with the purpose of managing application configurations. You can create a ConfigMap to contain a properties file as follows:
+```
+oc create configmap my-app-config --from-file=path/to/application.properties
+```
+This config map will be mounted as a file called application.properties in a directory that you can configure in your pod template. Here are the relevant sections:
+```
+     volumes:
+       - name: my-app-config
+         configMap:
+           name: my-app-config
+...
+         env:
+           - name: CONFIG_LOCATION
+             value: /etc/myapp/config
+         volumeMounts:
+           - name: my-app-config
+             mountPath: /etc/myapp/config
+```
+Notice that we use an environment variable to pass the location of the properties file to the application. This environment variable must match the volume mount point and never needs to change.
+
+The application will need to initialize its properties by looking at the environment variables that specified the location of the properties. If you are using Spring this can be done as follows:
+```
+@PropertySource("file:///${CONFIG_LOCATION}/application.properties")
+```
+This approach allows for easily sharing of properties between different applications, because they can all mount the same configmap.
+
+With this approach you have to manage an additional object in your CI/CD pipeline: the configmap. Someone or some process must be able to create them and update them when properties are changed, added, removed.
+
+==== Config store
+In this approach a service that we will refer to as config store is service configurations for one or more apps. Presumably this server can manage different environments so when an application starts it will call the service passing it’s identification and the environment for which it wants the configuration and the service will respond with the appropriate properties.
+
+Environment and config service endpoint will have to be passed using one of the previous methods. If using environment variables it the pod template would look as follows:
+```
+  env:
+   - name: ENV
+     value: {IT|QA|PROD}
+   - name: CONFIG_URL
+     value:http://myconfig.xxx.yyy
+```
+This methods is appropriate when application properties need to be reloaded at runtime. One shortcoming of this method is that your application now has a dependency on an external service (which may be down) to start. To overcome this limit you should have defaults for all your properties so that your application start anyway.
+
+link:https://github.com/Netflix/archaius/wiki[Archaius] is a NetFlix library designed to aggregate properties from different sources and ping these sources at regular interval to look for updates. It link:http://cloud.spring.io/spring-cloud-static/spring-cloud-netflix/1.2.4.RELEASE/[integrates] with Spring Cloud.
+
+=== Credential management strategies
+Credentials are similar to properties for the fact that they are environment dependent, but they differ for the fact that they should be known to a restricted set of individuals who have been given permission to see them.
+
+Historically, mature application server such as WebSphere and WebLogic allowed to system administrators to configure credentials and the applications to use them without ever seeing them via the facility of managed connections (this was available for JDBC, JMS, JCA connections and in some cases also for outbound web service calls).
+
+In OpenShift this ability is lost (at least for now) and the application code will need to see and use the credentials. Therefore we must be able to trust the code (this sometimes means that the developers should not access the logs in the higher environments) with these credentials.
+
+Here are two approaches to passing the credentials to the code.
+
+==== Secrets
+Secrets are a facility available in OpenShift to manage credentials. Secrets are OpenShift objects which contain encoded values representing credentials. Aside from that, secrets behave exactly the same as configmaps. In particular, whoever has access to view the secrets can essentially see the value. This seems a tautological statement, but it should be remembered that the project role view, (which in many cases, is the default access that anyone gets in a project) is also allowed to view the secrets. Also, keep in mind that the cluster administrators, and anyone who has access to the master or who can communicate with the etcd cluster, can probably access the secrets.
+
+If those caveats don’t represent an issue for your organization then using OpenShift secrets is probably a good approach, because as said before, it is not so different than reading properties using configmaps.
+
+==== Credential  Vaults
+Credential vaults are third party software with the sole purpose of managing credentials. Integrating a credential vault with OpenShift allows, if correctly configured, the code deployed in OpenShift to see the credentials, while preventing all the other parties to see them.
+
+Credential vaults behave as secure property stores. In the following example, we assume we are using link:https://www.hashicorp.com/vault.html[Vault] from link:https://www.hashicorp.com/[Hashicorp].
+
+If you are using a spring application link:https://spring.io/blog/2016/06/24/managing-secrets-with-vault[here] you can find how to integrate with Vault.
+
+A more general solution is available link:https://github.com/Boostport/kubernetes-vault[here] and link:https://github.com/kelseyhightower/vault-controller[here] as a proof of concept. It hasn’t been ported to OpenShift yet.

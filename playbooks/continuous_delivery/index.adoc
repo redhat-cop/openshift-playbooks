@@ -2,6 +2,10 @@
 ---
 = DevOps (Continuous Delivery) with Containers
 
+== CI/CD On-Boarding
+
+* link:cicd_onboarding{outfilesuffix}[CI/CD On-Boarding]
+
 == Application Builds
 
 == Application Deployments
