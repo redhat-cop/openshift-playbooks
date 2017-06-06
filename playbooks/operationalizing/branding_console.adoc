@@ -159,7 +159,7 @@ oauthConfig:
 
 NOTE: The indent space is remarkably important. Sometimes, master server can not load it because of different space length.
 
-* *Now restart atomic-o penshift-master service*
+* *Now restart atomic-openshift-master service*
 ```
 # systemctl atomic-openshift-master restart
 ```
