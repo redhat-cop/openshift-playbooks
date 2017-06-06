@@ -145,11 +145,11 @@ This will be the url that external users and/or tools will use to login to the O
 
 Wildcard DNS entry for Infrastructure(Router) nodes
 
-In addition to the hostnames for the master console and API, A wildcard DNS entry needs to exist under a unique subdomain (i.e. `*.cloudapps.c1-ocp.myorg.com`) that resolves to either the IP addresses (an A record) or the hostnames (a CNAME record) of the three Infrastructure Nodes.   This entry allows new routes to be automatically routable to the cluster under the subdomain such as mynewapp.cloudapps.c1-ocp.myorg.com.   Alternatively, every exposed route would require the entry to be created in order to route it to the OpenShift cluster. 
+In addition to the hostnames for the master console and API, A wildcard DNS entry needs to exist under a unique subdomain (i.e. `*.apps.c1-ocp.myorg.com`) that resolves to either the IP addresses (an A record) or the hostnames (a CNAME record) of the three Infrastructure Nodes.   This entry allows new routes to be automatically routable to the cluster under the subdomain such as mynewapp.apps.c1-ocp.myorg.com.   Alternatively, every exposed route would require the entry to be created in order to route it to the OpenShift cluster. 
 
 ----
 # default subdomain to use for exposed routes
-openshift_master_default_subdomain=cloudapps.c1-ocp.myorg.com
+openshift_master_default_subdomain=apps.c1-ocp.myorg.com
 ----
 
 image::/images/dnsmasterinfra.png[DNS Diagram]
@@ -172,7 +172,7 @@ osm_cluster_network_cidr=10.128.0.0/14
 openshift_master_cluster_hostname=console.c1-ocp.myorg.com <1>
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com <2>
 
-openshift_master_default_subdomain=cloudapps.c1-ocp.myorg.com
+openshift_master_default_subdomain=apps.c1-ocp.myorg.com
 ...
 ----
 <1> Hostname used by nodes and other cluster internals
