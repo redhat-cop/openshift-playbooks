@@ -725,7 +725,7 @@ ansible -i c1-ocp.myorg.com/hosts OSEv3 -a 'subscription-manager attach --pool 8
 ansible -i c1-ocp.myorg.com/hosts OSEv3 -a 'subscription-manager repos --disable "*" --enable rhel-7-server-rpms --enable rhel-7-server-extras-rpms --enable rhel-7-server-ose-3.5-rpms --enable rhel-7-fast-datapath-rpms'
 ----
 
-INFO: The `rhel-7-fast-datapath-rpms` channel is only required for OpenShift Container Platform version 3.5 and later. For versions 3.5 and earlier, this channel should be omitted.
+NOTE: The `rhel-7-fast-datapath-rpms` channel is only required for OpenShift Container Platform version 3.5 and later. For versions 3.5 and earlier, this channel should be omitted.
 
 === Docker Storage Setup
 
