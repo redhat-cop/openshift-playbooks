@@ -1,0 +1,155 @@
+---
+---
+= OpenShift Pre-Install Validation Checklist
+Matt Witzenman <mwitzenm@redhat.com>
+v1.0, 2017-03-29
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== This document is designed to ensure your OpenShift cluster nodes are ready for the installation of OpenShift via the advanced ansible installer
+
+=== Ensure ssh keys are propagated for ansible installer
+
+The Ansible installer requires either: root password-less ssh access using ssh keys or a non-root user with password-less ssh acess and full password-less sudo access from the ansible installer node
+
+How to Propagate your key example:
+
+----
+ssh-copy-id -i ~/.ssh/Myidrsa.pub remote.server.com
+----
+
+=== DNS lookup on each node in your cluster
+
+This is to ensure dns is properly set
+
+example:
+
+----
+dig www.google.com +short
+172.217.7.132
+----
+
+=== DNS reverse lookup on each node 
+
+example:
+
+----
+dig -x `dig www.google.com +short` +short
+iad23s59-in-f4.1e100.net.
+----
+
+=== OCP 3.3 install repos
+
+If Installing OpenShift 3.3 please use these repos
+
+----
+yum repolist |egrep 'rhel-7-server-rpms|rhel-7-server-extras-rpms|rhel-7-server-optional-rpms|rhel-7-server-ose-3.3-rpms' 
+----
+
+|==================
+|rhel-7-server-extras-rpms/x86_64 | Red Hat Enterprise Linux 7 Server - Extras (RPMs)
+|rhel-7-server-optional-rpms/7Server/x86_64 | Red Hat Enterprise Linux 7 Server - Optional (RPMs)
+|rhel-7-server-ose-3.3-rpms/x86_64 | Red Hat OpenShift Container Platform 3.3 (RPMs)
+|rhel-7-server-rpms/7Server/x86_64 | Red Hat Enterprise Linux 7 Server (RPMs)
+|==================
+
+
+=== OCP 3.4 install repos
+
+If Installing OpenShift 3.4 please use these repos
+
+----
+yum repolist |egrep 'rhel-7-server-rpms|rhel-7-server-extras-rpms|rhel-7-server-optional-rpms|rhel-7-server-ose-3.4-rpms'
+----
+
+|==================
+|rhel-7-server-extras-rpms/x86_64 | Red Hat Enterprise Linux 7 Server - Extras (RPMs)
+|rhel-7-server-optional-rpms/7Server/x86_64 | Red Hat Enterprise Linux 7 Server - Optional (RPMs)
+|rhel-7-server-ose-3.4-rpms/x86_64 | Red Hat OpenShift Container Platform 3.4 (RPMs)
+|rhel-7-server-rpms/7Server/x86_64 | Red Hat Enterprise Linux 7 Server (RPMs)
+|==================
+
+
+=== Show the repos expected and enabled
+
+----
+yum repolist enabled
+----
+
+=== Are updates required before you install OpenShift
+
+----
+yum list updates
+----
+
+=== Is subscription manager active
+
+----
+subscription-manager status
+----
+
+=== To list all repos recognized by your rhel 7 nodes
+
+----
+subscription-manager repos
+----
+
+=== Ensure docker is enabled 
+
+----
+systemctl enable docker
+----
+
+=== Ensure NetworkManager is enabled
+
+----
+systemctl enable NetworkManager
+----
+
+=== Check the sha256sum of a docker 1.10 installation for OpenShift 3.3, 3.2
+
+----
+sha256sum /etc/sysconfig/docker
+sha256sum /etc/sysconfig/docker-storage
+sha256sum /etc/sysconfig/docker-storage-setup
+----
+
+Notice the sha256sum values for docker 1.10.  It assumes no modification to the default install of the files
+These are here to give you confidence that your docker storage setup will cleanly run
+
+|==================
+|/etc/sysconfig/docker | 1fe04a24430eaefb751bf720353e730aec5641529f0a3b2567f72e6c63433e8b
+|/etc/sysconfig/docker-storage | 709dca62ac8150aa280fdb4d49d122d78a6a2f4f46ff3f04fe8d698b7035f3a0
+|/etc/sysconfig/docker-storage-setup | bf3e1056e8df0dd4fc170a89ac2358f872a17509efa70a3bc56733a488a1e4b2
+|==================
+
+Notice the sha256sum values for docker 1.12.  It assumes no modification to the default install of the files
+These are here to give you confidence that your docker storage setup will cleanly run
+
+|==================
+|/etc/sysconfig/docker | 86ed0dbf5b7c53d827c29f9de703000b720bd23cad06460aa68410c646f61a92  
+|/etc/sysconfig/docker-storage | 709dca62ac8150aa280fdb4d49d122d78a6a2f4f46ff3f04fe8d698b7035f3a0 
+|/etc/sysconfig/docker-storage-setup | bf3e1056e8df0dd4fc170a89ac2358f872a17509efa70a3bc56733a488a1e4b2
+|==================
+
+=== Check to see if SELinux is installed and enforcing
+
+Ensure you see SELinux status: enabled, Current mode: enforcing, Mode from config file: enforcing
+
+----
+sestatus
+SELinux status:                 enabled
+SELinuxfs mount:                /sys/fs/selinux
+SELinux root directory:         /etc/selinux
+Loaded policy name:             targeted
+Current mode:                   enforcing
+Mode from config file:          enforcing
+Policy MLS status:              enabled
+Policy deny_unknown status:     allowed
+Max kernel policy version:      28
+
+grep ^SELINUX= /etc/sysconfig/selinux  
+SELINUX=enforcing
+----
