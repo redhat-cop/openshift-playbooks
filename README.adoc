@@ -23,8 +23,6 @@ docker-compose up -d
 ----
 3. Launch browser and navigate to `http://localhost:4000`
 
-NOTE: This process assumes you've checked out the code to ~/src/openshift-playbooks. If you are cloning to a different location, you'll need to update `docker-compose.yml`
-
 === Quickstart Guide using RHEL (or derivatives)
 
 1. Install necessary packages.
