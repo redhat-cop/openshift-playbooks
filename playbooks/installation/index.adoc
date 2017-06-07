@@ -449,6 +449,7 @@ openshift-master-[1:3].c1-ocp.myorg.com
 openshift-master-[1:3].c1-ocp.myorg.com
 
 [nodes]
+openshift-master-[1-3].c1-ocp.myorg.com
 openshift-infranode-[1:3].c1-ocp.myorg.com
 openshift-appnode-1.c1-ocp.myorg.com.com
 openshift-appnode-2.c1-ocp.myorg.com
