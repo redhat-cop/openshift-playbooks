@@ -4,7 +4,7 @@
 
 The Operationalizing OpenShift Enterprise 3 playbook provides guidance on environment architecture concerns such as component placement and network topology and discusses related system integration issues.
 
-* link:../installation/admin_overview{outfilesuffix}[Overview of OpenShift for Administrators ( and What to Monitor)]
+* link:../installation/admin_overview{outfilesuffix}[Overview of OpenShift for Administrators (and What to Monitor)]
 * link:../installation/ldap_integration{outfilesuffix}[Integrating OpenShift with LDAP/Active Directory for Authentication]
 * link:./architecture{outfilesuffix}[Architecture]
 * link:./integration{outfilesuffix}[API Integration Guide]
