@@ -91,13 +91,14 @@ Each service in the cluster will be assigned an IP from this range.  The default
 
 Both the openshift_portal_net and the osm_cluster_network_cidr will default to the value above if not set, however if you prefer to have your inventory file describe your environment, its recommended to set them explicitly for future reference or comparison.
 
-==== Master API Port
-
-This is the port that the Master services (console, api, etc) will be listening on.
+==== Master Service Ports
 
 *Ansible Host File Variable:* `openshift_master_api_port=8443`
 
-The default value is 8443, Since we are using dedicated hosts for the masters we can set this to 443 and omit the port # from urls when connecting.
+This is the port that the Master api will be listening on. The default value is 8443. Since we are using dedicated hosts for the masters we can set this to 443 and omit the port # from urls when connecting.
+
+*Ansible Host File Variable:* `openshift_master_console_port=8443`
+This is the port that the Master console will be listening on. The default value is 8443. Like the api port, we can set this to 443 and omit the port # from urls when connecting. 
 
 ==== Ansible Inventory Update
 
@@ -110,13 +111,15 @@ openshift_deployment_type=openshift-enterprise
 openshift_release=v3.5
 
 openshift_master_api_port=443 <1>
-openshift_portal_net=172.30.0.0/16 <2>
-osm_cluster_network_cidr=10.128.0.0/14 <3>
+openshift_master_console_port=443 <2>
+openshift_portal_net=172.30.0.0/16 <3>
+osm_cluster_network_cidr=10.128.0.0/14 <4>
 ...
 ----
 <1> Master API Port
-<2> Service address space
-<3> Pod address space
+<2> Master Console Port
+<3> Service address space
+<4> Pod address space
 
 More information on Pods & Services can be found in the link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html[OpenShift Documentation]
 
@@ -166,6 +169,7 @@ deployment_type=openshift-enterprise
 openshift_release=v3.5
 
 openshift_master_api_port=443
+openshift_master_console_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
@@ -206,6 +210,7 @@ openshift_deployment_type=openshift-enterprise
 openshift_release=v3.5
 
 openshift_master_api_port=443
+openshift_master_console_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
@@ -240,6 +245,7 @@ openshift_deployment_type=openshift-enterprise
 openshift_release=v3.5
 
 openshift_master_api_port=443
+openshift_master_console_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
@@ -338,6 +344,7 @@ openshift_deployment_type=openshift-enterprise
 openshift_release=v3.5
 
 openshift_master_api_port=443
+openshift_master_console_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
@@ -513,6 +520,7 @@ openshift_deployment_type=openshift-enterprise
 openshift_release=v3.5
 
 openshift_master_api_port=443
+openshift_master_console_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
@@ -659,6 +667,7 @@ openshift_deployment_type=openshift-enterprise
 openshift_release=v3.5
 
 openshift_master_api_port=443
+openshift_master_console_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
