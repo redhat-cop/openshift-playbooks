@@ -451,7 +451,7 @@ openshift-appnode-2.c1-ocp.myorg.com
 Test ansible in an adhoc way to ensure it can get to all the nodes
 
 ----
-ansible -i /some/path/to/my/hosts/inventory/file OSEv3 -m ping
+ansible -i c1-ocp.myorg.com/hosts OSEv3 -m ping
 ----
 
 
