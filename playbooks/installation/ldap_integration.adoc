@@ -1,16 +1,80 @@
 ---
 ---
-= LDAP Integration
+= LDAP Integration for Authentication
 Jamie Whetsell <jwhetsel@redhat.com>
+Andrew Block <ablock@redhat.com>
 :toc: macro
 :toc-title:
 
 toc::[]
 
-== Configure Openshift for LDAP/AD
+The OpenShift Container Platform provides support for leveraging users and groups stored in an Lightweight Directory Access Protocol (LDAP) V3 server using simple bind authentication. 
 
-1.  [Add your configuration provider to /etc/orgins/master/master-config.yaml]
-2.  [restart openshift `systemctl restart atomic-openshift-master`]
+The official OpenShift documentation provide an overview on the process taking place to authenticate a user against an LDAP server 
+
+[quote, Configuring Authentication and User Agent, https://docs.openshift.com/container-platform/latest/install_config/configuring_authentication.html]
+_________________________________________________
+During authentication, the LDAP directory is searched for an entry that matches the provided user name. If a single unique match is found, a simple bind is attempted using the distinguished name (DN) of the entry plus the provided password.
+_________________________________________________
+
+== LDAP Users and their Access to OpenShift
+
+Once it has been determined that access to OpenShift will be governed by users defined in an LDAP server, the next step is to determine the criteria for determining a valid user. Common use cases are listed below:
+
+* A user exists either at the same level or underneath a particular location of the LDAP tree (known as a base DN)
+* A user must be a member of a particular LDAP group
+
+NOTE: The conditions above assume the user has provided valid credentials
+
+=== Example LDAP Tree Structure
+
+The organization and structure of objects in an LDAP server is critical for its interaction with OpenShift. The following is an example of an LDAP structure that will be used for the rest of the discussion:
+
+[source,ldap]
+----
++ dc=example,dc=com # domain/organization
+  + dn: ou=Users,dc=example,dc=com 
+    + dn: uid=jdoe,ou=Users,dc=example,dc=com
+      cn: jdoe
+      givenName: John Doe
+      mail: jdoe@redhat.com
+      member: uid=admins,ou=Groups,dc=example,dc=com
+      member: uid=openshift,ou=Groups,dc=example,dc=com
+      phone: 919-555-1234
+      uid: jdoe
+    + dn: uid=csmith,ou=Users,dc=example,dc=com
+      cn: csmith
+      uid: csmith
+      mail: csmith@redhat.com
+      member: uid=openshift,ou=Groups,dc=example,dc=com
+      givenName: Chris Smith
+      phone: 919-555-4321
+  + dn: ou=Groups,dc=example,dc=com
+    + dn: uid=admins,ou=Groups,dc=sample,dc=com
+      member: uid=jdoe,ou=Users,dc=example,dc=com 
+    + dn: uid=openshift,ou=Groups,dc=example,dc=com
+      member: uid=jdoe,ou=Users,dc=example,dc=com
+      member: uid=csmith,ou=Users,dc=example,dc=com
+----
+
+To primary organizational units (OU) are defined within the `example.com` domain (`ou=Users,dc=example,dc=com` and `dn: ou=Groups,dc=sample,dc=com`). This example represents a flat hierarchy where all users within the organization are contained within the _Users_ OU and all groups are contained within the _Groups_ OU. 
+
+
+== Configure OpenShift to use LDAP for User Authentication
+
+To configure OpenShift to restrict access to the platform based on users managed in an LDAP server, an Identity Provider leveraging the `LDAPPasswordIdentityProvider` must be configured.  The following information must be available to configure LDAP based authentication:
+
+1. Username and password of a user that has access to traverse the LDAP tree (if anonymous access disabled)
+2. Protocol, hostname and port of the LDAP server
+3. CA bundle of the LDAP server (if secured)
+4. Base DN location for which users will be searched
+5. Additional filtering logic, such the scope of the user query and a filter (optional)
+
+The `LDAPPasswordIdentityProvider` provider can be configured either by editing the OpenShift master configuration file located at `/etc/origin/master/master-config.yaml` or through the Ansible based installer. 
+
+=== The LDAP Identity Provider
+
+Based on the previous LDAP tree structure, to allow any authenticated user from the set of users defined in the `ou=Users,dc=example,dc=com` OU, specify the following Identity Provider configuration:
 
 [source,yaml]
 ----
@@ -20,259 +84,166 @@ toc::[]
     login: true 
     provider:
       apiVersion: v1
-      kind: LDAPPasswordIdentityProvider
+      kind: LDAPPasswordIdentityProvider <1>
       attributes:
         id: 
-        - dn # the unique id of the user, this is being mapped to the dn field in ldap
+        - dn <2>
         email: 
-        - mail # users email that is being mapped
+        - mail <3>
         name: 
-        - cn  # This is the display name it is mapped to the cn(common name field in LDAP)
+        - cn  <4>
         preferredUsername: 
-        - uid # this is the field that is the username when logging into open shift
-      #  This should be provided by the Customer
-      #  Generally the LDAP will have an anonymous bind for authentication purposes
-      bindDN: "" # If the ldap has anonymous bind turned off, you may need to add a username and password to search for users
-      bindPassword: "" 
-      # This should be provided by the client
-      ca: my-ldap-ca-bundle.crt # This should be provided to you
-      insecure: false # by default the system will try to use TLS for authentication. setting to true will not use tls
-      # LDAP by default runs on port 389 for insecure and will communicate via TLS over 389
-      # if you are using SSL, then you will need to use ldaps://
-      url: "ldap://ldap.example.com/ou=Users,dc=example,dc=com?uid" # by default this is the ldap URI, it contains the ip address, search base (ou=Users,example,dc=com) and the user field you are using.  in this case uid
+        - uid <5>
+      bindDN: "" <6>
+      bindPassword: "" <7>
+      ca: my-ldap-ca-bundle.crt <8>
+      insecure: false <9>
+      url: "ldaps://ldap.example.com/ou=Users,dc=example,dc=com?uid" <10>
 ----
-      
+<1> The name of the LDAP Identity Provider
+<2> The LDAP field of the user to use as the unique identifier within OpenShift
+<3> The LDAP field of the user to use as their email address
+<4> The LDAP field of the user to use as their friendly name
+<5> The LDAP field of the user to use as their user name when logging into OpenShift
+<6> The distinguished name (DN) of the user used to traverse the LDAP tree and validate users
+<7> The Password of the user used to traverse the LDAP tree to validate users. This value may also be provided in an link:https://docs.openshift.com/container-platform/latest/install_config/master_node_configuration.html#master-node-configuration-passwords-and-other-data[environment variable, external file, or encrypted file].
+<8> If communicating securely and the certificate is not in the system trust store, the location of the CA bundle
+<9> Whether to communicates securely with the LDAP server (true by default)
+<10> RFC 2255 based URL specifying the host and search parameters. 
 
+NOTE: If anonymous bind access is enabled, the `bindDN` and `bindPassword` options can be set as `""` 
 
-== What is LDAP
-LDAP is a database organized in a Tree Structure.  LDAP is made up of standardaized objects with inheritance to include additional fields to that object.
+In the example above, the _url_ parameter specifies that the query connect securely to the LDAP server on 636 (389 if not connecting securely). The baseDN which indicates where all searches should start from is specified after the `/`. _uid_ references the LDAP attribute that should be used to match username provided by the user attempting to log in. 
 
-Here is an example of what an LDAP directory tree may look like.
-[source,ldap]
-----
-+ dc=example,dc=com # domain/organization
-  + dn: ou=Users,dc=example,dc=com  # dn (distinguished name, unique key for each entry in LDAP, ou is organization unit)
-    + dn: uid=jamie,ou=Users,dc=scires,dc=com (User entry dn)
-      o: posixAccount
-      cn: jamie whetsell
-      uid: jamie
-      mail: jwhetsel@redhat.com
-      surName: Whetsell
-      givenName: jamie
-      phone: 843-867-5309
-      ...  # based on what type of object they are using for the account
-  + dn: ou=Groups,dc=sample,dc=com
-    + dn: uid=admins,ou=Groups,dc=sample,dc=com
-      member: uid=jamie,ou=Users,dc=example,dc=com  # This is a pointer to the dn of a user.  This says the user is in the admin groups
-      member: uid=someotheruser,ou=Users,dc=example,dc=com
-    + dn: uid=jamie,ou=Users,dc=example,dc=com
-      member: uid=jamie,ou=Users,dc=example,dc=com # users can be members of multiple groups
-----
-      
-      
-== Useful LDAP Queries
+Another option is to add a filter to the query in which to further limit the users that are allowed to authenticate to OpenShift. To limit only user who are members of the _openshift_ group, the `(member=uid=admins,ou=Groups,dc=sample,dc=com)` can be applied which results in a _url_ represented as `url: "ldaps://ldap.example.com/ou=Users,dc=example,dc=com?uid?(member=uid=admins,ou=Groups,dc=sample,dc=com)`.
 
-Active Directory
-[source,ldap]
+=== Manual Configuration 
+
+To configure the `LDAPPasswordIdentityProvider` within OpenShift, modify the OpenShift master configuration file located at `/etc/orgin/master/master-config.yaml`
+
+Locate the _identityProviders_ section of the OpenShift master configuration located at `/etc/origin/master/master-config.yaml` and configure the section with the value provided in the previous section.
+
+Once complete, restart the `atomic-openshift-master-api` (or `atomic-openshift-master` if running a single master) service to apply and enable the changes
+
+[source,bash]
 ----
-(&(objectClass=user)(sAMAccountName=yourUserName)
-  (memberof=CN=YourGroup,OU=Users,DC=YourDomain,DC=com))
-----
-  
-LDAP
-[source,ldap]
-----
-(&(objectClass=inetOrgPerson)(cn=uid)
-  (memberof=CN=YourGroup,OU=Users,DC=YourDomain,DC=com))
+systemctl restart atomic-openshift-master-api
 ----
 
-TIP: The member of overlay needs to be added to LDAP server for the member of query to work.
+IMPORTANT: These configurations must be applied on each master instance
 
-ApacheDS pre 2.1
-----
-[source,ldap]
-(&(objectclass=groupOfNames)(cn=openshift)(member=cn=jamie,ou=People,dc=examplex,dc=com))
-----
+=== OpenShift Ansible Configuration
 
-Example URL for master-config.yaml
-[source,ldap]
-----
-url: "ldap://10.3.9.248/ou=People,dc=opentlcx,dc=com?uid?sub?(&(objectClass=inetOrgPerson)(memberOf=cn=openshift,ou=Group,dc=opentlcx,dc=com))"
-----
+The Ansible based OpenShift installer contains functionality to automate the configuration of the `LDAPPasswordIdentityProvider`. Several link:https://docs.openshift.com/container-platform/latest/install_config/install/advanced_install.html#configuring-cluster-variables[cluster variables] of the Ansible link:https://docs.openshift.com/container-platform/latest/install_config/install/advanced_install.html#configuring-ansible[inventory] can be specified to tune the configuration of identity providers. For LDAP, these include:
 
-Example Ansible.cfg
+* `openshift_master_identity_providers` - An array of identity providers to configure within the OpenShift master configuration file
+* `openshift_master_ldap_ca` - Text value of the LDAP CA
+* `openshift_master_ldap_ca_file` - Location of the LDAP CA file on the Ansible control host. This file will be copied to the OpenShift master configuration directory (`/etc/origin/master`)
+
+The following can be added to the `[OSEv3:vars]` section of the OpenShift inventory file to configure the `LDAPPasswordIdentityProvider` for the LDAP structure referenced above. 
+
 [source,yaml]
 ----
-openshift_master_identity_providers=[{'name': 'my_ldap_provider', 'challenge': 'true', 'login': 'true', 'kind': 'LDAPPasswordIdentityProvider', 'attributes': {'id': ['dn'], 'email': ['mail'], 'name': ['cn'], 'p\
-referredUsername': ['uid']}, 'bindDN': '', 'bindPassword': '', 'ca': '/path/to/my-ldap-cacert.crt', 'insecure': 'false', 'url': 'ldap://ldap.mycompany.com:389/ou=users,dc=mycompany,dc=com?uid'}]
+[OSEv3:vars]
+...
+openshift_master_identity_providers=[{'name': 'my_ldap_provider', 'challenge': 'true', 'login': 'true', 'kind': 'LDAPPasswordIdentityProvider', 'attributes': {'id': ['dn'], 'email': ['mail'], 'name': ['cn'], 'preferredUsername': ['uid']}, 'bindDN': '', 'bindPassword': '', 'ca': 'my-ldap-ca-bundle.crt', 'insecure': 'false', 'url': 'ldap://ldap.example.com:389/uid=users,dc=example,dc=com?uid'}]
+openshift_master_ldap_ca_file=/home/myuser/my-ldap-ca-bundle.crt
+...
 ----
 
-== Adding a filter to a specific group
+Run the `ansible-playbook` command referencing the inventory file and playbook which will be used to apply the changes to the cluster.
 
-More than likely the logins to Openshift will be limited by a group.  This may include limiting the capabilities to certain groups.  We will discuss Group Syncing Later.
-
-We will assume we are connection to a standard ldap.  The first step is to create a query to limit the user to a group, so from above we have:
-
-[source,conf]
+[source,yaml]
 ----
-(&(objectClass=posixAccount)(memberof=CN=openshift,OU=groups,DC=example,DC=com))
+ansible-playbook -i <inventory-file> <playbook>
 ----
 
-so in english this looks like:
 
-Where object class equals posixAccount and the user is a member of the openshift group.
+== Testing LDAP queries
 
-== Testing your LDAP queries
+As part of the configuring OpenShift to make use of an LDAP server, it may be helpful to manually connect and perform queries against the server in order to validate the configurations. 
 
-* You need to install the ldapsearch utils
+There are several tools available that allow for browsing an LDAP server:
+
+* ldapsearch - Linux based command line query tool
+* link:http://jxplorer.org/[JXplorer] - Cross platform LDAP browser and editor
+
+=== ldapsearch
+
+To make use of the _ldapsearch_ tool, first ensure that it is installed on the local machine:
 
 [source,bash]
 ----
-yum install openldap-clients -y
+yum install -y openldap-clients -y
 ----
+
+==== Common Use Cases
+
+Common use cases for using the _ldapsearch_ tool include searching for users, groups and members within a group. The following are examples of each of these queries:
 
 * Search for a user
+
 [source,bash]
 ----
-ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -xZ -s base -b cn=openshift,ou=Users,dc=opentlc07a7,dc=com
+ldapsearch -h ldap.example.com -p 636 -x -s base -b uid=jdoe,ou=Users,dc=example,dc=com
 ----
 
 
 * Search for groups
+
 [source,bash]
 ----
-ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -x -sZ sub -b "dc=opentlc07a7,dc=com" "objectclass=groupOfNames"
+ldapsearch -h ldap.example.com -p 636 -x -s sub -b "ou=Groups,dc=example,dc=com" "objectClass: groupOfUniqueNames"
 ----
 
 
 * Get members of a group
-[source,bash]
-----
-ldapsearch -D "uid=admin,ou=system" -h 172.17.84.3 -p 10389 -w secret -xZ -s base -b cn=openshift,ou=Groups,dc=opentlc07a7,dc=com
-----
-
-=== Issues you May See with LDAP Search
-
-_TLS: can't accept: TLS error -12195:Peer does not recognize and trust the CA that issued your certificate.._
 
 [source,bash]
 ----
-Modify your /etc/openldap/ldap.conf
-TLS_CACERTDIR   /etc/openldap/certs # change to your cert dir
-TLS_CACERT      /etc/openldap/certs/ca.cert.pem # use the ca issuer cert
+ldapsearch -h ldap.example.com -p 636 -x -s base -b "uid=openshift,ou=Groups,dc=example,dc=com" "member"
 ----
 
-=== Issues with Openshift
+In each of the above queries, the following signify the parameters being specified:
 
-_Problem_
+* -h - The LDAP Host
+* -p - The LDAP port
+* -x - Perform a simple bind
+* -Z - Connect via TLS
+* -b - Base DN where all queries should start from
+* -s - Search scope of the query
+
+
+==== Common Issues
+
+When using _ldapsearch_, issues can arise that affect the operation and expected results.
+
+
+* _TLS: can't accept: TLS error -12195:Peer does not recognize and trust the CA that issued your certificate.._
+
+The CA to a secure LDAP server is not currently trusted by _ldapsearch_. Modify the `/etc/openldap/ldap.conf` file to include either a directory containing the certificates or a certificate bundle file
+
 [source,bash]
 ----
-atomic-openshift-master[8827]: F1207 12:55:23.250834 8827
-auth.go:114] error loading cert pool from ca file
-/etc/pki/tls/certs/ca-bundle.crt: error reading
-/etc/pki/tls/certs/ca-bundle.crt: x509: negative serial number
+TLS_CACERTDIR   /etc/openldap/certs <1>
+TLS_CACERT      /etc/openldap/certs/ca.cert.pem <2>
 ----
+<1> Directory containing certificates
+<2> Location of the CA bundle
 
-_Answer_
-[source,bash]
-----
-Your CA cert from open ldap was not generated correctly.  It appears if you use the default CA for CentOS/Fedora  is an issue.  Create your own CA if possible.
-----
+== Next Steps
 
+This guide focused on authenticating users into OpenShift against an LDAP server. To synchronize groups defined within the LDAP server into OpenShift, please refer to the link:../operationalizing/ldap_group_sync{outfilesuffix}[LDAP Group Synchronization guide].
 
-== Group Syncing with LDAP
+== Resources
 
-Openshift allows for automatic syncing of groups from LDAP Server.  Generally you will not want to sync the entire LDAP.  So you must specify a user defined group.  The file below will sync two groups inside of openshift.  
+The following links contain references to helpful resources when integrating an LDAP server with OpenShift. 
 
-1. [osadmin which contains the users that are determined to be openshift administrators]
-2. [openshift: which contains the users that are determined to be the users allowed to login into open.  **The login configuration is handled through your master-config.yaml]
+link:https://docs.openshift.com/container-platform/latest/install_config/configuring_authentication.html#LDAPPasswordIdentityProvider[OpenShift LDAP Authentication Reference]
 
-[source,yaml]
-----
----
-kind: LDAPSyncConfig
-apiVersion: v1
-bindDN: "cn=Manager,dc=opentlcx,dc=com"
-bindPassword: "password"
-insecure: true
-url: ldap://172.17.84.23/
-groupUIDNameMapping:
-  "cn=osadmin,ou=Group,dc=opentlcx,dc=com": Administrators
-  "cn=openshift,ou=Group,dc=opentlcx,dc=com": Users
-rfc2307:
-    groupsQuery:
-        baseDN: "ou=group,dc=opentlcx,dc=com"
-        scope: sub
-        derefAliases: never
-        filter: (objectclass=groupOfNames)
-    groupUIDAttribute: dn
-    groupNameAttributes: [ cn ]
-    groupMembershipAttributes: [ member ]
-    usersQuery:
-        baseDN: "ou=People,dc=opentlcx,dc=com"
-        scope: sub
-        derefAliases: never
-        filter: (objectclass=inetOrgPerson)
-    userUIDAttribute: dn
-    userNameAttributes: [ cn ]
-----
+link:https://docs.openshift.com/container-platform/latest/install_config/master_node_configuration.html#master-node-configuration-passwords-and-other-data[Securing Bind Passwords in OpenShift]
 
-_To Sync the LDAP server with openshift run the command above_
-[source,bash]
-----
-oadm groups sync --sync-config=config.yaml --confirm
-----
+link:http://www.ldapexplorer.com/en/manual/109010000-ldap-filter-syntax.htm[LDAP Filter Syntax]
 
-NOTE: You can remove the --confirm for a dry run
-
-NOTE: The sync will be automatic after it has setup
-
-_Show the Openshift groups_
-[source,bash]
-----
-oc describe groups
-----
-    
-
-_Add Role to a synced Group_
-
-This will make the administrators group in openshift which is mapped above to the osadmin group in ldap a cluster-admin.
-[source,bash]
-----
-oadm policy add-role-to-group cluster-admin Administrators
-----
-
-From the example above make everyone in the LDAP group openshift (In Openshift Users).  basic-users
-[source,bash]
-----
-oadm policy add-role-to-group basic-user Users
-----
-
-To see the policy bindings
-[source,bash]
-----
-oc describe policyBindings
-----
-
-
-* Errors *
-    
-_Here the error: error: validation of LDAP sync config failed: groupsQuery.filter: invalid value '', Details: invalid query filter: LDAP Result Code 201 "": ldap: filter does not start with an '('_
-    
-[source,bash]
-----
-    This is more than likely because you cannot connect to your ldap server.  
-----
-
-== References
-https://docs.openshift.com/container-platform/latest/install_config/configuring_authentication.html#LDAPPasswordIdentityProvider[OpenShift LDAP Authentication Reference]
-
-https://docs.openshift.com/container-platform/latest/install_config/syncing_groups_with_ldap.html[Syncing LDAP Groups]
-
-https://access.redhat.com/documentation/en-US/Red_Hat_Directory_Server/10/html/Administration_Guide/Examples-of-common-ldapsearches.html[LDAP Query Examples]
-
-http://www.openldap.org/faq/data/cache/185.html[Configuring OpenLDAP TLS]
-
-http://www.ldapexplorer.com/en/manual/109010000-ldap-filter-syntax.htm[LDAP Filter Syntax]
-
+link:https://access.redhat.com/documentation/en-US/Red_Hat_Directory_Server/10/html/Administration_Guide/Examples-of-common-ldapsearches.html[LDAP Query Examples]
 
