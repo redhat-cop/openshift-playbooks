@@ -10,25 +10,18 @@ This site is written in asciidoc format and is built using the link:https://gith
 
 === Quickstart Guide using Docker
 
-1. Setup link:https://github.com/rhtconsulting/rhc-ose/tree/openshift-enterprise-3/docker/jekyll-asciidoc-docker[Jekyll Asciidoc Docker]
-
-2. Clone git repositories
+1. Clone git repositories
 +
 ----
-git clone https://github.com/rhtconsulting/rhc-ose.git
-git clone https://github.com/rhtconsulting/openshift-playbooks.git
+git clone https://github.com/redhat-cop/openshift-playbooks.git
 ----
-3. Create and run Jekyll Asciidoc Docker container
+2. Start Site Builder Container
 +
 ----
-/path/to/rhc-ose/docker/jekyll-asciidoc/run.sh -d=/path/to/openshift-playbooks
+cd openshift-playbooks
+docker-compose up -d
 ----
-4. Launch browser and find site using default docker-machine IP address, for example:
-+
-----
-http://<docker_ip>:4000/
-----
-
+3. Launch browser and navigate to `http://localhost:4000`
 
 === Quickstart Guide using RHEL (or derivatives)
 
@@ -48,8 +41,8 @@ NOTE: For `gnome-terminal` users, you'll need to do this link:https://rvm.io/int
 2. Install and use Ruby 2.0
 +
 ----
-rvm install 2.0.0
-rvm use 2.0.0
+rvm install 2.3.0
+rvm use 2.3.0
 ----
 3. Install and set up RubyGems
 +

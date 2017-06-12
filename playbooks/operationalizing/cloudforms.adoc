@@ -223,6 +223,36 @@ Under *Endpoints*, select the *Hawkular* tab and enter the hawkular-metrics host
 
 Click *Add* to add the container provider.
 
+==== CloudForms 4.2:
+
+In the CloudForms web console, hover over *Compute* in the menu on the left, then *Containers*, then select *Providers*.
+
+Select the *Configuration* button and then *Add a New Containers Provider*.
+
+Enter a name for the provider and select *OpenShift Enterprise* in the type (ignore the zone, this will populate on its own). 
+
+Under *Endpoints*, in the *Default* tab, enter the address of the OpenShift Master API  into the *Hostname* field and enter the token retrieved earlier into the *Token* and *Confirm Token* fields. Click *Validate* to confirm connectivity.
+
+Under *Endpoints*, select the *Hawkular* tab and enter the hawkular-metrics hostname into the *Hostname* field.
+
+NOTE: Adding the hawkular-metrics hostname in this field eliminates the need for any special routing to connect CloudForms to Hawkular Metrics.
+
+Click *Add* to add the container provider.
+
+In the upper-right hand corner, click on the dropdown next to your *username* and then click on the *Configuration* menu item.  
+
+In the *Settings* tree, click on the *CFME Region*, then click on *Zones*, the OCP *Zone*, and finally pick the *Server*.
+
+Under the *Server* tab, in the *Server Control* section, under *Server Roles*, turn on the checkboxes *Capacity & Utilization Coordinator*, *Capacity & Utilization Data Collector*, *Capacity & Utilization Data Processor*.   Capacity and Utilization metrics will begin to flow into CFME.
+
+WARNING: Capacity and Utilization metrics will take approximately 24 hours to process data and make the default report generation and visualizations available.  For chargeback reports, it takes approximately a total of 48 hours for the report data to become available.  Additionally, chargeback data is not available for the current day (only prior day, 24 hour lag) because it has not been analyzed yet.
+
+You can verify metrics are flowing to CloudForms by *hovering over* from the left menu *Compute*, then hover over *Containers*, and finally click on *Providers*.
+
+Click *OpenShift Container Platform icon*.
+
+In the *Status* table, verify that *Last metrics collection* has a recent timestamp and that it continues to be updated semi-frequently.
+
 === Verify data collection
 
 After a minute or two, click the *Overview* tab to view the data collected
@@ -256,6 +286,121 @@ The following steps occurs during a SmartState container image analysis:
 5. CloudForms will communicate via the OpenShift API via the pod proxy to the WebDAV server to retrieve the results of the inspection 
 
 
+=== OpenSCAP Default Condition
+In general, the security policy is a crucial part of your overall compliance solution.  There are several security specifications and some party provide SCAP content. Red Hat
+also provide standard SCAP Security Guide that can be used with OpenSCAP according to platform type. This security guide contains many checking list such as Red Hat Errata
+security advisories. In addition to it, CloudForms Control allows you to add a condition statement with link:https://www.open-scap.org[OpenSCAP].  By default, there is one condition for container image. It says `If OpenSCAP rule result has high severity, it fails to deploy any containers using the image.`
+
+image::images/cloudforms-openscap-condition.png[title=CloudForms OpenSCAP Default Condition]
+
+.The path of CloudForms OpenSCAP Default Condition
+Controle => Conditions => Container Image Conditions
+
+.Condition Expression
+--
+FIND Container Image.Openscap Rule Results : Result = "fail" CHECK ANY Severity = "High" 
+--
+
+== Chargeback for OpenShift Container Platform
+Red Hat CloudForms provides Chargeback feature allows an administrator to calculate monetary projects/containers charges. The administrator creates Chargeback rate based on mainly Compute or Storage.  In order to gather data, it takes a couple of hours hence, it does not show any record during the time. Refer official document for link:https://access.redhat.com/documentation/en-us/red_hat_cloudforms/4.2/html-single/monitoring_alerts_and_reporting/#sect_chargeback[Chargeback]
 
 
+=== Create Chargeback Rate
+In the CloudForms user interface, select *Cloud Intel* => *Chargeback* =>  *Rates* => *Compute*. Click the *Configuration* button and then  *Add a new Chargeback Rate*.
+Give a name to *Description* and choose *Currencies* then, click *Add*.
+
+
+image::images/Chargeback_Rate.png[title=Sample CloudForms Chargeback Rate]
+
+
+== Report
+Red Hat CloudForms provides report tool. With this feature and Chargeback, an administrator can get monetary charges grouped by project, container and so on.
+
+=== Create Custom Report
+In the CloudForms user interface:
+
+1) select *Cloud Intel* => *Report* =>  *Reports*.  
+
+2) Click the *Configuration* button and then  *Add a new Report*.
+
+image::images/report-chargeback-create-1.png[title=Create CloudForms Report for Chargeback 1]
+
+[cols="1,1,2", options=header"]
+.Columns Tab
+|===
+|Label
+|Value
+|Memo
+
+
+|Menu Name
+|Dev OSE Chargeback - Inventory Team 
+|This name will be used for CF report menu
+
+
+|Title
+|Inventory Team OpenShift Cost
+|This name will be used for *Saved Reports menu*
+
+|*Base the report on
+|Chargeback Container Images
+|
+
+|Available Fields
+|
+- Cpu Cores Used Cost
+- Memory Used Cost
+- Newtork I/O Used Cost
+- Total Cost
+|===
+
+3) Click *Filter Tab* 
+
+image::images/report-chargeback-create-2.png[title=Create CloudForms Report for Chargeback 2]
+
+[cols="1,1,2", options=header"]
+.Filter Tab
+|===
+|Label
+|Value
+|Memo
+
+|Show Costs by
+|Container Image
+|
+
+|Provider
+|Dev OpenShift
+|This is provider name. **Should be changed according to your environment**
+
+
+|Container Image
+|All Container Images
+|
+
+|Group by 
+|Project
+|
+
+|===
+
+
+
+3) Click *Save*.
+
+
+=== Generating Report
+1) Go to *My Company(All EVM Groups) => Custom*
+Now, you can see a new custom report `Dev OSE Chargeback Inventory Team`. 
+
+2) Click the custom report.
+
+3) On the report, click *Queue* button.
+
+
+image::images/report-chargeback-queue.png[title=CloudForms Custom Report for Chargeback]
+
+4) Click the complete saved report.
+
+image::images/report-chargeback-result.png[title=CloudForms Result Report for Chargeback]
 

@@ -97,9 +97,9 @@ backend hawkular-metrics
 
 To provide the greatest level of flexibility, SSL can be configured in several places depending on the architecture of the environment. SSL termination for the API can occur at eiter the LTM or OpenShift level. For the metrics component, SSL termination can either occur at the LTM layer, Hawkular layer or at the HAProxy layer with the help of SSL reencryption support. The following links provide examples of how each type are configured:
 
-* link:https://docs.openshift.com/enterprise/3.1/install_config/cluster_metrics.html#metrics-deployer-using-secrets[Metrics Security Configuration]
+* link:https://docs.openshift.com/container-platform/latest/install_config/cluster_metrics.html#metrics-using-secrets[Metrics Secrets Configuration]
 * link:https://docs.openshift.com/enterprise/latest/install_config/certificate_customization.html[Custom OpenShift certificates]
-* link:https://docs.openshift.com/enterprise/3.1/architecture/core_concepts/routes.html#secured-routes[OpenShift router reencryption]
+* link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/routes.html#secured-routes[OpenShift router reencryption]
 
 
 === OpenShift Configuration

@@ -1,6 +1,35 @@
 ---
 ---
-= OSE 3 TroubleShooting
+
+= OCP Troubleshooting
 
 * link:troubleshooting_guide{outfilesuffix}[Troubleshooting Guide]
+
+== Official OCP Troubleshooting docs
+
+* link:https://docs.openshift.com/container-platform/latest/admin_guide/sdn_troubleshooting.html[Troubleshooting OpenShift SDN]
+* link:https://docs.openshift.com/container-platform/latest/admin_guide/diagnostics_tool.html[Diagnostic Tool]
+
+== Red Hat CSP Solutions
+
+* link:https://access.redhat.com/solutions/2068843[How to verify OpenShift Container Platform has been deployed successfully]
+* link:https://access.redhat.com/solutions/1599603[Common issues on OpenShift Container Platform 3]
+* link:https://access.redhat.com/solutions/2216951[Configure log levels for OpenShift Container Platform]
+* link:https://access.redhat.com/solutions/1542293[Troubleshooting OpenShift Container Platform: Basics]
+* link:https://access.redhat.com/solutions/2046063[Troubleshooting OpenShift Container Platform: Ansible Installer]
+* link:https://access.redhat.com/solutions/2529411[Troubleshooting OpenShift Container Platform: DNS]
+* link:https://access.redhat.com/solutions/1616953[Troubleshooting OpenShift Container Platform: Integrated Container Registry]
+* link:https://access.redhat.com/solutions/2354291[Troubleshooting OpenShift Container Platform: Aggregating Container Logging]
+* link:https://access.redhat.com/articles/2448341[Troubleshooting OpenShift Container Platform: Cluster Metrics]
+
+== OCP Release Notes
+
+* link:https://docs.openshift.com/container-platform/3.4/release_notes/ocp_3_4_release_notes.html#ocp-34-known-issues[OCP 3.4 Known Issues]
+* link:https://docs.openshift.com/container-platform/3.3/release_notes/ocp_3_3_release_notes.html#ocp-33-known-issues[OCP 3.3 Known Issues]
+* link:https://docs.openshift.com/enterprise/3.2/release_notes/ose_3_2_release_notes.html#ose-32-known-issues[OCP 3.2 Known Issues]
+* link:https://docs.openshift.com/enterprise/3.1/release_notes/ose_3_1_release_notes.html#ose-31-known-issues[OCP 3.1 Known Issues]
+* link:https://docs.openshift.com/enterprise/3.0/whats_new/ose_3_0_release_notes.html#known-issues[OCP 3.0 Known Issues]
+
+== Other Known Issues
+
 * link:known_bugs{outfilesuffix}[Known Bugs]
