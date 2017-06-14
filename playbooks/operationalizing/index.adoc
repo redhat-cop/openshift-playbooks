@@ -16,3 +16,4 @@ The Operationalizing OpenShift Enterprise 3 playbook provides guidance on enviro
 * link:./ingress{outfilesuffix}[Using Ingress to Expose Services]
 * link:./secure-forward-splunk{outfilesuffix}[Log Forwarding to Splunk Using Fluentd Secure Forward]
 * link:https://access.redhat.com/articles/2750891[Container Image Signing Integration Guide]
+* link:./vault_integration{outfilesuffix}[Vault Integration with OpenShift]
