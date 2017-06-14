@@ -17,3 +17,4 @@ The Operationalizing OpenShift Enterprise 3 playbook provides guidance on enviro
 * link:./secure-forward-splunk{outfilesuffix}[Log Forwarding to Splunk Using Fluentd Secure Forward]
 * link:https://access.redhat.com/articles/2750891[Container Image Signing Integration Guide]
 * link:./monitoring_guide{outfilesuffix}[Developing a Monitoring Strategy for OpenShift]
+* link:./vault_integration{outfilesuffix}[Vault Integration with OpenShift]
