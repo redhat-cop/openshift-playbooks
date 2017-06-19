@@ -122,9 +122,9 @@ More information on Pods & Services can be found in the link:https://docs.opensh
 
 === DNS
 
-All of the hosts in the cluster need to be resolveable via DNS.  Additionally if using a control node to serve as the ansible installer it too should be able to resolve all hosts in your cluster. 
+All of the hosts in the cluster need to be resolveable via DNS.  Additionally if using a control node to serve as the ansible installer it too should be able to resolve all hosts in your cluster.
 
-In an HA cluster there will also be a DNS name for the Load Balanced URL that points to the 3 master servers for access to the API, CLI and Console services.  This value should also resolve, and will be placed in the ansible Hosts file for the variables. 
+In an HA cluster there will also be a DNS name for the Load Balanced URL that points to the 3 master servers for access to the API, CLI and Console services.  This value should also resolve, and will be placed in the ansible Hosts file for the variables.
 
 Public Master URL
 
@@ -482,18 +482,30 @@ systemctl start docker-distribution
 Now that we have a registry up and running, we should confirm that we can reach Red Hat's registry and our new standalone registry.
 
 ----
-$ curl registry.access.redhat.com
-HTTP/1.1 200 OK
-Cache-Control: no-cache
-Date: Mon, 10 Apr 2017 15:18:09 GMT
-Content-Type: text/plain; charset=utf-8
+$ curl -IL registry.access.redhat.com
+HTTP/1.0 302 Found
+Location: https://access.redhat.com/search/#/container-images
+Server: BigIP
+Connection: close
+Content-Length: 0
 
-$ curl registry.c1-ocp.myorg.com:5000
+HTTP/2 200
+...
+
+$ curl -I registry.c1-ocp.myorg.com:5000
 HTTP/1.1 200 OK
 Cache-Control: no-cache
 Date: Mon, 10 Apr 2017 15:18:09 GMT
 Content-Type: text/plain; charset=utf-8
 ----
+
+We also need to set our internal registry up as an insecure registry. Add the following line to `/etc/sysconfig/docker` on the box from which you will sync images.
+
+----
+INSECURE_REGISTRY='--insecure-registry registry.c1-ocp.myorg.com:5000'
+----
+
+And then restart docker with `systemctl restart docker`.
 
 Now we're ready to sync images. To do this, we're going to run link:https://github.com/redhat-cop/openshift-toolkit/blob/master/disconnected_registry/docker-registry-sync.py[this script].
 
@@ -725,7 +737,7 @@ ansible -i c1-ocp.myorg.com/hosts OSEv3 -a 'subscription-manager attach --pool 8
 ansible -i c1-ocp.myorg.com/hosts OSEv3 -a 'subscription-manager repos --disable "*" --enable rhel-7-server-rpms --enable rhel-7-server-extras-rpms --enable rhel-7-server-ose-3.5-rpms --enable rhel-7-fast-datapath-rpms'
 ----
 
-INFO: The `rhel-7-fast-datapath-rpms` channel is only required for OpenShift Container Platform version 3.5 and later. For versions 3.5 and earlier, this channel should be omitted.
+NOTE: The `rhel-7-fast-datapath-rpms` channel is only required for OpenShift Container Platform version 3.5 and later. For versions 3.4 and earlier, this channel should be omitted.
 
 === Docker Storage Setup
 

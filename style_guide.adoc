@@ -83,10 +83,10 @@ link:/playbooks/installation/installation{outfilesuffix}[click here!]
 The link:/playbooks/installation/load_balancing{outfilesuffix}[External Load Balancers Guide] provides an introduction to the strategies that can be employed within OpenShift
 ----
 +
-3. Use an INFO callout when there's no natural flow.
+3. Use a NOTE callout when there's no natural flow.
 +
 ----
-INFO: The link:/playbooks/installation/load_balancing{outfilesuffix}[External Load Balancers Guide] provides an introduction to the strategies that can be employed within OpenShift
+NOTE: The link:/playbooks/installation/load_balancing{outfilesuffix}[External Load Balancers Guide] provides an introduction to the strategies that can be employed within OpenShift
 ----
 
 === Include a "What's Next?" section to encourage further reading
