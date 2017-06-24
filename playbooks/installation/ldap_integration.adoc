@@ -10,7 +10,7 @@ toc::[]
 
 The OpenShift Container Platform provides support for leveraging users and groups stored in an Lightweight Directory Access Protocol (LDAP) V3 server using simple bind authentication. 
 
-The official OpenShift documentation provide an overview on the process taking place to authenticate a user against an LDAP server 
+The official OpenShift documentation provides a high level overview for authenticating a user against an LDAP server:
 
 [quote, Configuring Authentication and User Agent, https://docs.openshift.com/container-platform/latest/install_config/configuring_authentication.html]
 _________________________________________________
@@ -33,48 +33,48 @@ The organization and structure of objects in an LDAP server is critical for its 
 [source,ldap]
 ----
 + dc=example,dc=com # domain/organization
-  + dn: ou=Users,dc=example,dc=com 
-    + dn: uid=jdoe,ou=Users,dc=example,dc=com
+  + dn: ou=Users,dc=myorg,dc=com 
+    + dn: uid=jdoe,ou=Users,dc=myorg,dc=com
       cn: jdoe
       givenName: John Doe
-      mail: jdoe@redhat.com
-      member: uid=admins,ou=Groups,dc=example,dc=com
-      member: uid=openshift,ou=Groups,dc=example,dc=com
+      mail: jdoe@myorg.com
+      member: uid=admins,ou=Groups,dc=myorg,dc=com
+      member: uid=openshift,ou=Groups,dc=myorg,dc=com
       phone: 919-555-1234
       uid: jdoe
-    + dn: uid=csmith,ou=Users,dc=example,dc=com
+    + dn: uid=csmith,ou=Users,dc=myorg,dc=com
       cn: csmith
       uid: csmith
       mail: csmith@redhat.com
-      member: uid=openshift,ou=Groups,dc=example,dc=com
+      member: uid=openshift,ou=Groups,dc=myorg,dc=com
       givenName: Chris Smith
       phone: 919-555-4321
-  + dn: ou=Groups,dc=example,dc=com
-    + dn: uid=admins,ou=Groups,dc=sample,dc=com
-      member: uid=jdoe,ou=Users,dc=example,dc=com 
-    + dn: uid=openshift,ou=Groups,dc=example,dc=com
-      member: uid=jdoe,ou=Users,dc=example,dc=com
-      member: uid=csmith,ou=Users,dc=example,dc=com
+  + dn: ou=Groups,dc=myorg,dc=com
+    + dn: uid=admins,ou=Groups,dc=myorg,dc=com
+      member: uid=jdoe,ou=Users,dc=myorg,dc=com 
+    + dn: uid=openshift,ou=Groups,dc=myorg,dc=com
+      member: uid=jdoe,ou=Users,dc=myorg,dc=com
+      member: uid=csmith,ou=Users,dc=myorg,dc=com
 ----
 
-To primary organizational units (OU) are defined within the `example.com` domain (`ou=Users,dc=example,dc=com` and `dn: ou=Groups,dc=sample,dc=com`). This example represents a flat hierarchy where all users within the organization are contained within the _Users_ OU and all groups are contained within the _Groups_ OU. 
+Two primary organizational units (OU) are defined within the `myorg.com` domain (`ou=Users,dc=myorg,dc=com` and `dn: ou=Groups,dc=myorg,dc=com`). This example represents a flat hierarchy where all users within the organization are contained within the _Users_ OU and all groups are contained within the _Groups_ OU. 
 
 
 == Configure OpenShift to use LDAP for User Authentication
 
 To configure OpenShift to restrict access to the platform based on users managed in an LDAP server, an Identity Provider leveraging the `LDAPPasswordIdentityProvider` must be configured.  The following information must be available to configure LDAP based authentication:
 
-1. Username and password of a user that has access to traverse the LDAP tree (if anonymous access disabled)
+1. Username (referred to Bind DN) and password (referred to Bind Password) of a user that has access to traverse the LDAP tree (if anonymous access disabled)
 2. Protocol, hostname and port of the LDAP server
-3. CA bundle of the LDAP server (if secured)
+3. CA bundle of the LDAP server (if secured. It is recommended that communication occur over a secure connection)
 4. Base DN location for which users will be searched
-5. Additional filtering logic, such the scope of the user query and a filter (optional)
+5. Additional filtering logic, such as the scope of the user query and a filter (optional)
 
 The `LDAPPasswordIdentityProvider` provider can be configured either by editing the OpenShift master configuration file located at `/etc/origin/master/master-config.yaml` or through the Ansible based installer. 
 
 === The LDAP Identity Provider
 
-Based on the previous LDAP tree structure, to allow any authenticated user from the set of users defined in the `ou=Users,dc=example,dc=com` OU, specify the following Identity Provider configuration:
+Based on the previous LDAP tree structure, to allow any authenticated user from the set of users defined in the `ou=Users,dc=myorg,dc=com` OU, specify the following Identity Provider configuration:
 
 [source,yaml]
 ----
@@ -98,7 +98,7 @@ Based on the previous LDAP tree structure, to allow any authenticated user from 
       bindPassword: "" <7>
       ca: my-ldap-ca-bundle.crt <8>
       insecure: false <9>
-      url: "ldaps://ldap.example.com/ou=Users,dc=example,dc=com?uid" <10>
+      url: "ldaps://ldap.example.com/ou=Users,dc=myorg,dc=com?uid" <10>
 ----
 <1> The name of the LDAP Identity Provider
 <2> The LDAP field of the user to use as the unique identifier within OpenShift
@@ -115,22 +115,8 @@ NOTE: If anonymous bind access is enabled, the `bindDN` and `bindPassword` optio
 
 In the example above, the _url_ parameter specifies that the query connect securely to the LDAP server on 636 (389 if not connecting securely). The baseDN which indicates where all searches should start from is specified after the `/`. _uid_ references the LDAP attribute that should be used to match username provided by the user attempting to log in. 
 
-Another option is to add a filter to the query in which to further limit the users that are allowed to authenticate to OpenShift. To limit only user who are members of the _openshift_ group, the `(member=uid=admins,ou=Groups,dc=sample,dc=com)` can be applied which results in a _url_ represented as `url: "ldaps://ldap.example.com/ou=Users,dc=example,dc=com?uid?(member=uid=admins,ou=Groups,dc=sample,dc=com)`.
+Another option is to add a filter to the query in which to further limit the users that are allowed to authenticate to OpenShift. To limit only user who are members of the _openshift_ group, the `(member=uid=admins,ou=Groups,dc=myorg,dc=com)` can be applied which results in a _url_ represented as `url: "ldaps://ldap.myorg.com/ou=Users,dc=myorg,dc=com?uid?(member=uid=admins,ou=Groups,dc=myorg,dc=com)`.
 
-=== Manual Configuration 
-
-To configure the `LDAPPasswordIdentityProvider` within OpenShift, modify the OpenShift master configuration file located at `/etc/orgin/master/master-config.yaml`
-
-Locate the _identityProviders_ section of the OpenShift master configuration located at `/etc/origin/master/master-config.yaml` and configure the section with the value provided in the previous section.
-
-Once complete, restart the `atomic-openshift-master-api` (or `atomic-openshift-master` if running a single master) service to apply and enable the changes
-
-[source,bash]
-----
-systemctl restart atomic-openshift-master-api
-----
-
-IMPORTANT: These configurations must be applied on each master instance
 
 === OpenShift Ansible Configuration
 
@@ -146,7 +132,7 @@ The following can be added to the `[OSEv3:vars]` section of the OpenShift invent
 ----
 [OSEv3:vars]
 ...
-openshift_master_identity_providers=[{'name': 'my_ldap_provider', 'challenge': 'true', 'login': 'true', 'kind': 'LDAPPasswordIdentityProvider', 'attributes': {'id': ['dn'], 'email': ['mail'], 'name': ['cn'], 'preferredUsername': ['uid']}, 'bindDN': '', 'bindPassword': '', 'ca': 'my-ldap-ca-bundle.crt', 'insecure': 'false', 'url': 'ldap://ldap.example.com:389/uid=users,dc=example,dc=com?uid'}]
+openshift_master_identity_providers=[{'name': 'my_ldap_provider', 'challenge': 'true', 'login': 'true', 'kind': 'LDAPPasswordIdentityProvider', 'attributes': {'id': ['dn'], 'email': ['mail'], 'name': ['cn'], 'preferredUsername': ['uid']}, 'bindDN': '', 'bindPassword': '', 'ca': 'my-ldap-ca-bundle.crt', 'insecure': 'false', 'url': 'ldap://ldap.myorg.com:389/uid=users,dc=myorg,dc=com?uid'}]
 openshift_master_ldap_ca_file=/home/myuser/my-ldap-ca-bundle.crt
 ...
 ----
@@ -155,8 +141,23 @@ Run the `ansible-playbook` command referencing the inventory file and playbook w
 
 [source,yaml]
 ----
-ansible-playbook -i <inventory-file> <playbook>
+ansible-playbook -i c1-ocp.myorg.com/hosts /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
 ----
+
+=== Manual Configuration 
+
+Instead of using Ansible, the `LDAPPasswordIdentityProvider` can be configured manually by modifying the OpenShift master configuration file located at `/etc/orgin/master/master-config.yaml`
+
+Locate the _identityProviders_ section of the OpenShift master configuration located at `/etc/origin/master/master-config.yaml` and configure the section with the value provided in the previous section.
+
+Once complete, restart the `atomic-openshift-master-api` (or `atomic-openshift-master` if running a single master) service to apply and enable the changes
+
+[source,bash]
+----
+systemctl restart atomic-openshift-master-api
+----
+
+IMPORTANT: These configurations must be applied on each master instance
 
 
 == Testing LDAP queries
@@ -185,7 +186,7 @@ Common use cases for using the _ldapsearch_ tool include searching for users, gr
 
 [source,bash]
 ----
-ldapsearch -h ldap.example.com -p 636 -x -s base -b uid=jdoe,ou=Users,dc=example,dc=com
+ldapsearch -h ldap.myorg.com -p 636 -x -s base -b uid=jdoe,ou=Users,dc=myorg,dc=com
 ----
 
 
@@ -193,7 +194,7 @@ ldapsearch -h ldap.example.com -p 636 -x -s base -b uid=jdoe,ou=Users,dc=example
 
 [source,bash]
 ----
-ldapsearch -h ldap.example.com -p 636 -x -s sub -b "ou=Groups,dc=example,dc=com" "objectClass: groupOfUniqueNames"
+ldapsearch -h ldap.example.com -p 636 -x -s sub -b "ou=Groups,dc=myorg,dc=com" "objectClass: groupOfUniqueNames"
 ----
 
 
@@ -201,7 +202,7 @@ ldapsearch -h ldap.example.com -p 636 -x -s sub -b "ou=Groups,dc=example,dc=com"
 
 [source,bash]
 ----
-ldapsearch -h ldap.example.com -p 636 -x -s base -b "uid=openshift,ou=Groups,dc=example,dc=com" "member"
+ldapsearch -h ldap.myorg.com -p 636 -x -s base -b "uid=openshift,ou=Groups,dc=myorg,dc=com" "member"
 ----
 
 In each of the above queries, the following signify the parameters being specified:
@@ -231,7 +232,7 @@ TLS_CACERT      /etc/openldap/certs/ca.cert.pem <2>
 <1> Directory containing certificates
 <2> Location of the CA bundle
 
-== Next Steps
+== What''s Next?
 
 This guide focused on authenticating users into OpenShift against an LDAP server. To synchronize groups defined within the LDAP server into OpenShift, please refer to the link:../operationalizing/ldap_group_sync{outfilesuffix}[LDAP Group Synchronization guide].
 
