@@ -2,15 +2,15 @@
 ---
 ### Documenent maintenence
 ---
-Maintainer: *Samuel Leonard <sleonard@redhat.com>*
+Maintainer: *Samuel Leonard <sleonard@redhat.com>* +
 Version: *v1.0* 
 
 ### Docker Garbage Collection
 ---
 Docker garbage collection refers to the removal of images which have been exitedafter a specified grace period, and the removal of image which no longer belong to a running container. Garbage collection will manage the local image files on a specific host. Thusly, in order to be used meaningfully within the context of OCP **all node hosts** must be running some sort of garbage collection. Below a link to a trusted docker-gc script may be found, as well as an playbook which will place garabage collection on an OCP cluster using the [nodes] hosts from an existing OCP ansible inventory file.
 
-* [Docker-gc source and documentation](https://github.com/spotify/docker-gc)
-* [Ansible playbook for an OCP cluster](https:/github.com/sal2fcVir/tree/master/cluster-management)
+* link:https://github.com/spotify/docker-gc[Docker-gc source and documentation]
+* link:(https:/github.com/sal2fcVir/tree/master/cluster-management[Ansible playbook for an OCP cluster]
 
 **NOTE:** The playbook will set the following Garabage collection parameters by default:
 
@@ -18,14 +18,14 @@ Docker garbage collection refers to the removal of images which have been exited
 * Image Grace Period: 1 Hour
 * Excluded images: Red Hat infrastructure images
 
-These paramters may easily be modified within the source for your specific needs. a 1 hour grace period on images. 
+These paramters may easily be modified within the source for your specific needs. 
 
 ### Image Pruning
 ---
 Image Pruning within OCP is used in order to periodically remove older versions of OCP objets from a cluster when their use is no longer needed. Because pruning is run within OCP it must only be run from one OCP host in order to be used effectively.
 
 Official documentation for object pruning in OCP may be found below:
-* [OCP pruning](https://docs.openshift.com/container-platform/3.5/admin_guide/pruning_resources.html)
+* link:https://docs.openshift.com/container-platform/3.5/admin_guide/pruning_resources.html[OCP Pruning]
 
 **TODO:** Create an OCP pruning ansible playbook.
  
