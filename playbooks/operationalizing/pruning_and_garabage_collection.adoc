@@ -25,6 +25,7 @@ These paramters may easily be modified within the source for your specific needs
 Image Pruning within OCP is used in order to periodically remove older versions of OCP objets from a cluster when their use is no longer needed. Because pruning is run within OCP it must only be run from one OCP host in order to be used effectively.
 
 Official documentation for object pruning in OCP may be found below: +
+
 * link:https://docs.openshift.com/container-platform/3.5/admin_guide/pruning_resources.html[OCP Pruning]
 
 **TODO:** Create an OCP pruning ansible playbook.
