@@ -1,0 +1,341 @@
+---
+---
+= LDAP Group Synchronization
+Red Hat Containers & PaaS CoP
+v1.0, 2017-06-10
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+toc::[]
+
+NOTE: This guide discusses the synchronization of groups defined in an LDAP server with OpenShift and is distinct from using an LDAP server to authenticate users to OpenShift. Please refer to the link:/playbooks/installation/ldap_integration{outfilesuffix}[LDAP Integration guide] for using an LDAP server as an identity provider to govern user authentication to OpenShift.
+
+The OpenShift Container Platform contains a fully functional Role Based Access Control (RBAC) system. Access to privileged resources can be granted on a per user basis or to a set of users, known as a Group. Many organizations leveraging an LDAP server to manage the authentication of users to OpenShift may want to also synchronize groups that may already be defined in an LDAP server with OpenShift to simplify the management into a single location. 
+
+NOTE: Only users that have `cluster-admin` privileges may synchronize LDAP groups with OpenShift.
+
+OpenShift provides three schemas for defining group synchronization:
+
+* RFC 2307 (`rfc2307`)
+* Active Directory (`activeDirectory`)
+* Augmented Active Directory (`augmentedActiveDirectory`)
+
+The process of synchronizing groups defined in an LDAP server with OpenShift requires the definition of a client configuration file that specifies how to connect to the LDAP server and the mapping of groups and their users to OpenShift. The subsequent sections will describe how to configure the client configuration file and execute the synchronization process.
+
+== Client configuration file
+
+The client configuration file is a _yaml_ based file that defines a `LDAPSyncConfig` resource and containers the parameters to connect to the LDAP server along with the mapping groups and their users. 
+
+NOTE: In the link:/playbooks/installation/ldap_integration{outfilesuffix}[LDAP Integration for Authentication guide], an link:/playbooks/installation/ldap_integration{outfilesuffix}#example-ldap-tree-structure[example LDAP tree structure] was provided as a use case and will be used during this discussion to synchronize groups from LDAP to OpenShift.
+
+=== Connectivity
+
+The first step is to define how OpenShift should connect to the LDAP server. In many cases, the values can be taken directly from those defined when configuring OpenShift to authenticate against in LDAP server in the OpenShift master configuration file (`/etc/origin/master/master-config.yaml`). The following values can be specified
+
+[source,yaml]
+----
+bindDN: "" <1>
+bindPassword: "" <2>
+insecure: false <3>
+ca: my-ldap-ca-bundle.crt <4>
+url: ldaps://ldap.example.com/ <5>
+----
+<1> The distinguished name (DN) of the user used to traverse the LDAP tree and validate users
+<2> The Password of the user used to traverse the LDAP tree to validate users. This value may also be provided in an link:https://docs.openshift.com/container-platform/latest/install_config/master_node_configuration.html#master-node-configuration-passwords-and-other-data[environment variable, external file, or encrypted file].
+<3> Whether to communicates securely with the LDAP server (true by default)
+<4> If communicating securely and the certificate is not in the system trust store, the location of the CA bundle
+<5> The protocol, hostname/IP address, and port of the LDAP server formatted as `scheme://host:port`
+
+=== Schema
+
+Once the basic connectivity details have been defined, the remaining components of the LDAP group synchronization configuration file pertain to the how objects stored in the LDAP server are interrogated. A schema must be defined that contain the remaining values. In the example LDAP tree, the `rfc2307` schema will be used. Each of the subsequent sections relate directly to the provided schema. 
+
+=== Group and User Queries
+
+The process for synchronizing groups from an LDAP server to OpenShift requires the use of multiple queries: a query to search for all matching groups (`groupsQuery`) and the users associated in each group (`usersQuery`). Based on the values specified, new groups in OpenShift will be created. Each query can contain the following parameters:
+
+[source,yaml]
+----
+baseDN: "ou=Groups,dc=example,dc=com" <1>
+scope: sub <2>
+derefAliases: never <3>
+timeout: 0 <4>
+filter: (objectClass=groupOfUniqueNames) <5>
+pageSize: 0 <6>
+----
+<1> The distinguished name (DN) of the branch of the directory where all searches will start from
+<2> The scope of the search (`sub` by default). link:https://docs.openshift.com/container-platform/3.5/install_config/syncing_groups_with_ldap.html#ldap-search[This table] describes the various options.
+<3> The behavior of the search with respect to aliases in the LDAP tree (`always` by default). link:https://docs.openshift.com/container-platform/3.5/install_config/syncing_groups_with_ldap.html#deref-aliases[This table] describes the various options.
+<4> The time limit allowed for search operations (Default is `0` which indicates no timeout)
+<5> An LDAP filter
+<6> Maximum number of responses to return. Helpful if the LDAP server imposes a maximum query response limit
+
+From the example LDAP tree structure, if it was desired to synchronize all groups contained within the `ou=Groups,dc=example,dc=com` Organizational Unit, a group query could be defined as follows:
+
+[source,yaml]
+----
+groupsQuery:
+    baseDN: "ou=Groups,dc=example,dc=com"
+    scope: sub
+    derefAliases: never
+    filter: (objectClass=groupOfUniqueNames)
+    pageSize: 0
+----
+
+This example above would satisfy the first query OpenShift will perform as part of the group synchronization process. Next, a query for locating where users are stored in an LDAP server must be defined. `ou=People,dc=example,dc=com` is the Organizational Unit where users are defined in the example LDAP tree structure which will allow for the following `usersQuery` to be defined:
+
+[source,yaml]
+----
+usersQuery:
+    baseDN: "ou=Users,dc=example,dc=com"
+    scope: sub
+    derefAliases: never
+    pageSize: 0
+----
+
+Once the groups and user queries have been defined, the resulting configuration file at this point is represented below:
+
+[source,yaml]
+----
+kind: LDAPSyncConfig
+apiVersion: v1
+url: ldaps://ldap.example.com 
+insecure: false
+ca: my-ldap-ca-bundle.crt 
+bindDN: ""
+bindPassword: ""
+rfc2307:
+    groupsQuery:
+        baseDN: "ou=Groups,dc=example,dc=com"
+        scope: sub
+        derefAliases: never
+        filter: (objectClass=groupOfUniqueNames)
+        pageSize: 0
+    usersQuery:
+        baseDN: "ou=Users,dc=example,dc=com"
+        scope: sub
+        derefAliases: never
+        pageSize: 0
+----
+
+=== Attribute Mapping
+
+Once group and user queries have been defined, the next step is to configure the mapping of attributes based on the result of each query. These values will help support the second query performed against the LDAP server to associate user records with a group along with the creation of the new OpenShift group record.
+
+==== OpenShift Group Metadata
+
+The first query performed by OpenShift against the LDAP server is to search for all group based upon the parameters performed in the `groupsQuery` section. For a new group resource to be created in OpenShift, a value for the unique identifier of the LDAP group and a friendly name for the newly created group must be mapped from the LDAP server. The following from the example LDAP server can define these values:
+
+[source,yaml]
+----
+groupUIDAttribute: dn <1>
+groupNameAttributes: [ cn ] <2>
+----
+<1> Value to be used as the unique identifier for the new OpenShift group. A filter in the `groupsQuery` section cannot be provided if this value is `DN`
+<2> Value to use as the name of the newly created group in OpenShift
+
+
+==== Users Associated to Groups
+
+Once the initial set of metadata for groups synchronized into OpenShift has been provided, the set of users associated with a group must be determined. To determine the users associated with a group, the `groupMembershipAttributes` specifies the attribute of the group object within the LDAP server containing the list of members. In the example LDAP structure, the _member_ field contained the value of users associated to the group. The following snippet illustrates the member field on the _openshift_ group.
+
+[source,yaml]
+----
+member: uid=jdoe,ou=Users,dc=example,dc=com
+member: uid=csmith,ou=Users,dc=example,dc=com
+----
+
+In the `LDAPSyncConfig` file, the following would be added to indicate the group membership attribute:
+
+[source,yaml]
+----
+groupMembershipAttributes: [ member ]
+----
+
+NOTE: The `groupMembershipAttributes` accepts an array value. If multiple values are specified, the first non empty value returned will be used.
+
+For each user associated with a group, OpenShift will execute a subsequent query using the values associated in the `usersQuery` section along with the following:
+
+[source,yaml]
+----
+userUIDAttribute: dn <1>
+userNameAttributes: [ uid ] <2>
+----
+<1> Value to be used as the attribute to identify a user. A filter in the `usersQuery` section cannot be provided if this value is `DN`. 
+<2> Name of the attribute on the LDAP user record to use as the user name within OpenShift. 
+
+IMPORTANT: The value retrieved from the attribute listed in the `userUIDAttribute` field specified _must_ match the value associated by the `groupMembershipAttributes` in the Group object
+
+IMPORTANT:  This value retrieved from the attribute listed in `userNameAttributes` _must_ match the name of the username within OpenShift otherwise any associated roles or policies will not be applied to the intended user
+
+NOTE: The `userNameAttributes` accepts an array value. If multiple values are specified, the first non empty value returned will be used.
+
+Based on the user and group mappings configured within this section, the following `LDAPSyncConfig` is produced:
+
+[source,yaml]
+----
+kind: LDAPSyncConfig
+apiVersion: v1
+url: ldaps://ldap.example.com 
+insecure: false
+ca: my-ldap-ca-bundle.crt 
+bindDN: ""
+bindPassword: ""
+rfc2307:
+    groupsQuery:
+        baseDN: "ou=Groups,dc=example,dc=com"
+        scope: sub
+        derefAliases: never
+        filter: (objectClass=groupOfUniqueNames)
+        pageSize: 0
+    groupUIDAttribute: dn 
+    groupNameAttributes: [ cn ] 
+    groupMembershipAttributes: [ member ] 
+    usersQuery:
+        baseDN: "ou=Users,dc=example,dc=com"
+        scope: sub
+        derefAliases: never
+        pageSize: 0
+    userUIDAttribute: dn 
+    userNameAttributes: [ uid ] 
+----
+
+=== Additional Configuration Options
+
+To support compatibility with the range of LDAP servers, additional options are available to reduce the number of errors that might be returned as part of the synchronization process. These options are also configured under the appropriate schema for the LDAP server:
+
+*  `tolerateMemberNotFoundErrors` - Determines whether an error is thrown when a user is defined as a member within the list of returned groups is not found as part of the `usersQuery` (Default: `false`). If `true`, the error would only be logged with the synchronization process continuing until completion. If `false`, the synchronization job would fail.
+*  `tolerateMemberOutOfScopeErrors` - Determines whether an error is thrown when a user is defined as a member within the list of returned groups but is not within the scope of the `usersQuery`. A common example of this occurrence is when the user does not fall within the baseDN of the `usersQuery` or may be in another segment of the LDAP tree (Default value is `false`). If `true`, the error would only be logged with the synchronization process continuing until completion. If `false`, the synchronization job would fail.
+
+These options are defined within the specific schema portion of the LDAP configuration file.
+
+=== Explicit Group Mapping
+
+In some cases, the name of the group as defined within the LDAP server may not be a desired name within OpenShift. The `groupUIDNameMapping` allows for an administrator to explicitly map the unique identifier of a returned found within the LDAP server (as defined by the `groupUIDAttribute` value) to a name within OpenShift. In the example LDAP schema, if it was desired to call the group named  _admins_ as defined in the LDAP server (with UID `uid=admins,ou=Groups,dc=example,dc=com`) to be called `openshift_admins`, the following `groupUIDNameMapping` within the configuration file:
+
+[source,yaml]
+----
+groupUIDNameMapping:
+  "uid=admins,ou=Groups,dc=example,dc=com": openshift_admins
+----
+
+== Executing the Synchronization job
+
+Once the synchronization file has been prepared, platform administrators can perform the following command to execute the LDAP group synchronization process:
+
+[source,bash]
+----
+oc adm groups sync --sync-config=<configuration_file_location>
+----
+
+By default, the sync command executes in _dry run_ mode only. When run in _dry run_ mode, the results of what would have occurred against OpenShift is displayed. 
+
+To apply the changes to OpenShift, add the `--confirm` flag.
+
+[source]
+----
+oc adm groups sync --sync-config=<configuration_file_location> --confirm
+----
+
+=== Whitelists/Blacklists
+
+The LDAP group synchronization functionality within OpenShift supports the ability to explicitly allow (whitelist) or disallow (blacklist) groups from being added to OpenShift. A common use case for using blacklists or whitelists is where there may be a large number of groups defined in a single organizational unit and there is a desire not to all groups. 
+
+Whitelist and blacklist groups or organized in separate files with each line containing the unique identifier of the group in the LDAP server. The following is an example of a group defined in a whitelist/blacklist file.
+
+[source,bash]
+----
+uid=openshift,ou=Groups,dc=example,dc=com
+----
+
+If the above group where used in a whitelist file, only this group from the list of groups found in the LDAP server would be added to OpenShift. If it was used as the contents of a blacklist file, all groups found in the LDAP with the exception of this group would be added to OpenShift. 
+
+The `--whitelist=<whitelist-file>` and `--blacklist=<blacklist-file>` parameters can be added to the `oc adm groups sync` command. Any combination of whitelist and blacklist parameters can be applied.
+
+== Verifying Groups in OpenShift
+
+Once groups have been synchronized into OpenShift, they can be verified by executing the following command:
+
+[source,bash]
+----
+oc get groups
+
+NAME                  USERS
+admins                jdoe
+openshift             jdoe, csmith
+----
+
+Groups that have been synchronized from an LDAP server will have annotation values beginning with `openshift.io/ldap.` containing the synchronization time, unique identifier and address of the LDAP server.
+
+== Associating Permissions to Synchronized Groups
+
+The act of synchronizing groups and their associated users into OpenShift does not grant any new set of permissions against OpenShift's RBAC system. Roles must still be explicitly granted to each group through the `oc adm policy add-role-to-group <role-name> <group-name>` command.
+
+To add the `view` role of the `example` project to the `openshift` group, execute the following command:
+
+[source,bash]
+----
+oc policy add-role-to-group -n example view openshift
+----
+
+To confirm the changes have been applied, execute the following command and review the _view_ rolebinding to confirm the _openshift_ group is present:
+
+[source,bash]
+----
+oc describe -n example policybindings
+
+Name:					:default
+Namespace:				example
+Created:				42 hours ago
+Labels:					<none>
+Annotations:				<none>
+Last Modified:				2017-06-11 18:05:47 -0500 CDT
+Policy:					<none>
+RoleBinding[admin]:			 
+					Role:			admin
+					Users:			system:admin
+					Groups:			<none>
+					ServiceAccounts:	<none>
+					Subjects:		<none>
+RoleBinding[system:deployers]:		 
+					Role:			system:deployer
+					Users:			<none>
+					Groups:			<none>
+					ServiceAccounts:	deployer
+					Subjects:		<none>
+RoleBinding[system:image-builders]:	 
+					Role:			system:image-builder
+					Users:			<none>
+					Groups:			<none>
+					ServiceAccounts:	builder
+					Subjects:		<none>
+RoleBinding[system:image-pullers]:	 
+					Role:			system:image-puller
+					Users:			<none>
+					Groups:			system:serviceaccounts:example
+					ServiceAccounts:	<none>
+					Subjects:		<none>
+RoleBinding[view]:			 
+					Role:			view
+					Users:			<none>
+					Groups:			openshift
+					ServiceAccounts:	<none>
+					Subjects:		<none>
+
+----
+
+== Pruning Groups
+
+The process of synchronizing groups and users from an LDAP server into OpenShift is an additive process only. Groups that were previously synchronized into OpenShift may have been deleted on the LDAP server and are no longer applicable for use. To remove orphaned groups from OpenShift, the same LDAP configuration file along with any whitelist/blacklists can be used.
+
+Prune orphaned LDAP groups by executing the following command:
+
+[source,bash]
+----
+oc adm groups prune --sync-config=<configuration_file_location> --confirm
+----
+
+== References
+
+link:https://docs.openshift.com/container-platform/latest/install_config/syncing_groups_with_ldap.html[Syncing Groups With LDAP]

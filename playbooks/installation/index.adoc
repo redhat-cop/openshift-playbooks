@@ -812,4 +812,4 @@ link:/playbooks/installation/install_validation{outfilesuffix}[Validating an Ope
 
 == What's Next?
 
-Adding LDAP for Authentication (Coming soon!)
+link:/playbooks/installation/ldap_integration{outfilesuffix}[Adding LDAP for Authentication]
