@@ -436,6 +436,31 @@ ansible -i /some/path/to/my/hosts/inventory/file -hosts OSEv3 -m ping
 * Provisioning infrastructure on OpenStack using the openstack CLI (Coming Soon)
 * Provigioning infrastructure on Amazon EC2 using the awscli (Coming Soon)
 
+==== Configuring Node Host Labels
+
+Labels are simple key/value pairs that are used to organize, group, or select API objects. You can assign labels to node hosts during the Ansible install by configuring the /etc/ansible/hosts file. Labels are useful for determining the placement of pods onto nodes using the scheduler. Other than `region=infra` (discussed in link:#configuring-labels-for-dedicated-infrastructure-nodes[Configuring Labels For Dedicated Infrastructure Nodes]]), the actual label names and values are arbitrary and can be assigned however you see fit per your cluster’s requirements.
+
+To assign labels to a node host during the advanced installation, use the `openshift_node_labels` variable with the desired labels added to the desired node host entry in the `[nodes]` section. For example:
+
+----
+[nodes]
+node1.example.com openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
+----
+
+===== Configuring Labels For Dedicated Infrastructure Nodes
+
+The `openshift_router_selector` and `openshift_registry_selector` Ansible settings determine the label selectors used when placing registry and router pods. They are set to `region=infra` by default:
+
+----
+...
+# default selectors for router and registry services
+# openshift_router_selector='region=infra'
+# openshift_registry_selector='region=infra'
+...
+----
+
+The default router and registry will be automatically deployed during installation if nodes exist in the `[nodes]` section that match the selector settings.
+
 ==== Ansible Inventory Update
 
 Once we have our hosts created and add to DNS, we can add them to the bottom of our Ansible Inventory file like so.
@@ -449,10 +474,10 @@ openshift-master-[1:3].c1-ocp.myorg.com
 openshift-master-[1:3].c1-ocp.myorg.com
 
 [nodes]
-openshift-master-[1-3].c1-ocp.myorg.com
-openshift-infranode-[1:3].c1-ocp.myorg.com
-openshift-appnode-1.c1-ocp.myorg.com.com
-openshift-appnode-2.c1-ocp.myorg.com
+openshift-master-[1:3].c1-ocp.myorg.com openshift_node_labels="{'region': 'master'}"
+openshift-infranode-[1:3].c1-ocp.myorg.com openshift_node_labels="{'region': 'infra'}"
+openshift-appnode-1.c1-ocp.myorg.com openshift_node_labels="{'region': 'primary'}"
+openshift-appnode-2.c1-ocp.myorg.com openshift_node_labels="{'region': 'primary'}"
 ----
 
 === Create Standalone Registry
