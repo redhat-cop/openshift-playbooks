@@ -432,12 +432,6 @@ ssh-copy-id -i ~/.ssh/Myidrsa.pub remote.server.com
 
 ssh will require you to accept the new ssh key for the first time into the `~/.ssh/known_hosts` file by either shelling into each of the nodes one by one and typing yes each time or adding the file `~/.ssh/config` file with perms of 600 with a line that includes `StrictHostKeyChecking no`.  Once this is completed you can test that ansible will no longer ask to accept the key
 
-Test ansible in an adhoc way to ensure it can get to all the nodes
-
-----
-ansible -i /some/path/to/my/hosts/inventory/file -hosts OSEv3 -m ping
-----
-
 ==== Cloud-Specific Provisioning Guides
 
 * Provisioning infrastructure on OpenStack using the openstack CLI (Coming Soon)
@@ -460,6 +454,13 @@ openshift-infranode-[1:3].c1-ocp.myorg.com
 openshift-appnode-1.c1-ocp.myorg.com.com
 openshift-appnode-2.c1-ocp.myorg.com
 ----
+
+Test ansible in an adhoc way to ensure it can get to all the nodes
+
+----
+ansible -i c1-ocp.myorg.com/hosts OSEv3 -m ping
+----
+
 
 === Create Standalone Registry
 
