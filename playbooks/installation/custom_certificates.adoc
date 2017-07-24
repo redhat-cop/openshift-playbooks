@@ -1,0 +1,172 @@
+---
+---
+= Configuring OpenShift to use Custom Certificates
+Red Hat Containers & PaaS CoP
+v2.0, 2016-08-18
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+toc::[]
+
+_This is a followup to link:/playbooks/installation/[Installing a Highly Available OpenShift Cluster]. Many assumptions are made based on the information in that guide. If you have not yet been through this guide, we recommend doing so before continuing._
+
+== Overview
+
+OpenShift creates a lot of certificates by default. Understanding where and how those certificates are used will help to understand how it can be configured to meet your needs.
+
+In this guide we will discuss how and where TLS Certificates are used in OpenShift, how they are created, and how to go about designing a proper certificate management strategy for OpenShift. We will then show you how to configure OpenShift via Ansible to reflect this strategy.
+
+== Design of OpenShift Certificate Management
+
+OpenShift utilizes TLS Certificates in three primary ways.
+
+1. To encrypt traffic
+1. To Authenticate Certain Infrastructure Components
+1. To authenticate certain users
+  * OpenShift uses client certificates to authenticate system critical Service Accounts
+  * Users can also authenticate via client certificates, though this is not common (Client Cert Auth https://kubernetes.io/docs/admin/authentication/#x509-client-certs)
+
+The table below is a breakdown of the various places in which certificates are used to do one of the things from the list above.
+
+:service_account: Service Account Auth via Client Certificate
+:raw_client_cert: Raw Client Certificate Auth
+:api_token: API Token over HTTPS connection
+:https: HTTPS Connection
+.OpenShift Certificate Usage
+[options="header"]
+|====================
+| Source (Client) | Destination (Server) | TLS Type | Notes
+| Nodes | Master API | {service_account} | Node Service account have the format `system:node:<hostname>`
+| Master | Node (kubelet) | {raw_client_cert} |
+| `system:admin` User | Master API | {service_account} | This is the default cluster admin user. Only accessible as `root` on a master host, as this is the only user that has read access to the client certificate for the account.
+| Router | Master API | {service_account} |
+| Registry | Master API | {service_account} |
+| Master controllers | Master API | {service_account} | Multiple service accounts used here
+| Master | Etcd | {raw_client_cert} | How OpenShift does all read/write to etcd
+| Etcd | Etcd | {raw_client_cert} | Used to establish cluster membership and do data replication
+| User | Master API | {api_token} | Primary method which users use to authenticate to OpenShift Console/API
+| User | Router | {https} | Primary method for front-end users to access Applications in OpenShift
+| User | Kibana (Logging) | {api_token} |
+| Fluentd | ElasticSearch | {raw_client_cert} |
+| ElasticSearch | ElasticSearch | {raw_client_cert} |
+| Kibana | ElasticSearch | {raw_client_cert} |
+| User | Hawkular (Metrics) | {api_token} |
+| User | Registry | {api_token} |
+| User | Registry Console | {api_token} |
+| Registry Console | Registry | {service_account} |
+|====================
+
+To make the provisioning process for all of these certificates more palatable, the Ansible Config Playbook that is used to automate the deployment and configuration of OpenShift automatically generates and signs all of these certificates. By default, this is done from an internally signed CA (the `openshift-signer`). This is convenient, as it makes the creation, signing, and configuring of these certificates essentially invisible to the administrator, and the install is as seamless as possible. However, when building long running, higher environment OpenShift clusters, it is often desired to have certificates signed by a trusted internal or public Certificate Authority presented to users. The Ansible Config Playbook supports two options for handling custom certificates, covered in the following sections.
+
+=== Using a Trusted Intermediate CA
+
+The first option would be to provide the Ansible playbook with a trusted intermediate CA and Key, and allow ansible to auto-generate all certificates as part of the install.
+
+The benefits to this approach are that it is a comprehensive solution; all certificates in the cluster will be signed by a trusted CA. Because all of the certificate generation is handled by ansible, this is also the most maintainable solution as all certs get generated for you at configuration time, including router wildcard, registry, logging, metrics etc. A third benefit to allowing ansible to generate all certificates, is that, when they expire, another set of Ansible playbooks is available to automatically regenerate certificates.
+
+This approach does have its challenges, however. For instance, in many organizations, it is considered a risk to allow a system to take control of a CA key, as this means that it has authority to create trusted certificates with any hostname desired, possibly faciliating man in the middle attacks or other security threats. Because of this, it is very important to be clear that the CA key file is not required to remain on the OpenShift system, or on the Ansible box. The key can be provided temporarily during an ansible run, and thereafter removed from the system. In fact, if further lock-down is required, it is possible to only relnquish the CA key, when the following actions will be taken by ansible.
+
+- Initial generation of certificates during a first install
+- Regeneration of certificates when they expire
+- Addition of new infrastructure components (Etcd, Master, or Node scale-up)
+
+All other ansible configurations may run without the key being present on the system.
+
+To see how to configure OpenShift to use this strategy, you can skip down to the link:#configuring-openshift-to-use-an-intermediate-ca[Configuring OpenShift to use an Intermediate CA]] section.
+
+=== Using Component Specific Certificates
+
+The second option is to allow OpenShift Internals to use self-signed/generated certificates, and add a custom server certificate for each User-facing/PublicIP/PublicURL endpoint.
+
+IMPORTANT: In order to do the above, master cluster public hostname and master cluster hostname  must be different.  If they’re the same, the named certificates will fail and will require a re-install. See the link:/playbooks/installation/#dns[Designing for DNS] section of the Install Guide.
+
+The Advantage of this approach is that it can be more flexible, as it allows you to start off relying completely on the self-signed certificates generated by OpenShift, and add-on custom trusted certificates to individual components as needed.
+
+The downside to this approach is that the internal infrastructure certificates remain self-signed, which may be percieved as bad practice by some Security or PKI teams. In reality the risk here is minimal, as the only clients that are trusting these certificates would be other components within the Cluster, and all external users and systems would be presented with custom trusted certificates.
+
+To see how to configure OpenShift to use this strategy, you can skip down to the link:#configuring-openshift-to-use-component-specific-custom-certificates[Configuring OpenShift to use Component-specific Custom Certificates] section.
+
+== Configuration
+
+There are two options for configuring custom certificates in OpenShift.
+
+=== Option 1: Configuring OpenShift to use an Intermediate CA
+
+In order to use this option, you will need to provision an Intermediate Certificate Authority Certificate and Key, and provide it to the installer to use to generate all of the OpenShift core certificates.
+
+IMPORTANT: This MUST happen on first install, or when running redeploy-openshift-ca playbook after which redeploy-certificates playbook have to be executed.
+
+Place the CA cert and key files on a directory accessible to Ansible, and add the following to your Ansible inventory.
+
+----
+openshift_master_ca_certificate={'certfile': '/path/to/ca.crt', 'keyfile': '/path/to/ca.key'}
+#
+# NOTE: CA certificate will not be replaced with existing clusters.
+# This option may only be specified when creating a new cluster or
+# when redeploying cluster certificates with the redeploy-certificates
+# playbook.
+----
+
+When ready, you may run the Ansible config playbook like so.
+
+----
+ansible-playbook -i c1-ocp.myorg.com/hosts /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
+----
+
+=== Option 2: Configuring OpenShift to use Component-specific Custom Certificates
+
+Alternatively, you can allow OpenShift to use its own CA to generate the internal certificates (self-signed) with which all of the internal components of OpenShift will authenticate. Custom certificates may be created and configured to be used individually by User-facing components of openshift. Discussion of each component is below.
+
+INFO: One way to simplify this is to have one certificate with multiple SAN names (console.example.com, metrics.example.com, logging.example.com), and to use the same certificate for all components.
+
+==== Master API Certificate
+
+In order to facilitate trusted connections with external users of OpenShift, a “Named Certificate” can be provisioned which matches the domain name provided in `openshift_master_cluster_public_hostname`. This certificate must be placed in a directory accessible to Ansible, and added to the Ansible inventory file like so.
+
+----
+openshift_master_named_certificates=[{"certfile": "/path/to/console.ocp-c1.myorg.com.crt", "keyfile": "/path/to/console.ocp-c1.myorg.com.key", "names": ["console.ocp-c1.myorg.com"], "cafile": "/path/to/console.ocp-c1.myorg.com.ca.crt"}]
+----
+
+==== Default (Wildcard) Router Certificate
+
+OpenShift’s Router may be configured with a default wildcard certificate, which can be used to provide a convenient way for applications deployed to the platform to take advantage of some level of out of the box encryption without being required to bring their own custom certificates to the table. This is generally a recommended practice, at least in a Non-Production scenario to encourage exploration, experimentation, and rapid development.
+
+In order to configure a default wildcard certificate, a certificate must be provisioned that is valid for `*.<app domain>`, where <app domain> is the value of `openshift_master_default_subdomain`. Once provisioned, you will need to place your cert, key and ca cert files on your ansible host, and add the following line to your ansible inventory.
+
+----
+openshift_hosted_router_certificate={"certfile": "/path/to/apps.c1-ocp.myorg.com.crt", "keyfile": "/path/to/apps.c1-ocp.myorg.com.key", "cafile": "/path/to/apps.c1-ocp.myorg.com.ca.crt"}
+----
+
+==== Registry Certificate
+
+OpenShift's Image Registry is an internal service, whose primary use is to facilitate builds and deployments in OpenShift. Most of the communication with the registry is facilitated by internal components in OpenShift. As such, there should be no need to replace the certificate used by the Registry service itself. However, by default, the Registry will also be exposed by a Route to allow external systems and users the ability to `docker login` to the registry to do pulls and pushes of images. In order to avoid interacting with an internal, self-signed certificate, a Reencrypt route may be used with a custom certificate on it, which will be presented to external users. To configure this, simply add the following lines pointing to the cert you would like used for the registry route.
+
+----
+openshift_hosted_registry_routehost=registry.apps.c1-ocp.myorg.com
+openshift_hosted_registry_routecertificates={"certfile": "/path/to/registry.apps.c1-ocp.myorg.com.crt", "keyfile": "/path/to/registry.apps.c1-ocp.myorg.com.key", "cafile": "/path/to/registry.apps.c1-ocp.myorg.com-ca.crt"}
+----
+
+==== Other components
+
+For other components like Logging & Metrics, the approach for fronting services with custom certs can be found in link:https://docs.openshift.com/container-platform/latest/admin_solutions/certificate_management.html[Administrator Solutions for Certificate Management].
+
+==== Run Ansible
+
+Once your Ansible Inventory has been updated with the above, you can re-run the config playbook.
+
+----
+ansible-playbook -i c1-ocp.myorg.com/hosts /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
+----
+
+== Additional Resources
+
+Additional information and reading can be found in the following places.
+
+* link:https://docs.openshift.com/container-platform/latest/install_config/certificate_customization.html[Official Docs on Certificate Customization]
+* link:https://docs.openshift.com/container-platform/latest/install_config/redeploying_certificates.html[Official Docs on Redeploying Expired Certificates]
+* link:https://docs.openshift.com/container-platform/latest/admin_solutions/certificate_management.html[Official Docs on Certificate Management for Services]
+
+== What's Next?
+
+* link:/playbooks/installation/ldap_integration{outfilesuffix}[Adding LDAP for Authentication]
