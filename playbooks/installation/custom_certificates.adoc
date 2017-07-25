@@ -22,14 +22,15 @@ In this guide we will discuss how and where TLS Certificates are used in OpenShi
 OpenShift utilizes TLS Certificates in three primary ways.
 
 1. To encrypt traffic
-1. To Authenticate Certain Infrastructure Components
+1. To authenticate certain infrastructure components
 1. To authenticate certain users
-  * OpenShift uses client certificates to authenticate system critical Service Accounts
+  * OpenShift uses client certificates to authenticate system critical system users and service accounts
   * Users can also authenticate via client certificates, though this is not common (Client Cert Auth https://kubernetes.io/docs/admin/authentication/#x509-client-certs)
 
 The table below is a breakdown of the various places in which certificates are used to do one of the things from the list above.
 
-:service_account: Service Account Auth via Client Certificate
+:infra_account: Infrastructure Component Authenticating via X509 Client Certs
+:service_account: Service Account API Token
 :raw_client_cert: Raw Client Certificate Auth
 :api_token: API Token over HTTPS connection
 :https: HTTPS Connection
@@ -37,12 +38,12 @@ The table below is a breakdown of the various places in which certificates are u
 [options="header"]
 |====================
 | Source (Client) | Destination (Server) | TLS Type | Notes
-| Nodes | Master API | {service_account} | Node Service account have the format `system:node:<hostname>`
+| Nodes | Master API | {infra_account} | Node Service account have the format `system:node:<hostname>`
 | Master | Node (kubelet) | {raw_client_cert} |
-| `system:admin` User | Master API | {service_account} | This is the default cluster admin user. Only accessible as `root` on a master host, as this is the only user that has read access to the client certificate for the account.
+| `system:admin` User | Master API | {infra_account} | This is the default cluster admin user. Only accessible as `root` on a master host, as this is the only user that has read access to the client certificate for the account.
 | Router | Master API | {service_account} |
 | Registry | Master API | {service_account} |
-| Master controllers | Master API | {service_account} | Multiple service accounts used here
+| Master controllers | Master API | {infra_account} | Multiple service accounts used here
 | Master | Etcd | {raw_client_cert} | How OpenShift does all read/write to etcd
 | Etcd | Etcd | {raw_client_cert} | Used to establish cluster membership and do data replication
 | User | Master API | {api_token} | Primary method which users use to authenticate to OpenShift Console/API
@@ -54,7 +55,7 @@ The table below is a breakdown of the various places in which certificates are u
 | User | Hawkular (Metrics) | {api_token} |
 | User | Registry | {api_token} |
 | User | Registry Console | {api_token} |
-| Registry Console | Registry | {service_account} |
+| Registry Console | Registry | {infra_account} |
 |====================
 
 To make the provisioning process for all of these certificates more palatable, the Ansible Config Playbook that is used to automate the deployment and configuration of OpenShift automatically generates and signs all of these certificates. By default, this is done from an internally signed CA (the `openshift-signer`). This is convenient, as it makes the creation, signing, and configuring of these certificates essentially invisible to the administrator, and the install is as seamless as possible. However, when building long running, higher environment OpenShift clusters, it is often desired to have certificates signed by a trusted internal or public Certificate Authority presented to users. The Ansible Config Playbook supports two options for handling custom certificates, covered in the following sections.
@@ -117,8 +118,6 @@ ansible-playbook -i c1-ocp.myorg.com/hosts /usr/share/ansible/openshift-ansible/
 === Option 2: Configuring OpenShift to use Component-specific Custom Certificates
 
 Alternatively, you can allow OpenShift to use its own CA to generate the internal certificates (self-signed) with which all of the internal components of OpenShift will authenticate. Custom certificates may be created and configured to be used individually by User-facing components of openshift. Discussion of each component is below.
-
-INFO: One way to simplify this is to have one certificate with multiple SAN names (console.example.com, metrics.example.com, logging.example.com), and to use the same certificate for all components.
 
 ==== Master API Certificate
 
