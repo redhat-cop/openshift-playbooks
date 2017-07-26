@@ -449,7 +449,7 @@ node1.example.com openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
 
 ===== Configuring Labels For Application Nodes
 
-The `osm_default_node_selector` Ansible settings determine the label that projects will use by default when placing pods on Application nodes. They are set to `region=primary` by default:
+The `osm_default_node_selector` Ansible setting determines the label that projects will use by default when placing pods on Application nodes. It is set to `region=primary` by default:
 
 ----
 ...
