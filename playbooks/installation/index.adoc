@@ -447,6 +447,17 @@ To assign labels to a node host during the advanced installation, use the `opens
 node1.example.com openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
 ----
 
+===== Configuring Labels For Application Nodes
+
+The `osm_default_node_selector` Ansible settings determine the label that projects will use by default when placing pods on Application nodes. They are set to `region=primary` by default:
+
+----
+...
+# default project node selector
+#osm_default_node_selector='region=primary'
+...
+----
+
 ===== Configuring Labels For Dedicated Infrastructure Nodes
 
 The `openshift_router_selector` and `openshift_registry_selector` Ansible settings determine the label selectors used when placing registry and router pods. They are set to `region=infra` by default:
