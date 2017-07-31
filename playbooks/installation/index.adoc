@@ -98,7 +98,7 @@ Both the openshift_portal_net and the osm_cluster_network_cidr will default to t
 This is the port that the Master api will be listening on. The default value is 8443. Since we are using dedicated hosts for the masters we can set this to 443 and omit the port # from urls when connecting.
 
 *Ansible Host File Variable:* `openshift_master_console_port=8443`
-This is the port that the Master console will be listening on. The default value is 8443. Like the api port, we can set this to 443 and omit the port # from urls when connecting. 
+This is the port that the Master console will be listening on. The default value is 8443. Like the api port, we can set this to 443 and omit the port # from urls when connecting.
 
 ==== Ansible Inventory Update
 
@@ -127,40 +127,31 @@ More information on Pods & Services can be found in the link:https://docs.opensh
 
 All of the hosts in the cluster need to be resolveable via DNS.  Additionally if using a control node to serve as the ansible installer it too should be able to resolve all hosts in your cluster.
 
-In an HA cluster there will also be a DNS name for the Load Balanced URL that points to the 3 master servers for access to the API, CLI and Console services.  This value should also resolve, and will be placed in the ansible Hosts file for the variables.
+In an HA cluster there should also be two DNS names for the Load Balanced IP address that points to the 3 master servers for access to the API, CLI and Console services. One of these names is the *public* name that users will use to log into the cluster. The other is an _internal_ name that will be used by internal components within the cluster to talk back to the master. These values should also resolve, and will be placed in the ansible Hosts file for the variables.
 
-Public Master URL
+==== Public Master Hostname
 
-This will be the url that external users and/or tools will use to login to the OpenShift cluster
+*Ansible Inventory Variable:* `openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com`
 
-Ansible Host file variable:
+This will be the hostname that external users and/or tools will use to login to the OpenShift cluster
 
-*Master Public Hostname Variable :* `openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com`
+==== Internal Master Hostname
 
-Replace the value in your host file
+*Ansible Inventory Variable:* `openshift_master_cluster_hostname=console-int.c1-ocp.myorg.com`
 
+This will be the hostname that users and/or tools interacting with the platform will use to login to the OpenShift API and Web Console.
 
-Master URL
+==== Wildcard DNS entry for Infrastructure(Router) nodes
 
-This will be the url that external users and/or tools will use to login to the OpenShift cluster
+*Ansible Inventory Variable:* `openshift_master_default_subdomain=apps.c1-ocp.myorg.com`
 
-*Master Hostname Variable:*`openshift_master_cluster_hostname=console.c1-ocp.myorg.com`
-
-Wildcard DNS entry for Infrastructure(Router) nodes
-
-In addition to the hostnames for the master console and API, A wildcard DNS entry needs to exist under a unique subdomain (i.e. `*.cloudapps.c1-ocp.myorg.com`) that resolves to either the IP addresses (an A record) or the hostnames (a CNAME record) of the three Infrastructure Nodes.   This entry allows new routes to be automatically routable to the cluster under the subdomain such as mynewapp.cloudapps.c1-ocp.myorg.com.   Alternatively, every exposed route would require the entry to be created in order to route it to the OpenShift cluster.
-
-----
-# default subdomain to use for exposed routes
-openshift_master_default_subdomain=cloudapps.c1-ocp.myorg.com
-----
+In addition to the hostnames for the master console and API, A wildcard DNS entry needs to exist under a unique subdomain (i.e. *.apps.c1-ocp.myorg.com`) that resolves to either the IP addresses (an A record) or the hostnames (a CNAME record) of the three Infrastructure Nodes.   This entry allows new routes to be automatically routable to the cluster under the subdomain such as mynewapp.apps.c1-ocp.myorg.com.   Alternatively, every exposed route would require the entry to be created in order to route it to the OpenShift cluster. If this is desired, it is highly recommended to implement an automated integration between OpenShift and an external DNS system to automatically provision new DNS entries whenever a new route is created. link:https://github.com/redhat-cop/openshift-event-controller[OpenShift Event Controller] is an open source project that provides a good reference for such an implementation.
 
 image::/images/dnsmasterinfra.png[DNS Diagram]
 
+==== Ansible Inventory Update
 
 Having added all of the above to your inventory file we should have something like the following in your inventory file.
-
-==== Ansible Inventory Update
 
 ----
 ...
@@ -173,14 +164,19 @@ openshift_master_console_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
-openshift_master_cluster_hostname=console.c1-ocp.myorg.com <1>
+openshift_master_cluster_hostname=console-int.c1-ocp.myorg.com <1>
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com <2>
 
-openshift_master_default_subdomain=cloudapps.c1-ocp.myorg.com
+openshift_master_default_subdomain=apps.c1-ocp.myorg.com <3>
 ...
 ----
 <1> Hostname used by nodes and other cluster internals
 <2> Hostname used by platform users
+<3> Application wildcard subdomain
+
+=== SSL/TLS Certificates
+
+The Ansible config playbook will by default generate a bunch of certificates that will be used by various components. If you have need to customize these certificates, consult link:/playbooks/installation/custom_certificates{outfilesuffix}[Configuring OpenShift to use Custom Certificates].
 
 === Load Balancing & HA
 
@@ -850,4 +846,5 @@ link:/playbooks/installation/install_validation{outfilesuffix}[Validating an Ope
 
 == What's Next?
 
-link:/playbooks/installation/ldap_integration{outfilesuffix}[Adding LDAP for Authentication]
+* link:/playbooks/installation/custom_certificates{outfilesuffix}[Configuring OpenShift to use Custom Certificates]
+* link:/playbooks/installation/ldap_integration{outfilesuffix}[Adding LDAP for Authentication]
