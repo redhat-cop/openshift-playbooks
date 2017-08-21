@@ -592,7 +592,25 @@ TODO
 
 ==== Syncing Images using Satellite 6
 
-TODO
+To sync Docker images in Satellite all you need to do is create a product and in that product create an repository for each image.
+
+----
+hammer product create --name "OCP Docker Images" --organization "c1-ocp.myorg.com"
+hammer repository create --name "openshift3/ose" --organization-id "c1-ocp.myorg.com" --content-type docker --url "https://registry.access.redhat.com" --docker-upstream-name "openshift3/ose" --product "OCP Docker Images"
+----
+
+NOTE: Satellite will sync ALL tags for each image repository you create so it might be space intensive.
+
+There is a script available at https://github.com/redhat-cop/openshift-toolkit/tree/master/satellite/populate-ocp.sh that can be used to save time.
+
+By adding the below 2 lines in your inventory file you configure OpenShift to consume the images from Satellite that was synced above.
+
+----
+oreg_url=satellite.example.com:5000/lab-ocp_docker_images-openshift3_ose-${component}:${version}
+cli_docker_additional_registries=satellite.example.com:5000
+----
+
+Satellite does not give you an option of the above naming scheme so you will need to modify imagestreams accordingly.
 
 === Sync RPM Channels
 
