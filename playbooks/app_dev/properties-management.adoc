@@ -1,3 +1,14 @@
+```
+---
+---
+Raffaele Spazzoli <rspazzol@redhat.com>
+v1.0, 2017-08-28
+:toc: macro
+:toc-title:
+
+toc::[]
+
+
 == Environment Dependent Property Management Strategies for OpenShift Pipelines
 
 One of the things to think about when designing promotion pipelines for applications deployed in OpenShift is a strategy for managing environment-dependent properties. +
