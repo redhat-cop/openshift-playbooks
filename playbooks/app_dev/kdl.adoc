@@ -1,3 +1,13 @@
+```
+---
+---
+Raffaele Spazzoli <rspazzol@redhat.com>
+v1.0, 2017-08-28
+:toc: macro
+:toc-title:
+
+toc::[]
+
 = KDL a notation to describe Kubernetes application deployments
 
 == Introduction
