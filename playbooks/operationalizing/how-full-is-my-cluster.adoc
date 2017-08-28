@@ -1,3 +1,15 @@
+```
+---
+---
+Raffaele Spazzoli <rspazzol@redhat.com>
+v1.0, 2017-08-28
+:toc: macro
+:toc-title:
+
+toc::[]
+
+
+
 = How Full is my OpenShift Cluster?
 
 If you are in the early stages of your OpenShift implementation you may find it hard to answer this question: How full is my cluster? +
