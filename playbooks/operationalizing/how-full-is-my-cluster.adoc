@@ -24,7 +24,7 @@ https://docs.openshift.com/container-platform/latest/dev_guide/compute_resources
 ||*When it’s evaluated*|*Purpose*
 
 |Quotas|Request time.|To limit how many resources a single tenant can request so that they cannot take over the cluster.
-|Requests|https://docs.openshift.com/container-platform/3.6/admin_guide/scheduling/scheduler.html[Scheduling time].|Requests are used to choose which node is the best fit for the given workload (together with other criteria).
+|Requests|https://docs.openshift.com/container-platform/latest/admin_guide/scheduling/scheduler.html[Scheduling time].|Requests are used to choose which node is the best fit for the given workload (together with other criteria).
 |Limits|Run time.|Limits are used to limit the maximum amount of resources that a container can use at runtime.
 |===
 
