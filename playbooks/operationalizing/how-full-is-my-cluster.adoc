@@ -133,7 +133,7 @@ oc proxy &
 docker run -it --net=host raffaelespazzoli/ocp-ops-view 
 ```
 
-And then point your browser to http://localhost:8080/[http://localhost:8080]
+And then point your browser to `http://localhost:8080`.
 
 === Running Kube-ops-view in your cluster
 
