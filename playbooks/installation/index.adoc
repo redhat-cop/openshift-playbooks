@@ -846,5 +846,6 @@ link:/playbooks/installation/install_validation{outfilesuffix}[Validating an Ope
 
 == What's Next?
 
+* link:/playbooks/installation/admin_overview{outfilesuffix}[Overview of OpenShift for Administrators]
 * link:/playbooks/installation/custom_certificates{outfilesuffix}[Configuring OpenShift to use Custom Certificates]
 * link:/playbooks/installation/ldap_integration{outfilesuffix}[Adding LDAP for Authentication]
