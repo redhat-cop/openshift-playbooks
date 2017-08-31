@@ -10,10 +10,9 @@ toc::[]
 
 
 
-= How Full is my OpenShift Cluster?
+= Building a Capacity Management Strategy for OpenShift?
 
-If you are in the early stages of your OpenShift implementation you may find it hard to answer this question: How full is my cluster? +
-In this blog post I’ll try  to provide a very simple and quick way to answer this question,  something that you can use while you develop a more mature and comprehensive approach to monitoring OpenShift . +
+In this article we will lay the foundations to do proper capacity management in OpenShift . +
 But before that we need to make sure we understand the question.
 
 == Quotas, Requests, Limits
