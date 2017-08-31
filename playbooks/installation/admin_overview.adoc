@@ -191,3 +191,7 @@ Additional 20-25 GB for every additional 8 GB Memory | Growth limited by capacit
 | /var/lib/origin/openshift.local.volumes | Ephemeral volume storage for pods. This includes anything external that is mounted into a container at runtime. Includes environment variables, kube secrets, and data volumes not backed by persistent storage PVs. | Varies | Minimal if pods requiring storage are using Persistent Volumes; If using ephemeral storage, this can grow quite quickly.
 | /var/log | Log files for all components | 10 - 30 GB | Log files can grow quickly; size can be managed by growing disks or managed using logrotate
 |=====
+
+== What's Next?
+
+* link:/playbooks/operationalization/monitoring_guide.adoc
