@@ -36,9 +36,9 @@ Docker is an essential component of an OpenShift environment. The overall health
 
 |Docker Daemon |Check that docker is running on a system | `systemctl is-active docker`
 
-|Docker Storage|Check that docker's local volume is not full | `echo "$(lvs \| awk '/docker-pool/ {print $5}') > 70" \| bc`
+|Docker Storage|Check that docker's storage has adequate space | `echo $(echo \"$(docker info 2>/dev/null \| awk '/Data Space Available/ {print $4}') / $(docker info 2>/dev/null \| awk '/Data Space Total/ {print $4}')\" \| bc -l) '>' 0.3 \| bc -l`
 
-|Docker Metadata Storage |Check that docker's metadata storage volume is not full | `echo "$(lvs \| awk '/docker-pool/ {print $6}') > 70" \| bc`
+|Docker Metadata Storage |Check that docker's metadata storage volume is not full | `echo $(echo \"$(docker info 2>/dev/null \| awk '/Metadata Space Available/ {print $4}') / $(docker info 2>/dev/null \| awk '/Metadata Space Total/ {print $4}')\" \| bc -l) '>' 0.3 \| bc -l`
 
 |=========================================================
 
@@ -81,9 +81,9 @@ Many OpenShift components expose HTTP based endpoints for interrogating the heal
 
 |Registry |Check the health of the Registry| `curl -I https://docker-registry.default.svc.cluster.local:5000/healthz \| grep 200`
 
-|Logging | Check the health of the EFK Logging Stack | https://github.com/redhat-cop/openshift-toolkit/blob/master/health_check/elasticsearch-health-check-ocp34.sh
+|Logging | Check the health of the EFK Logging Stack | Because of the various components and complexities involved, we recommend the link:https://github.com/redhat-cop/openshift-toolkit/blob/master/health_check/elasticsearch-health-check-ocp34.sh[OpenShift Metrics health check script].
 
-|Metrics | Check the health of the Metrics Stack | https://github.com/redhat-cop/openshift-toolkit/blob/master/health_check/metrics-health-check.sh
+|Metrics | Check the health of the Metrics Stack | Because of the various components and complexities involved, we recommend the https://github.com/redhat-cop/openshift-toolkit/blob/master/health_check/metrics-health-check.sh[OpenShift Metrics health check script].
 
 |=========================================================
 
