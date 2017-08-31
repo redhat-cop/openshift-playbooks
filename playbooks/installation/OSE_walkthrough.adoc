@@ -1,0 +1,1657 @@
+= OSE 3.1 Installation Steps
+
+
+== Environment Assumptions:
+
+. You have a properly configured NFS server with the share set to 755 and owned
+by nfsnobody:nfsnobody. I recommend (rw,sync,root_squash,no_wdelay)
+. You have a working internal DNS setup
+a. All of the hosts in your openshift cluster have forward and reverse entries
+b. You setup a wildcard DNS entry which points at the IP of your infrastructure
+nodes (more on this later)
+
+
+
+== OSE Prereqs: Repositories
+
+You will need to subscribe all hosts to either access.redhat.com or a satellite
+installation. After that you need the following repositories:
+
+----
+subscription-manager repos \
+    --enable="rhel-7-server-rpms" \
+    --enable="rhel-7-server-extras-rpms" \
+    --enable="rhel-7-server-ose-3.1-rpms"
+----
+
+
+== OSE Prereqs: Required packages
+
+You will need the following packages in order to launch the ansible installer
+on each host:
+
+----
+yum install -y wget git net-tools bind-utils iptables-services bridge-utils
+bash-completion atomic-openshift-utils docker-selinux-1.8.2-10.el7 docker-1.8.2-10.el7
+----
+
+
+== OSE Prereqs: Ansible
+
+If you are not using a software load balanacer to run the installer from, as
+suggested above, the steps below should be executed on another host which ansible
+is installed on. After you have ansible installed from the repositories prereq
+above, you will need to setup your ansible host file. For the purpose of OSE,
+the OpenShift team keeps an example host file
+link:https://github.com/openshift/openshift-ansible/blob/master/inventory/byo/hosts.ose.example[located on git].
+
+I have paired down the host file to bare essentials:
+----
+[masters]
+master01.ose.example.com openshift_schedulable=false
+master02.ose.example.com openshift_schedulable=false
+master03.ose.example.com openshift_schedulable=false
+
+[nodes]
+infrastructure01.ose.example.com openshift_node_labels="{'region': 'infrastructure', 'zone': 'default'}"
+infrastructure02.ose.example.com openshift_node_labels="{'region': 'infrastructure', 'zone': 'default'}"
+application01.ose.example.com openshift_node_labels="{'region': 'application', 'zone': 'east'}"
+application02.ose.example.com openshift_node_labels="{'region': 'application', 'zone': 'west'}"
+master01.ose.example.com openshift_node_labels="{'region': 'infrastructure', 'zone': 'default'}"
+master02.ose.example.com openshift_node_labels="{'region': 'infrastructure', 'zone': 'default'}"
+master03.ose.example.com openshift_node_labels="{'region': 'infrastructure', 'zone': 'default'}"
+
+[etcd]
+master01.ose.example.com
+master02.ose.example.com
+master03.ose.example.com
+
+[lb]
+lb00.ose.example.com
+
+[OSEv3:children]
+masters
+nodes
+etcd
+lb
+
+[OSEv3:vars]
+deployment_type=openshift-enterprise
+openshift_master_cluster_method=native
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/htpasswd'}]
+openshift_master_cluster_hostname=lb00.ose.example.com
+openshift_master_cluster_public_hostname=openshift.example.com
+openshift_master_portal_net=172.50.0.0/16
+osm_cluster_network_cidr=10.5.0.0/16
+osm_default_subdomain=apps.ose.example.com
+openshift_use_dnsmasq=False
+----
+===========
+*IMPORTANT NOTE:* the _osm_default_subdomain_ is optional, however if you do not
+specify it, each time you create an application you may have problems with your
+route. The default subdomain is used to create a route when you start a new
+application. For example, by default if your project is called
+"mobile-applications" and your appname is called "newsreader" the following
+route will be created automatically *only if* you specify osm_default_subdomain:
+ *_newsreader-mobile-applications.apps.ose.example.com_*
+===========
+Ansible uses each section of its host file as a way to reference a set of servers
+while executing commands. I usually create something like this for convenience:
+
+----
+[nomasters]
+infrastructure01.ose.example.com
+infrastructure02.ose.example.com
+application01.ose.example.com
+application02.ose.example.com
+----
+
+So that if I need to execute an ansible command against everything but the
+masters, I can reference *[nomasters*. While this is not an ansible tutorial,
+having some basics is helpful. In general ansible has 3 modules that you may
+make use of frequently: ping, copy and adhoc
+
+*adhoc*: This is essentially a bash command you pass into ansible that it will
+run on a "one-off" basis
+*copy*: Used to copy files from one source to multiple destinations
+*ping*: A module that returns "pong" if the host is up
+
+*Ansible requires either passwordless root ssh keys or appropriate sudo
+permissions to function*
+
+Some example ansible commands:
+
+----
+# copies a file in the local directory to the dest directory for servers in 'nodes' group
+ansible nodes -m copy -a "src=docker-storage-setup dest=/etc/sysconfig/docker-storage-setup"
+
+# runs the subscription-manager command on all OSE hosts
+ansible OSEv3 -a 'subscription-manager repos --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.1-rpms"'
+ansible OSEv3 -a "yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion atomic-openshift-utils docker-selinux-1.8.2-10.el7 docker-1.8.2-10.el7"
+
+# Runs the ping module on all OSE hosts
+ansible OSEv3 -m ping
+----
+
+
+== OSE Prereqs: Docker
+
+In order to manage docker images properly it is recommended that you setup
+docker storage. If you omit this step, docker will attempt to carve off space
+from your root LVM. The easiest method for this prereq is to have a separate
+block device that you can give to the docker-storage. In my case the disk I am
+passing in is */dev/vdb*
+
+/etc/sysconfig/docker-storage-setup:
+----
+cat <<EOF > /etc/sysconfig/docker-storage-setup
+DEVS=/dev/vdb
+VG=docker-vg
+EOF
+----
+
+After this is completed you need to run
+
+----
+docker-storage-setup
+----
+
+Finally, you need to add an insecure registry (since it will be self signed) to
+the docker configuration. This uses *openshift_master_portal_net* from your
+ansible file:
+
+----
+sed -i 's/selinux-enabled/selinux-enabled\ --insecure-registry\ 172.50.0.0\/16/g' /etc/sysconfig/docker
+----
+
+After this is completed make sure that docker is enabled and started
+
+----
+systemctl enable docker
+systemctl start docker
+----
+
+_The ansible way to do the above_
+
+----
+ansible nodes -a "sed -i 's/selinux-enabled/selinux-enabled\ --insecure-registry\ 172.50.0.0\/16/g' /etc/sysconfig/docker"
+ansible nodes -m copy -a "src=/etc/sysconfig/docker-storage-setup dest=/etc/sysconfig/docker-storage-setup"
+ansible nodes -a  "docker-storage-setup"
+ansible nodes -a "systemctl enable docker"
+ansible nodes -a "systemctl start docker"
+----
+
+
+== OSE Prereqs: Misc Notes
+
+The following notes should be understood:
+
+. The installer expects SELinux to be enabled and will bail without it
+. The installer *WILL* adjust firewall rules. IPTables is turned on and
+firewalld is masked
+. Your DNS should be external to the OSE environment. Because there are
+firewall adjustments, if you have DNS being served from within the environment,
+the installation will fail after it can no longer detect DNS
+
+
+== OSE Run the installer
+
+The last thing, as long as your ansible host file is set properly, is to run
+the installation
+
+----
+ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
+----
+===========
+*IMPORTANT NOTE:* The latest version of the ansible installer playbooks can be
+cloned from git: link:https://github.com/openshift/openshift-ansible[openshift github].
+While you can use the version that comes with the rpm, you can also check out
+the latest for the packages you have. You can find this by querying rpm:
+===========
+----
+[root@lb00 ~]# rpm -qa |grep openshift-ansible
+openshift-ansible-docs-3.0.88-1.git.0.31c3daf.el7.noarch
+openshift-ansible-playbooks-3.0.88-1.git.0.31c3daf.el7.noarch
+openshift-ansible-3.0.88-1.git.0.31c3daf.el7.noarch
+openshift-ansible-filter-plugins-3.0.88-1.git.0.31c3daf.el7.noarch
+openshift-ansible-roles-3.0.88-1.git.0.31c3daf.el7.noarch
+openshift-ansible-lookup-plugins-3.0.88-1.git.0.31c3daf.el7.noarch
+----
+
+So in this case I have 3.0.88-1, I would access this like this:
+
+----
+git clone https://github.com/openshift/openshift-ansible
+cd openshift-ansible
+git checkout tags/openshift-ansible-3.0.88-1
+----
+
+If you want to see all tags available for checkout you can do
+----
+git tag -l
+----
+
+*The installer uses relative paths meaning it can be run from wherever you
+clone it*
+
+
+If everything has gone successfully you should see the playrecap similar to this
+
+----
+PLAY RECAP ********************************************************************
+master01.ose.example.com : ok=520  changed=16   unreachable=0    failed=0
+master02.ose.example.com : ok=273  changed=7    unreachable=0    failed=0
+master03.ose.example.com : ok=273  changed=7    unreachable=0    failed=0
+infrastructure01.ose.example.com : ok=99   changed=4    unreachable=0    failed=0
+infrastructure02.ose.example.com : ok=98   changed=0    unreachable=0    failed=0
+application01.ose.example.com : ok=98   changed=0    unreachable=0    failed=0
+application02.ose.example.com : ok=98   changed=0    unreachable=0    failed=0
+lb00.ose.example.com : ok=38   changed=0    unreachable=0    failed=0
+localhost                  : ok=27   changed=0    unreachable=0    failed=0
+----
+
+
+= Post Installation: Cluster configuration
+
+== Verification of installation
+
+
+There are a few steps you can take to test for a successful installation.
+On a master you can run 'oc get nodes'
+
+----
+[root@master01 ~]# oc get nodes
+NAME                                     LABELS                                                                                    STATUS                     AGE
+master01.example.com   kubernetes.io/hostname=master01.example.com,region=infra,zone=default   Ready,SchedulingDisabled   9h
+master02.example.com   kubernetes.io/hostname=master02.example.com,region=infra,zone=default   Ready,SchedulingDisabled   9h
+master03.example.com   kubernetes.io/hostname=master03.example.com,region=infra,zone=default   Ready,SchedulingDisabled   9h
+infrastructure01.example.com   kubernetes.io/hostname=infrastructure01.example.com,region=infra,zone=default   Ready                      7h
+infrastructure02.example.com   kubernetes.io/hostname=infrastructure02.example.com,region=infra,zone=default   Ready                      8h
+application01.example.com   kubernetes.io/hostname=application01.example.com,region=primary,zone=east    Ready                      8h
+application02.example.com   kubernetes.io/hostname=application02.example.com,region=primary,zone=east    Ready                      8h
+----
+
+
+Next you can verify the ETCD membership
+
+----
+[root@master01 ~]# etcdctl -C     https://master01.example.com:2379,https://master02.example.com:2379,https://master03.example.com:2379     --ca-file=/etc/origin/master/master.etcd-ca.crt     --cert-file=/etc/origin/master/master.etcd-client.crt     --key-file=/etc/origin/master/master.etcd-client.key member list
+e0e2c123213680f: name=master01.example.com peerURLs=https://192.168.200.50:2380 clientURLs=https://192.168.200.50:2379
+64f1077d838e039c: name=master02.example.com peerURLs=https://192.168.200.51:2380 clientURLs=https://192.168.200.51:2379
+a9e031ea9ce2a521: name=master03.example.com peerURLs=https://192.168.200.52:2380 clientURLs=https://192.168.200.52:2379
+----
+
+
+And then the cluster status
+
+----
+[root@master01 ~]# etcdctl -C     https://master01.example.com:2379,https://master02.example.com:2379,https://master03.example.com:2379     --ca-file=/etc/origin/master/master.etcd-ca.crt     --cert-file=/etc/origin/master/master.etcd-client.crt     --key-file=/etc/origin/master/master.etcd-client.key cluster-health
+member e0e2c123213680f is healthy: got healthy result from https://192.168.200.50:2379
+member 64f1077d838e039c is healthy: got healthy result from https://192.168.200.51:2379
+member a9e031ea9ce2a521 is healthy: got healthy result from https://192.168.200.52:2379
+cluster is healthy
+----
+
+
+Finally, if you have setup a load balancer as above, you can curl against the
+port HA-proxy is running on (most of the output below is truncated for space)
+
+----
+[root@master01 ~]# curl http://lb00.example.com:9000
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html><head><title>Statistics Report for HAProxy</title>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+
+---snip---
+
+</style></head>
+<body><h1><a href="http://www.haproxy.org/" style="text-decoration: none;">HAProxy version 1.5.14, released 2015/07/02</a></h1>
+<h2>Statistics Report for pid 17896</h2>
+<hr width="100%" class="hr">
+<h3>&gt; General process information</h3>
+<table border=0><tr><td align="left" nowrap width="1%">
+<p><b>pid = </b> 17896 (process #1, nbproc = 1)<br>
+<b>uptime = </b> 0d 9h51m59s<br>
+<b>system limits:</b> memmax = unlimited; ulimit-n = 40035<br>
+<b>maxsock = </b> 40035; <b>maxconn = </b> 20000; <b>maxpipes = </b> 0<br>
+current conns = 149; current pipes = 0/0; conn rate = 5/sec<br>
+Running tasks: 1/157; idle = 96 %<br>
+</td><td align="center" nowrap>
+<table class="lgd"><tr>
+
+---snip---
+----
+
+
+
+== Setting up Authentication
+
+The official docs can be found link:https://docs.openshift.com/enterprise/3.1/install_config/configuring_authentication.html[here]
+
+
+=== htpasswd authentication
+
+If you setup htpasswd as your identify provider you will now have to create
+/etc/origin/htpasswd. This can be done via the 'htpasswd' command
+
+----
+htpasswd -c /etc/origin/htpasswd <username>
+----
+
+This file will need to be sync'd across all the masters as there is currently
+no facility for this. It may work without syncing, but this is luck of the draw
+depending on which master is handling the authentication request
+
+
+=== LDAP/Active Directory Connection
+
+Setting up LDAP takes some knowledge of how your schema is laid out. If you
+don't have this information easily available, I recommend using an ldap browser
+such as Apache Studio. A tutorial on LDAP browsers is outside of the scope of
+this walkthrough however.
+
+You will need a bind account which has access to *read* most of the common
+components within LDAP/AD (users, groups, OUs etc.). If you are adding LDAP
+auth as a post-installation step, you will need to *edit the master config on
+each server*
+
+*/etc/origin/master/master-config.yaml*:
+----
+---snip---
+networkConfig:
+  clusterNetworkCIDR: 10.5.0.0/16
+  hostSubnetLength: 8
+  networkPluginName: redhat/openshift-ovs-subnet
+# serviceNetworkCIDR must match kubernetesMasterConfig.servicesSubnet
+  serviceNetworkCIDR: 172.50.0.0/16
+oauthConfig:
+  assetPublicURL: https://openshift.example.com:8443/console/
+  grantConfig:
+    method: auto
+  identityProviders:
+  - challenge: true
+    login: true
+    mappingMethod: claim
+    name: ldap_provider
+    provider:
+      apiVersion: v1
+      attributes:
+        email:
+        - mail
+        id:
+        - dn
+        name:
+        - cn
+        preferredUsername:
+        - uid
+      bindDN: uid=<username>,ou=People,dc=example,dc=com
+      bindPassword: <ldap password>
+      insecure: true
+      kind: LDAPPasswordIdentityProvider
+      url: ldap://<ip or dns to ldap server>:389/dc=example,dc=com
+---snip---
+----
+
+I have included the networking section for context. You only need to edit the
+oauthConfig section. In a multi-master setup the *atomic-openshift-master-api*
+service needs to be restarted any time you make a change to master-config.yaml.
+In a single master setup its *atomic-openshift-master*
+===========
+*IMPORTANT NOTE:* a very broad ldap url as in the example above, will search
+the entire forest meaning that anyone who is in your LDAP/AD forest will be
+considered valid and this may not be what you want. You will need to work with
+LDAP filters in order to narrow this down. I provide the following as an example
+only and not as a filtering best practice
+===========
+----
+url: "ldap://ldapserver.example.com:389/DC=example,DC=com?sAMAccountName?sub?(&(memberOf=ClusterAdmin,OU=Roles,OU=Accounts,DC=example,DC=com))"
+----
+
+This would limit valid users to those with the sAMAccountName attribute with a
+membership to the group "ClusterAdmin" inside of the Accounts/Roles/Server_admin
+OU.
+
+
+=== LDAP/Active Directory Sync
+
+The LDAP sync is actually different from the configuration above. In the above,
+access is granted based on arbitrary associations which you decide. LDAP sync is
+designed so that you can apply OpenShift Enterprise permissions (rolebindings)
+to groups. LDAP sync is designed to sync groups which you specify and keep
+them up to date
+
+Official documentation is link:https://docs.openshift.com/enterprise/3.1/install_config/syncing_groups_with_ldap.html[here]
+
+Below is a sample sync config. It will look familiar. It uses standard LDAP
+syntax, you can do goupUID mapping if you choose (i.e. linking LDAP groups to a
+specific OSE group), however if you leave this section unspecified, it will
+create OSE groups with the name of the group in LDAP.
+
+----
+kind: LDAPSyncConfig
+apiVersion: v1
+url: ldap://ldapserver.example.com:389
+insecure: true
+bindDN: "uid=<username>,ou=People,dc=example,dc=com"
+bindPassword: passwd
+rfc2307:
+ groupsQuery:
+   baseDN: "OU=ClusterAdmin,OU=Roles,OU=Accounts,DC=example,DC=com"
+   scope: sub
+   derefAliases: never
+   filter: (objectClass=group)
+ groupUIDAttribute: cn
+ groupNameAttributes: [ cn ]
+ groupMembershipAttributes: [ member ]
+ usersQuery:
+   baseDN: "DC=example,DC=com"
+   scope: sub
+   derefAliases: never
+   filter: (objectClass=inetOrgPerson)
+ userUIDAttribute: dn
+ userNameAttributes: [ sAMAccountName ]
+----
+
+===========
+*IMPORTANT NOTE:*: The above will not work for your environment, you will have
+to use your ldap browser to get the specific attributes, OUs and paths from
+your specific environment. A tutorial for *ldapsearch*, is outside the scope of
+this walkthrough but most of the information you require is available through
+ldapsearches.
+===========
+
+After you have completed your ldap sync file, you run the sync like so
+(presumably on some cron interval that makes sense for your environment)
+
+----
+oadm groups sync --sync-config=<sync config file> --confirm
+----
+
+===========
+*NOTE:* There may be cases where you don't want all of the groups inside of an
+OU, in this case you can create a whitelist file which is just a list of groups
+which you want to permit. If you are syncing with a white list the syntax is
+===========
+
+----
+oadm groups sync --whitelist=<whitelist_file>  --sync-config=<sync config file>   --confirm
+----
+
+
+= Post Installation: Cluster Configuration
+
+
+== OSE Internal Docker Registry Setup
+
+=== Prepare infrastructure nodes for nfs storage
+
+As part of the docker registry you may want to have additional storage available
+for OpenShift to store the images of applications you build. In this example,
+the docker registries will be placed on the infrastructure nodes. Red Hat uses
+SELinux to help secure docker containers and since the registry itself is a
+docker container, SELinux will prevent images from being pushed to the internal
+registry unless you set the following sebool's:
+
+----
+setsebool -P virt_use_nfs 1
+setsebool -P virt_sandbox_use_nfs 1
+----
+
+This allows the infrastructure nodes to make use of the NFS shares inside of a
+docker container thereby providing persistent storage for your registry.
+
+
+=== Persistent Volumes & Claims
+
+OpenShift uses the concept of Persistent Volumes and a corresponding claim to
+manage external storage requirements, both for stateful applications as well
+as things like the docker registry. While you can mount the shares directly
+into a container, this does not allow the pod to be portable. The way around
+this is to have a Persistent Volume set up and then claim it inside of the
+application configuration. This way each time a new pod is required by the
+application it can refer to its configuration to use the shared storage. To
+setup a persistent volume create a json (or yaml) file similar to the following:
+
+*nfs-pv.json*
+----
+{
+  "apiVersion": "v1",
+  "kind": "PersistentVolume",
+  "metadata": { "name": "registry-nfs-storage"
+  },
+  "spec": { "capacity": { "storage": "50Gi" }, "accessModes": [ "ReadWriteOnce" ], "nfs": { "path": "<absolute path being shared by server>", "server": "<server ip or dns name>" }, "persistentVolumeReclaimPolicy": "Recycle"
+  }
+}
+----
+
+===========
+*NOTE:* The capacity: {storage: 50Gi} is *metadata only.* It does not
+necessarily reflect the amount of space available for use on a share. This
+metadata is used in the event you have multiple shares and a claim is issued.
+The claim will attempt to find the metadata which most closely matches its
+requirements without going over. For example, assume you have 3 persistent
+volumes (pv) with the following metadata: 50G, 30G and 5G. A claim that
+requests 10G will search the metadata and then select the second share (30G)
+because it most closely matches its needs.
+===========
+
+After you create a file with the above contents, you can create the pv with the
+following command
+
+----
+oc create -f nfs-pv.json
+----
+
+You should see the following output:
+
+----
+[root@master01 ~]# oc create -f nfs.json
+persistentvolume "registry-nfs-storage" created
+----
+
+Once the pv is created you can view it by issuing
+
+----
+[root@master01 ~]# oc get persistentvolumes
+NAME                   LABELS    CAPACITY   ACCESSMODES   STATUS    CLAIM                REASON    AGE
+registry-nfs-storage   <none>    50Gi       RWO           Bound     default/nfs-claim1             1h
+----
+
+
+You are now ready to create a claim. After a claim is created you then associate
+a claim with a specific deployment configuration.
+
+claim.yaml
+----
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-claim1
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 40Gi
+----
+
+And you create the claim in the same fashion as the pv:
+
+----
+[root@master01 ~]# oc create -f claim.yaml
+persistentvolumeclaim "nfs-claim1" created
+
+[root@master01 ~]# oc get persistentvolumeclaim
+NAME         LABELS    STATUS    VOLUME                 CAPACITY   ACCESSMODES   AGE
+nfs-claim1   <none>    Bound     registry-nfs-storage   50Gi       RWO           40s
+----
+
+
+
+=== Deploy Registry
+
+Now we are ready to deploy the registry. There are two parts to this, first
+the actual deployment command, and second we are going to change the deployment
+config so that it makes use of the persistent volume we setup in the steps
+previously.
+
+To initiate a registry creation:
+----
+oadm registry --config=/etc/origin/master/admin.kubeconfig \
+   --credentials=/etc/origin/master/openshift-registry.kubeconfig \
+   --images='registry.access.redhat.com/openshift3/ose-${component}:${version}' --selector='region=infra'
+----
+
+===========
+*IMPORTANT NOTE:* the --selector is very important. This tells the resource
+where to deploy. It must align with the labels you see in the output from
+===========
+
+----
+oc get nodes
+----
+
+After the registry has been created you should see
+----
+DeploymentConfig "docker-registry" created
+Service "docker-registry" created
+----
+
+Which indicates that a deployment will soon be initiated. The next step is
+actually going to re-initiate a deployment because we are going to be changing
+the config to add persistent storage. As part of the deployment the registry
+image is downloaded from the Red Hat registry, so if you edit the deployment
+config while this is on going you should not have any issues. However, there is
+ a chance when the registry gets redeployed that its' internal IP changes.
+ While the masters are notified of this change, often a restart of the
+ atomic-openshift-master-api service is required in order for the new registry
+ IP to take effect.
+
+To attach persistent storage to the docker registry issue the following:
+
+----
+oc volume deploymentconfigs/docker-registry --add --name=registry-storage -t persistentvolumeclaim \
+     --claim-name=<pvc_name> --overwrite
+----
+
+Where pvc_name matches the value of
+----
+oc get persistentvolumeclaims
+----
+
+===========
+*IMPORTANT NOTE:* the *--name=registry-storage* must be exactly this. In the
+screenshot below, you can see that the mount "registry-storage" is mounted
+to /registry. Since we want the NFS mount to be used for the registry storage,
+we must overwrite the current definition for "registry-storage"
+===========
+
+=== (Optional) Expose Registry
+
+===========
+*IMPORTANT NOTE:* This step *MUST* be done *AFTER* creating an OSE router
+===========
+
+Exposing the registry may be required for any number of reasons. By default
+OSE registries are kept to the internal network only. If you wanted to
+reference a registry from different segments of your network (say through a DMZ)
+ or you wanted to provide access for people to do 'docker pull' to review exact
+ images that are deployed, you will want to expose the registry
+
+In general the steps required to expose a registry are:
+
+. obtain the service ip and port of the registry
+. generate or obtain a certificate and a key that the registry will use to secure its' route
+. create a secret to hold the certs
+. add the secret to the *default* service account
+. mount the secrets into the registry so it can access the certs
+. enable TLS on the docker registry
+. make the liveness probe aware that it should be using TLS now
+. copy the certis into the docker directory so docker can use TLS certs
+. remove --insecure-registry from /etc/sysconfig-docker for the internal registry
+. create a passthrough route for the docker registry
+
+===========
+*NOTE:* You may wish to make the IPs of your registry static. Any change to
+the deployment of a registry may cause it to get a new IP. Before making
+changes to your registry you should obtain the current cluster IP
+===========
+----
+oc get svc/docker-registry -o yaml | grep clusterIP
+----
+
+After you obtain the IP, make the changes to your registry and then export
+the new registry configuration to a yaml file (replacing the new IP with the
+appropriate IP)
+
+----
+# get the current cluster IP
+oc get svc/docker-registry -o yaml | grep clusterIP > registry_cluster_ip
+
+# edit the deploymentconfig and then dump the deployment config to a file
+oc get svc/docker-registry -o yaml > registry.yaml
+
+# replace the cluster IP with the saved one
+sed -i "s/.*clusterIP:.*/`cat registry_cluster_ip`/g" registry.yaml
+
+# remove the old registry
+oc delete service/docker-registry deploymentconfig/docker-registry
+
+# Load the proper config
+oc create -f registry.yaml
+----
+
+The reason it must be done this was is the IPs of the registry are immutable
+after it is created, so the registry must be deleted and recreated to maintain
+the ip.
+
+
+==== Get the IP/Port of the docker registry
+
+----
+
+[root@master01 tmp]# oc get service/docker-registry
+NAME              CLUSTER_IP      EXTERNAL_IP   PORT(S)    SELECTOR                  AGE
+docker-registry   172.50.254.67   <none>        5000/TCP   docker-registry=default   4h
+----
+
+
+==== Certificate for docker registry
+
+There are a few ways that you can get a certificate.
+
+1. Use the internal OSE CA:
+----
+oadm ca create-server-cert --signer-cert=ca.crt \
+    --signer-key=ca.key --signer-serial=ca.serial.txt \
+    --hostnames='docker-registry.default.svc.cluster.local,172.50.254.67' \
+    --cert=registry.crt --key=registry.key
+----
+
+2. Have your own root CA provide a cert with a CN and a SAN (this is outside
+the scope of this tutorial)
+3. Have someone else provide the cert and key
+
+
+===========
+*IMPORTANT NOTE:*: The registry expects the files to be called *registry.crt*
+ and *registry.key*. If you have an intermediate CA file you need to combine
+ it with the cert generated by the CA.
+===========
+
+
+==== Dealing with secrets
+
+Next create the secret to store the certificate and key:
+
+----
+oc secrets new registry-secret registry.crt registry.key
+----
+
+Verify the secret was created properly:
+
+----
+oc get secrets registry-secret
+----
+
+Next add it to the *default* service account for OSE:
+----
+oc secrets add serviceaccounts/default secrets/registry-secret
+----
+
+Mount the secret into the container:
+----
+oc volume dc/docker-registry --add --type=secret \
+    --secret-name=registry-secret -m /etc/secrets
+----
+
+
+==== Enable TLS
+
+Enable TLS inside the container:
+----
+oc env dc/docker-registry \
+    REGISTRY_HTTP_TLS_CERTIFICATE=/etc/secrets/registry.crt \
+    REGISTRY_HTTP_TLS_KEY=/etc/secrets/registry.key
+----
+
+Make sure that the liveness probe checks the https address instead of http:
+----
+oc patch dc/docker-registry --api-version=v1 -p '{"spec": {"template": {"spec": {"containers":[{
+    "name":"registry",
+    "livenessProbe":  {"httpGet": {"scheme":"HTTPS"}}
+  }]}}}}'
+----
+
+Wait a few minutes for the pod to redeploy and then verify that the new pod is
+running TLS:
+----
+[root@master01 ~]# oc get pods
+NAME                       READY     STATUS             RESTARTS   AGE
+docker-registry-5-kej6h    1/1       Running            0          2m
+router-1-pt9pd             1/1       Running            0          4h
+
+[root@master01 ~]# oc log docker-registry-5-kej6h |grep tls
+W0528 18:00:27.135172   29821 cmd.go:200] log is DEPRECATED and will be removed in a future version. Use logs instead.
+time="2016-05-28T17:58:15.836322104-04:00" level=info msg="listening on :5000, tls" go.version=go1.4.2 instance.id=ca9a02c2-0d68-49fc-86cf-666b5d8ce9d1
+----
+
+Copy the CA certificate to the docker certificates directory for the hostname
+and ip. This *MUST* be done on all nodes in the cluster
+
+----
+ansible nodes -a "mkdir -p /etc/docker/certs.d/172.50.254.67:5000"
+ansible nodes -a "mkdir -p /etc/docker/certs.d/docker-registry.default.svc.cluster.local:5000"
+ansible nodes -m copy -a "src=ca.crt dest=/etc/docker/certs.d/172.50.254.67:5000/ca.crt"
+ansible nodes -m copy -a "src=/tmp/ca.crt dest=/etc/docker/certs.d/docker-registry.default.svc.cluster.local:5000/ca.crt"
+----
+
+
+==== Update /etc/sysconfig/docker
+
+We need to remove the insecure registry now that we have secured it, and we are
+going to put it in the --add-registry section
+----
+ansible nodes -a "sed -i 's/--insecure-registry=172\.50\.0\.0\/16//' /etc/sysconfig/docker"
+ansible nodes -a "sed -i "s/ADD_REGISTRY='/ADD_REGISTRY='--add-registry\ 172.50.0.0\/16\ /" /etc/sysconfig/docker"
+----
+
+Now we need to restart docker:
+----
+ansible nodes -a "systemctl daemon-reload"
+ansible nodes -a "systemctl restart docker"
+----
+
+
+==== Verify docker config
+
+In order to test the registry you will need to attempt to do a docker push/pull. You will need to login to the registry which includes the rolebinding *system:registry*. Docker push requires *system:image-builder*
+
+----
+oadm policy add-role-to-user system:registry <user_name>
+oadm policy add-role-to-user system:image-builder <user_name>
+----
+
+Log in as this user and get your token:
+----
+oc login -u <user_name>
+oc whoami -t
+----
+
+With this token you should be able to do a docker login:
+----
+docker login -u <username> -e <any_email_address> \
+    -p <token_value> <registry_ip>:<port>
+----
+
+If your certificates are bad, or you have misconfigured the ca.crt for docker
+you will see an error similar to this:
+
+----
+Error response from daemon: invalid registry endpoint https://172.50.254.67:5000/v0/: unable to ping registry endpoint https://172.50.254.67:5000/v0/
+v2 ping attempt failed with error: Get https://172.50.254.67:5000/v2/: x509: cannot validate certificate for 172.50.254.67 because it doesn't contain any IP SANs
+ v1 ping attempt failed with error: Get https://172.50.254.67:5000/v1/_ping: x509: cannot validate certificate for 172.50.254.67 because it doesn't contain any IP SANs. If this private registry supports only HTTP or HTTPS with an unknown CA certificate, please add `--insecure-registry 172.50.254.67:5000` to the daemon's arguments. In the case of HTTPS, if you have access to the registry's CA certificate, no need for the flag; simply place the CA certificate at /etc/docker/certs.d/172.50.254.67:5000/ca.crt
+----
+
+If everything went well you will see a successful login
+
+----
+WARNING: login credentials saved in /root/.docker/config.json
+Login Succeeded
+----
+
+Now attempt to push an image into the OSE repo
+----
+docker pull registry.access.redhat.com/rhscl/httpd-24-rhel7
+docker images
+docker tag 5a903a05d3a6 172.50.254.67:5000/openshift/httpd
+docker push 172.50.254.67:5000/openshift/httpd
+----
+
+On a different host you can then try pulling the image:
+----
+docker login -u <username> -e <any_email_address> \
+    -p <token_value> <registry_ip>:<port>
+[root@master02 ~]# docker pull 172.50.254.67:5000/openshift/httpd
+Using default tag: latest
+Trying to pull repository 172.50.254.67:5000/openshift/httpd ... latest: Pulling from openshift/httpd
+c453594215e4: Pull complete
+5a903a05d3a6: Pull complete
+Digest: sha256:6cdbd6f3329f1d856690f8eb8b92a001dde47ed164da1f8ec551117a3ce362d3
+Status: Downloaded newer image for 172.50.254.67:5000/openshift/httpd:latest
+----
+
+The docker registry is now secured with your custom certificate
+
+==== Create a passthrough route
+
+Create a json or yaml file with the following:
+
+----
+apiVersion: v1
+kind: Route
+metadata:
+  name: registry
+spec:
+  host: registry.apps.example.com
+  to:
+    kind: Service
+    name: docker-registry
+  tls:
+    termination: passthrough
+----
+
+===========
+*IMPORTANT NOTE:*: the host you specify in the "spec:" section needs to be one of the SANs inside of your cert. In addition, this needs to be resolvable via dns (either directly or via a wildcard entry)
+===========
+
+Finally, import the route
+
+----
+oc create -f route.yaml
+----
+
+If your cert does not match the host: entry you will receive an error similar to the following:
+----
+stratus@stratus-desktop ~  $ docker login -u stratus -e some@email.com -p <token> registry.apps.example.com
+Warning: '-e' is deprecated, it will be removed soon. See usage.
+Error response from daemon: Get https://registry.apps.example.com/v1/users/: x509: certificate is valid for docker-registry.default.svc.cluster.local, not registry.apps.example.com
+----
+
+On your client, you need to have the ca.crt located in */etc/docker/certs.d/registry.apps.example.com* or you will see this error
+----
+Error response from daemon: Get https://registry.apps.example.com/v1/users/: x509: certificate signed by unknown authority
+----
+
+If your login is successful, try to pull from your OSE registry:
+----
+stratus@stratus-desktop ~  $ docker pull registry.apps.example.com/openshift/httpd
+Using default tag: latest
+latest: Pulling from openshift/httpd
+
+afafa291bfcc: Pull complete
+175a0419cc61: Pull complete
+Digest: sha256:6cdbd6f3329f1d856690f8eb8b92a001dde47ed164da1f8ec551117a3ce362d3
+Status: Downloaded newer image for registry.apps.example.com/openshift/httpd:latest
+----
+
+
+== OSE Router Setup
+
+In comparison to the docker registry, creating the router is relatively simple. Depending on which point release of OSE 3.1, OpenShift may have attempted to deploy a router for you. Usually if the registry is not setup when it attempts to create the router, the router deployment will fail. To be on the safe side I suggest removing the default deployed router and redeploy it
+
+Remove the router (if it exists)
+----
+oc delete deploymentconfig/router service/router
+----
+
+Then recreate the router:
+----
+oadm router --service-account=router --credentials='/etc/origin/master/openshift-router.kubeconfig'  --selector='region=infra'
+----
+
+Thats it for the router. If you have set up proper authentication for a user, you can grant this user cluster-admin rights by issuing the following:
+----
+oadm policy add-cluster-role-to-user cluster-admin stratus
+----
+
+This will allow you to login to the webUI and monitor the progress from there. If you prefer to monitor from the CLI the relevant commands are
+----
+oc project default
+oc get events
+oc status
+oc get pods
+oc describe pod <pod name>
+----
+
+= Creating a project
+
+== Methods for creating a project
+
+There are three ways you can create a project:
+
+1. oc project <project name>
+2. In the webUI, if you are a self provisioner you will be able to create a project by clicking the button
+3. API call.
+
+The first two are very easy for the end user. The third method involves passing a json payload to the API. The API method is obviously the most flexible because you can customize every little detail. It is however, the most complicated. A basic project creation will look something like this
+
+----
+#!/usr/bin/python
+
+import requests
+auth_token = "<your token here>"
+header = {"Authorization": "Bearer %s" %auth_token}
+base_url = "https://lb00.example.com:8443"
+project_url = "/oapi/v1/projects"
+groups_url = "/oapi/v1/groups"
+deploy_config_url = "/oapi/v1/deploymentconfigs"
+
+def create_project(url_base, resource_url, project_name):
+    """ This method will create a new project"""
+    object_url = url_base + resource_url
+    # We will need to pass the payload as a json object and not data for this to work
+    payload = {"kind": "Project","metadata":{"name":project_name}}
+    creation_request = requests.post(url=object_url,headers=header,verify=False,json=payload).json()
+    print(creation_request)
+
+print("\n    Creating project")
+create_project(base_url, project_url,"my-new-project")
+----
+
+Going indepth on the API is also outside the scope of this post. If you want more information, you can see the link:https://docs.openshift.com/enterprise/latest/rest_api/index.html[official docs]
+
+
+== Understanding Permissions
+
+After you have created a project you need to start to manage permissions if you plan on having multiple users accessing the system.
+
+For testing purposes create some groups and add your users to them
+----
+oadm groups new <group name> <username>
+oadm policy add-cluster-role-to-group cluster-status <group name>
+oadm policy add-role-to-group admin <group name> -n proj1
+oadm policy add-cluster-role-to-group cluster-reader <group name>
+oadm policy add-cluster-role-to-group cluster-admin <group name>
+----
+
+There are two levels of permissions currently in OSE: Local and cluster wide. Local applies to individual projects, where cluster obviously applies to all projects in the cluster.
+
+To view the rolebindings on a project
+----
+[ root@master01 ~]# oc describe policybinding -n default
+Name:					:default
+Created:				22 hours ago
+Labels:					<none>
+Last Modified:				2016-05-28 18:26:41 -0400 EDT
+Policy:					<none>
+RoleBinding[system:deployer]:
+					Role:			system:deployer
+					Users:			<none>
+					Groups:			<none>
+					ServiceAccounts:	deployer, deployer
+					Subjects:		<none>
+RoleBinding[system:image-builder]:
+					Role:			system:image-builder
+					Users:			stratus
+					Groups:			<none>
+					ServiceAccounts:	builder, builder
+					Subjects:		<none>
+RoleBinding[system:image-puller]:
+					Role:			system:image-puller
+					Users:			<none>
+					Groups:			system:serviceaccounts:default
+					ServiceAccounts:	<none>
+					Subjects:		<none>
+RoleBinding[system:registry]:
+					Role:			system:registry
+					Users:			stratus
+					Groups:			<none>
+					ServiceAccounts:	<none>
+					Subjects:		<none>
+
+----
+
+And for cluster wide
+----
+[ root@master01 ~]# oc describe clusterpolicybinding
+Name:						:default
+Created:					22 hours ago
+Labels:						<none>
+Last Modified:					2016-05-28 20:29:37 -0400 EDT
+Policy:						<none>
+RoleBinding[basic-users]:
+						Role:			basic-user
+						Users:			<none>
+						Groups:			system:authenticated
+						ServiceAccounts:	<none>
+						Subjects:		<none>
+RoleBinding[cluster-admins]:
+						Role:			cluster-admin
+						Users:			stratus
+						Groups:			system:cluster-admins
+						ServiceAccounts:	<none>
+						Subjects:		<none>
+RoleBinding[cluster-readers]:
+						Role:			cluster-reader
+						Users:			<none>
+						Groups:			system:cluster-readers
+						ServiceAccounts:	management-infra/management-admin
+						Subjects:		<none>
+RoleBinding[cluster-status-binding]:
+						Role:			cluster-status
+						Users:			<none>
+						Groups:			system:authenticated, system:unauthenticated
+						ServiceAccounts:	<none>
+						Subjects:		<none>
+RoleBinding[self-provisioners]:
+						Role:			self-provisioner
+						Users:			<none>
+						Groups:			system:authenticated
+						ServiceAccounts:	<none>
+						Subjects:		<none>
+
+---snip---
+----
+
+===========
+*IMPORTANT NOTE:* A self provisioner can create projects. By default anyone who is authenticated (system:authenticated) can create projects. Be sure this is what you want.
+===========
+
+To get a full list of roles you can use
+----
+oc describe clusterpolicy
+----
+
+Be aware this list is massive and dumping it to the terminal may make it difficult to read. link:https://docs.openshift.com/enterprise/latest/admin_guide/manage_authorization_policy.html#viewing-roles-and-bindings[The official docs] have most of the important ones (but not all) on the web page.
+
+These roles are independent of any LDAP/Active Directory settings (unless roles are applied to groups which have been sync'd)
+
+= Deploying an app
+
+Templates are an important concept within the OpenShift world. They are, however, more of an advanced topic and outside of the scope of this "quick start". You can find more information regarding templates link:https://docs.openshift.com/enterprise/latest/dev_guide/templates.html[here]
+
+
+== Creating a Build
+
+Builds are the foundation of any type of CI/CD ("cloud") work flow. This is a huge topic and I would suggest reading the link:https://docs.openshift.com/enterprise/3.2/dev_guide/builds.html[full documentation] to start.
+
+That said I will do my best to summarize some of what I think are the more important points
+
+OpenShift Enterprise has three build strategies:
+
+1. Source to image (usually involves linking a source repository into the build config)
+2. Docker
+3. Custom
+
+You can have the following sources in a build:
+
+1. Git repo
+2. Dockerfile
+3. Image
+4. Binary (this is usually where Jenkins/Bamboo or other has already built your artifact and you want to deploy that)
+
+
+=== Build Configuration
+
+At the heart of every build is the build config. Every build config needs the following pieces:
+
+----
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      description: Defines how to build the application
+    labels:
+      template: <name of template>
+    name: <name of the build config>
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: <name of repository to push built docker image>
+    resources: {}
+    source:
+      git:
+        uri: <location of git repo with source code>
+      type: Git
+    strategy:
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: <name of docker image to base build on>
+      type: Source
+    triggers:
+    - imageChange: {}
+      type: ImageChange
+    - type: ConfigChange
+    - github:
+        secret: <secret for git>
+      type: GitHub
+  status:
+    lastVersion: 0
+----
+
+
+I am not going to go into huge detail here as I believe the documentation does a good job of explaining this fairly well. However, to start off with, I suggest basing your build config on one that gets generated by one of the "instant app" templates. Get used to manipulating those before attempting to create your own from scratch
+
+=== Understanding Secrets
+
+The Secret object type provides a mechanism to hold sensitive information such as passwords, OpenShift client config files, dockercfg files, etc. Secrets decouple sensitive content from the pods that use it and can be mounted into containers using a volume plug-in or used by the system to perform actions on behalf of a pod.
+
+===========
+*IMPORTANT NOTE:* A secret must be created before the pods that depend on it. Once a pod is created, its secret volumes do not change, even if the secret resource is modified. To change the secret used, the original pod must be deleted, and a new pod must be created.
+===========
+
+Docker Secrets
+
+The official documentation demonstrates how to create a .dockercfg json file:
+----
+{
+	"https://index.docker.io/v1/": {
+		"auth": "YWRfbGzhcGU6R2labnRib21ifTE=",
+		"email": "user@example.com"
+	}
+}
+----
+
+===========
+*NOTE:* You can define multiple Docker registry entries in this file. Alternatively, you can also add authentication entries to this file by running the docker login command. The file will be created if it does not exist.
+===========
+
+Once you have created your .dockercfg create the secret:
+----
+oc secrets new dockersecret ~/.dockercfg
+----
+
+Add the secret to the service accounts:
+----
+oc secrets add serviceaccount/default secrets/dockersecret --for=pull
+oc secrets add serviceaccount/builder secrets/dockersecret
+----
+
+
+In order to use the secret you will need to add the pushSecret and pullSecret sections to your build config
+----
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: cakephp-example:latest
+  pushSecret:
+    name: dockersecret
+  postCommit: {}
+  resources: {}
+  source:
+    git:
+      uri: https://github.com/openshift/cakephp-ex.git
+    secrets: null
+    type: Git
+  strategy:
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        name: php:5.6
+        namespace: openshift
+    pullSecret:
+      name: dockersecret
+----
+
+
+=== BasicAuth/Git Secrets
+
+To create a basic auth secret, you have 3 options:
+
+1. username and password
+----
+oc secrets new-basicauth basicsecret --username=USERNAME --password=PASSWORD
+----
+
+2. token
+----
+oc secrets new-basicauth basicsecret --password=TOKEN
+----
+
+3. CA Certificate
+----
+oc secrets new-basicauth basicsecret --username=USERNAME --password=PASSWORD --ca-cert=FILENAME
+----
+
+Once you create your secret make sure the builder service account has access to it
+
+
+Below is an example of a basicauth secret being called within a buildconfig:
+----
+apiVersion: "v1"
+kind: "BuildConfig"
+metadata:
+  name: "sample-build"
+spec:
+  output:
+    to:
+      kind: "ImageStreamTag"
+      name: "sample-image:latest"
+  source:
+    git:
+      uri: "https://github.com/user/app.git"
+    sourceSecret:
+      name: "basicsecret"
+    type: "Git"
+----
+
+
+=== Config Maps
+
+The ConfigMap object provides mechanisms to inject containers with configuration data while keeping containers agnostic of OpenShift Enterprise. A ConfigMap can be used to store fine-grained information like individual properties or coarse-grained information like entire configuration files or JSON blobs. The ConfigMap API object holds key-value pairs of configuration data that can be consumed in pods or used to store configuration data for system components such as controllers. ConfigMap is similar to secrets, but designed to more conveniently support working with strings that do not contain sensitive information.
+
+A configmap can be a plain yaml file:
+
+----
+apiVersion: v1
+data:
+  game-settings: |
+    enemies=aliens
+    lives=3
+    enemies.cheat=true
+    enemies.cheat.level=noGoodRotten
+    secret.code.passphrase=UUDDLRLRBABAS
+    secret.code.allowed=true
+    secret.code.lives=30
+kind: ConfigMap
+metadata:
+  creationTimestamp: 2016-05-30T22:52:06Z
+  name: game-settings
+  namespace: project1
+  resourceVersion: "281368"
+  selfLink: /api/v1/namespaces/project1/configmaps/game-settings
+  uid: 21e809ec-26b9-11e6-86bc-0800271c5c7b
+----
+
+You can import them in the usual fashion
+
+----
+oc create -f game-settings.yaml
+----
+
+However, you can also create configmaps from a flat file
+----
+enemies=aliens
+lives=3
+enemies.cheat=true
+enemies.cheat.level=noGoodRotten
+secret.code.passphrase=UUDDLRLRBABAS
+secret.code.allowed=true
+secret.code.lives=30
+----
+
+And then import them with
+----
+oc create configmap game-settings --from-file=game-settings.txt
+----
+
+You can also create configmaps of all files in a directory:
+----
+oc create configmap game-config --from-file=example-files-directory/
+----
+
+For more information see the link:http://https://docs.openshift.com/enterprise/3.2/dev_guide/configmaps.html[official documentation]
+
+
+== Deployment Configuration
+
+The deployment config is what you would be concerned about duplicating if you are moving an image that has already been built, from one environment to another. Think of the deployment config as a method for "promoting" an image. In the deployment config you can specify things like environment variables inside the container (which is often used for database related information, program startup parameters etc), the deployment strategy link:https://docs.openshift.com/enterprise/latest/dev_guide/deployments.html#strategies[(see here)], resource limits and a host of other related information. For demo purposes deployment configs are created for you from a template and you don't usually have to worry about changing these directly.
+
+However should you want to create a template or a yaml file from an existing deployment config, you can always dump it to the command line.
+
+To dump the template
+----
+oc export deploymentconfig/cakephp-example --as-template=mytemplate > deploymentconfig_template.yaml
+----
+
+Or to simply create a deployment config yaml file
+----
+oc get deploymentconfig/cakephp-example -o yaml |grep -v selfLink |grep -v namespace |grep -v uid |grep -v resrouceVersion |grep -v creationTimestamp > cakephp-deploymentconfig.yaml
+----
+
+The difference between these methods is how they are used and stored. In general, you probably want to dump the deployment config yaml file instead of the template. The keen observer will notice that the _oc get_ command has some greps in there. This is because  you will want to remove any uniquely identifying references or else the import will fail. You cannot have duplicates of uid, selfLink, resourceVersion etc, for obvious reasons. There should be only a single object with these exact values.
+
+
+=== Deploying images between projects
+
+There are two ways of achieving this.
+
+1. Using a docker style methodology whereby an image that has been deployed and tested, is retagged for the new project
+2. Sharing the image stream
+
+Of the two, the former provides the best granularity and security. This deployment process is done with a series of docker commands
+
+First identify the image to deploy to a different project (this is done on the app node where the image is currently deployed)
+----
+[root@application01 ~]# docker images
+REPOSITORY                                              TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+172.50.254.67:5000/project1/cakephp-example              latest              12956f73e415        18 minutes ago      508.7 MB
+registry.access.redhat.com/openshift3/ose-sti-builder   v3.1.1.6            cad03b82e5ad        12 days ago         442.2 MB
+registry.access.redhat.com/openshift3/ose-pod           v3.1.1.6            077b7021c72c        12 days ago         428.2 MB
+registry.access.redhat.com/rhscl/php-56-rhel7           latest              bbfc4eb8005b        3 weeks ago         491.4 MB
+----
+
+Next login to docker
+----
+docker login -u <username> -e <email> -p <token from oc whoami -t> 172.50.254.67:5000
+Login Succeeded
+----
+
+Tag the image and then push it into the new project
+----
+[root@application01 ~]# docker tag 12956f73e415 172.50.254.67:5000/project2/cakephp-example
+
+[root@application01 ~]# docker images
+REPOSITORY                                              TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+172.50.254.67:5000/project1/cakephp-example              latest              12956f73e415        21 minutes ago      508.7 MB
+172.50.254.67:5000/project2/cakephp-example             latest              12956f73e415        21 minutes ago      508.7 MB
+registry.access.redhat.com/openshift3/ose-sti-builder   v3.1.1.6            cad03b82e5ad        12 days ago         442.2 MB
+registry.access.redhat.com/openshift3/ose-pod           v3.1.1.6            077b7021c72c        12 days ago         428.2 MB
+registry.access.redhat.com/rhscl/php-56-rhel7           latest              bbfc4eb8005b        3 weeks ago         491.4 MB
+
+[root@application01 ~]# docker push 172.50.254.67:5000/project2/cakephp-example
+The push refers to a repository [172.50.254.67:5000/project2/cakephp-example] (len: 1)
+12956f73e415: Pushed
+bbfc4eb8005b: Pushed
+6bcf1d53eb78: Pushed
+c453594215e4: Pushed
+latest: digest: sha256:7f822812f569841176e0326fdee6a46d85da3c22495688a2de60615a22b829be size: 11241
+----
+
+Now that the image is pushed, log out of the application node and return to working on the master (or whichever machine you are issuing the oc commands from)
+
+Generate the deployment config from project1:
+----
+oc get deploymentconfig/cakephp-example --namespace project1 -o yaml |grep -v selfLink |grep -v namespace |grep -v uid |grep -v resrouceVersion |grep -v creationTimestamp > cakephp-deploymentconfig.yaml
+----
+
+You will have to change the references from project1 to project2 in this file. Once you have done this, you are ready to create the deployment config in the new project:
+----
+oc create -f cakephp-deploymentconfig.yaml --namespace project2
+----
+
+OpenShift by default, will detect the deployment config and begin deploying it. The image should deploy successfully. The route and service entry are not copied during this operation, so they will need to be created if you want to access the pod externally.
+
+A basic service can be obtained from the original running pod. Below is an example of a basic service definition (extracted from _oc export service/cakephp-example --namespace project1 --as-template=newtemp_
+
+----
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    description: Exposes and load balances the application pods
+  creationTimestamp: null
+  labels:
+    template: cakephp-example
+  name: cakephp-example
+spec:
+  ports:
+  - name: web
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    name: cakephp-example
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+----
+
+The clusterIP and portalIP are dynamically allocated from the pool and should not be specified manually. Finally you need to expose the route, you can either do this manually via the _oc expose_ command, or get it from dumping the route to a file
+----
+oc get route/cakephp-example --namespace project1 -o yaml |grep -v selfLink |grep -v namespace |grep -v uid |grep -v resrouceVersion |grep -v creationTimestamp > cakephp-route.yaml
+----
+
+This will produce a file which needs to have the *_hosts:_* section edited or else it will produce the same URL that already exists and thus will point to the wrong project's application.
+
+Finally import the *edited* route into the new project
+----
+oc create -f cakephp-route.yaml --namespace project2
+----
+
+At this point your image has now been "promoted" into a new project/environment.
+
+===========
+*IMPORTANT NOTE:* For manageability,  while your routes, services, deployment configs, build configs etc. can all have different names to identify them, I *_STRONGLY_* recommend naming them the exact same as the app the belong to, or at very least follow, and stick to, a naming convention. When it comes to automating tasks in the future you will be glad you did!
+===========
+
+== Routes and TLS
+
+For the purpose of this discussion, I assume that you either have a CA to generate your own certificates, or you have been given proper certificates from an authority. In any event, there are a few ways that this can be done.
+
+1. passthrough. This requires each one of your apps to manage their own certificates
+2. re-encryption. This also requires certificates to be inside the pod as well as outside
+3. edge termination.
+
+For simplicity sake I am only going to talk about edge termination in this post. For more details on various options please see link:https://docs.openshift.com/enterprise/latest/architecture/core_concepts/routes.html#secured-routes[the document on secured routes]
+
+The easiest way to do edge termination is to create a route yaml file. If you have an existing route you have 2 options, edit the current route in place (either through the webUI or _oc edit_) or dump the current route to a file, delete the route, edit the yaml file created and then reload it with the _oc create_ command. I prefer editing from within the webUI as the tab key is already set to help with the appropriate spacing (which is important in yaml)
+
+Here is what a completed edge termination file may look like (for security reasons large sections of the certificates have been deleted... THESE ARE NOT VALID CERTS)
+----
+apiVersion: v1
+kind: Route
+metadata:
+  annotations:
+    openshift.io/host.generated: "true"
+  creationTimestamp: 2016-05-29T16:49:28Z
+  labels:
+    template: cakephp-example
+  name: cakephp-example
+  namespace: project1
+  resourceVersion: "121790"
+  selfLink: /oapi/v1/namespaces/project1/routes/cakephp-example
+  uid: 4edb34e2-25bd-11e6-aaf6-080027e32c95
+spec:
+  host: cakephp-example-project1.apps.example.com
+  tls:
+    caCertificate: |-
+      -----BEGIN CERTIFICATE-----
+      MIIGAzCCA+ugAwIBAgIJAMdWmtLRwBKfMA0GCSqGSIb3DQEBCwUAMEoxCzAJBgNV
+      BAYTAkNBMQ8wDQYDVQQIDAZDYW5hZGExGDAWBgNVBAoMD3g4NiBJbm5vdmF0aW9u
+      czEQMA4GA1UEAwwHUm9vdCBDQTAeFw0xNjA1MjQxODEzNDNaFw0zNjA1MTkxODEz
+      NDNaMEoxCzAJBgNVBAYTAkNBMQ8wDQYDVQQIDAZDYW5hZGExGDAWBgNVBAoMD3g4
+      q0uB9lHFo/9WMswQJM+IJKrJkNwOb2RmTPJCujDrXs/xDRI0RxaoWUsHA1islU62
+      Jhk5q3Q8yNU7VAvF+98ZoRVzQO/D2jU1tpW5zurNBpFYrCF0lPJM2silbriWvzqD
+      VYUEHMQQ6qozdkeNQd1T4qhWKZsiSEIBDSjeANzJ/eZelwcUqhCH0F7+eBUFV3Rm
+      IAdZNmvmIl9pMkosgjpDpZNMNYC2tVI2SopMN/zqsXNGYN3fo1x9j6O6lS2tchnA
+      dNo4Gly8my+n662ZaamiIp2HytfZda8AwEyTkUja0xSC0IlSgAD7CKzQ9gj0u5JJ
+      gn3zFMa7eg==
+      -----END CERTIFICATE-----
+    certificate: |-
+      -----BEGIN CERTIFICATE-----
+      MIIGdDCCBFygAwIBAgICEAQwDQYJKoZIhvcNAQELBQAwUjELMAkGA1UEBhMCQ0Ex
+      DzANBgNVBAgMBkNhbmFkYTEYMBYGA1UECgwPeDg2IElubm92YXRpb25zMRgwFgYD
+      VQQDDA9JbnRlcm1lZGlhdGUgQ0EwHhcNMTYwNTI0MTgxNjE4WhcNMTcwNjAzMTgx
+      NjE4WjBOMQswCQYDVQQGEwJDQTEPMA0GA1UECAwGQ2FuYWRhMRgwFgYDVQQKDA94
+      ODYgSW5ub3ZhdGlvbnMxFDASBgNVBAMMC2V4YW1wbGUuY29tMIIBIjANBgkqhkiG
+      db5soDkIrCmzG3JeU2sCj6iaf2GrQjPlmdTM99w7nsKpwRagNVtb8o+uE8uz838S
+      SJHONCS8HDLpT9nqXmMN2WcWk/VaA4O5xYFAWx80Sy/AxM4Fs3jXxD9+bWPbDjAa
+      zA/0RfSZnOyG0HksmGY0bE2LBNjJzNuRvQceGWm40RfUd3CIBzwSAebjAbbXx9Oj
+      woRNiE4snyeFtXInd42V9hTYLJxd8ECsaWiGFtyk2FwJszCTSpA4OmZN+5Px8PR+
+      iaScGTYrXo63CNI+0DbGFJ3i8Dybwgmo
+      -----END CERTIFICATE-----
+    key: |-
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEowIBAAKCAQEAvAfZZkXk5y/5kvZBEp/KyEFyWUqZ8JxNs7nS5xoqdVaS8t0K
+      5LHjQ5KYK4kp9wvB4rupLfkYyk8tx1FkmOS+Oc1DqEs41dwzOrhity1Z7VjAII2Q
+      A++fq1VOcMnKS9snZeGiThmy7SSQ8CCT4tnFWN20nU4yka2/RExZblNn14fe5bFu
+      i8otZT0MHv3g3UN32D2uWiZobdjkar8ooNwXeaW0eEFpuuAH1ydAAutwc7ZDpDl+
+      6bm1J52thocgj7PWQdjjQ4PNJeNEhe49g7YHqeCRBXqj6NXRTZDQbpdxA3HszZZ1
+      FIAJZobwfDsGlNIpa4mCtJJGXxgVQgGJPu1noQIDAQABAoIBAFIyODX+Ld9mWHqH
+      BZ9pCQKBgGT56lJEsQhL8/+AmjmILIcTppX1pOCaLA7VwpL73h+qTKA1QPB8Qu9m
+      VxfRtYr/4/gPtdHvCySScFxgnVdvqHwJ+rRFfSdvOQB0+8B+UfqsZyC6K02XDp6Y
+      hshsaAAuYx30j4vQLYvneCUAvU/6AQI2E8X1cr768tNFCwMgG0rI
+      -----END RSA PRIVATE KEY-----
+    termination: edge
+  to:
+    kind: Service
+    name: cakephp-example
+status: {}
+----
+
+
+For re-encryption, it is almost exactly the same as the above, however you add one section which represents the CA public key certificate (usually named ca.crt) which is associated with the certificate inside of the pod.
+
+The TLS section would look like this
+----
+  tls:
+    termination: reencrypt
+    key: [as in edge termination]
+    certificate: [as in edge termination]
+    caCertificate: [as in edge termination]
+    destinationCaCertificate: |-
+      -----BEGIN CERTIFICATE-----
+      [...]
+      -----END CERTIFICATE-----
+----
+
+= Scaling out the number of VMs/machines in your OSE cluster
+
+== Ansible scaleup playbook
+
+===========
+*IMPORTANT NOTE:* The nodes you wish to add must be treated exactly the same as when you were preparing for the initial cluster install. I.E. all the prerequisite packages, docker configurations, dns setting etc. *MUST* be completed prior to attempting the scaleup. You can find a quick recap below:
+===========
+
+----
+# if you have satellite, install the ca package
+ansible new_nodes -a "yum -y localinstall http://satellite/pub/katello-ca-consumer-latest.noarch.rpm"
+
+#run the subscription manager
+ansible new_nodes -a "subscription-manager register --username=<username> --password=<passwd> --org 'Default_Organization' --force --auto-attach"
+
+# subscribe to the correct repos
+ansible new_nodes -a 'subscription-manager repos --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.1-rpms"'
+
+# grab the correct packages
+ansible new_nodes -a "yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion atomic-openshift-utils docker-selinux-1.8.2-10.el7 docker-1.8.2-10.el7"
+
+# push the docker related files over
+ansible new_nodes -m copy -a "src=/root/docker-storage-setup dest=/etc/sysconfig/docker-storage-setup"
+ansible new_nodes -m copy -a "src=/root/docker dest=/etc/sysconfig/docker"
+
+# run the docker-storage-setup
+ansible new_nodes -a "docker-storage-setup"
+
+#if you have secured/exposed your registry push over the cert
+ansible new_nodes -a "mkdir /etc/docker/certs.d/172.50.254.67:5000"
+ansible new_nodes -a "mkdir -p /etc/docker/certs.d/docker-registry.default.svc.cluster.local:5000"
+ansible new_nodes -m copy -a "src=/tmp/ca.crt dest=/etc/docker/certs.d/172.50.254.67:5000/ca.crt"
+ansible new_nodes -m copy -a "src=/tmp/ca.crt dest=/etc/docker/certs.d/docker-registry.default.svc.cluster.local:5000/ca.crt"
+----
+
+Below are the instructions from the documentation found link:https://docs.openshift.com/enterprise/3.1/install_config/install/advanced_install.html#adding-nodes-advanced[here.]
+
+
+=== To add nodes to an existing cluster:
+
+Ensure you have the latest playbooks by updating the atomic-openshift-utils package on the machine you are running the ansible playbook from:
+----
+yum update atomic-openshift-utils
+----
+
+Edit your */etc/ansible/hosts* file and add new_nodes to the [OSEv3:children] section:
+----
+[OSEv3:children]
+masters
+nodes
+new_nodes
+----
+
+Then, create a [new_nodes] section much like the existing [nodes] section, specifying host information for any new nodes you want to add. For example:
+
+----
+[new_nodes]
+infrastructure03.example.com openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+----
+
+
+I recommend pulling the latest version of the scaleup playbook from the git repo in a similar fashion to the installer:
+
+----
+git clone https://github.com/openshift/openshift-ansible
+cd openshift-ansible
+git checkout tags/openshift-ansible-3.0.88-1
+----
+
+Then run the playbook
+----
+ ansible-playbook    openshift-ansible/playbooks/byo/openshift-node/scaleup.yml
+----
+
+After the playbook completes successfully, verify the installation in the same fashion you did during the cluster installation (see the section Verifying Installation)
+
+Finally, move any hosts you had defined in the [new_nodes] section up into the [nodes] section (but leave the [new_nodes] section definition itself in place) so that subsequent runs using this inventory file are aware of the nodes but do not handle them as new nodes. For example:
+
+----
+[nodes]
+
+[new_nodes]
+----
+
+
+
+= Upgrading Cluster to newer version of OSE
+
+In terms of preparing for the upgrade process there isn't a whole lot of preparation to be done. However, you will need to update the repositories on the entire cluster:
+----
+ansible OSEv3 -a 'subscription-manager repos --disable="rhel-7-server-ose-3.1-rpms"     --enable="rhel-7-server-ose-3.2-rpms"'
+----
+
+Next, upgrade the atomic-openshift-utils:
+----
+ansible OSEv3 -a "yum update -y atomic-openshift-utils"
+----
+
+Finally, run the playbook for upgrading the cluster. Again I recommend running the playbook from the git clone you made earlier
+----
+ansible-playbook ~/openshift-ansible/playbooks/byo/openshift-cluster/upgrades/v3_1_to_v3_2/upgrade.yml
+----
