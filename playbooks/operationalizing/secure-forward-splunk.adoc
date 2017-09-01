@@ -215,6 +215,7 @@ Edit the secure-forward.conf file contained within the ConfigMap using the comma
 [source]
 ----
   secure-forward.conf: |
+    <store>
     @type secure_forward
 
     self_hostname "#{ENV['HOSTNAME']}"
@@ -231,6 +232,7 @@ Edit the secure-forward.conf file contained within the ConfigMap using the comma
       host 10.9.49.72 <5>
       port 24284 <6>
     </server>
+    </store>
 ----
 <1> Value shared between both ends of the secure forward plugin
 <2> Location of the certificate used by the secure forward plugin
