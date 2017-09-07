@@ -166,7 +166,6 @@ osm_cluster_network_cidr=10.128.0.0/14
 
 openshift_master_cluster_hostname=console-int.c1-ocp.myorg.com <1>
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com <2>
-
 openshift_master_default_subdomain=apps.c1-ocp.myorg.com <3>
 ...
 ----
