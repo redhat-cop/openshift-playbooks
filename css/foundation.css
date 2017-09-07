@@ -154,7 +154,7 @@ select {
     margin-right: auto;
     margin-top: 0;
     margin-bottom: 0;
-    max-width: 70rem;
+    max-width: 80rem;
 }
 
 .row:before, .row:after {

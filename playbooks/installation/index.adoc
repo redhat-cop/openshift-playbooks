@@ -19,7 +19,7 @@ This article proposes a reference architecture for a Highly Available installati
 
 image::/images/ocp_smart_start_diagram.png[Smart Start Architecture]
 
-The diagram above depicts the architecture of the environment we will build. It consists of 3 Masters and 6 Nodes. We further subdivide the nodes into two groups. Three of them get designated to run OpenShift's router, image registry and other infrastructure services. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:https://docs.openshift.com/container-platform/latest/admin_guide/scheduler.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the link:#ansible-inventory-review[sample inventory file] at the bottom of this doc to see how those labels are assigned.
+The diagram above depicts the architecture of the environment we will build. It consists of 3 Masters and 6 Nodes. We further subdivide the nodes into two groups. Three of them get designated to run OpenShift's router, image registry and other infrastructure services. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:https://docs.openshift.com/container-platform/latest/admin_guide/scheduling/index.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the link:#ansible-inventory-review[sample inventory file] at the bottom of this doc to see how those labels are assigned.
 
 === Preparing the Installer
 
@@ -91,13 +91,14 @@ Each service in the cluster will be assigned an IP from this range.  The default
 
 Both the openshift_portal_net and the osm_cluster_network_cidr will default to the value above if not set, however if you prefer to have your inventory file describe your environment, its recommended to set them explicitly for future reference or comparison.
 
-==== Master API Port
-
-This is the port that the Master services (console, api, etc) will be listening on.
+==== Master Service Ports
 
 *Ansible Host File Variable:* `openshift_master_api_port=8443`
 
-The default value is 8443, Since we are using dedicated hosts for the masters we can set this to 443 and omit the port # from urls when connecting.
+This is the port that the Master api will be listening on. The default value is 8443. Since we are using dedicated hosts for the masters we can set this to 443 and omit the port # from urls when connecting.
+
+*Ansible Host File Variable:* `openshift_master_console_port=8443`
+This is the port that the Master console will be listening on. The default value is 8443. Like the api port, we can set this to 443 and omit the port # from urls when connecting.
 
 ==== Ansible Inventory Update
 
@@ -110,13 +111,15 @@ openshift_deployment_type=openshift-enterprise
 openshift_release=v3.5
 
 openshift_master_api_port=443 <1>
-openshift_portal_net=172.30.0.0/16 <2>
-osm_cluster_network_cidr=10.128.0.0/14 <3>
+openshift_master_console_port=443 <2>
+openshift_portal_net=172.30.0.0/16 <3>
+osm_cluster_network_cidr=10.128.0.0/14 <4>
 ...
 ----
 <1> Master API Port
-<2> Service address space
-<3> Pod address space
+<2> Master Console Port
+<3> Service address space
+<4> Pod address space
 
 More information on Pods & Services can be found in the link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html[OpenShift Documentation]
 
@@ -124,40 +127,31 @@ More information on Pods & Services can be found in the link:https://docs.opensh
 
 All of the hosts in the cluster need to be resolveable via DNS.  Additionally if using a control node to serve as the ansible installer it too should be able to resolve all hosts in your cluster.
 
-In an HA cluster there will also be a DNS name for the Load Balanced URL that points to the 3 master servers for access to the API, CLI and Console services.  This value should also resolve, and will be placed in the ansible Hosts file for the variables.
+In an HA cluster there should also be two DNS names for the Load Balanced IP address that points to the 3 master servers for access to the API, CLI and Console services. One of these names is the *public* name that users will use to log into the cluster. The other is an _internal_ name that will be used by internal components within the cluster to talk back to the master. These values should also resolve, and will be placed in the ansible Hosts file for the variables.
 
-Public Master URL
+==== Public Master Hostname
 
-This will be the url that external users and/or tools will use to login to the OpenShift cluster
+*Ansible Inventory Variable:* `openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com`
 
-Ansible Host file variable:
+This will be the hostname that external users and/or tools will use to login to the OpenShift cluster
 
-*Master Public Hostname Variable :* `openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com`
+==== Internal Master Hostname
 
-Replace the value in your host file
+*Ansible Inventory Variable:* `openshift_master_cluster_hostname=console-int.c1-ocp.myorg.com`
 
+This will be the hostname that users and/or tools interacting with the platform will use to login to the OpenShift API and Web Console.
 
-Master URL
+==== Wildcard DNS entry for Infrastructure(Router) nodes
 
-This will be the url that external users and/or tools will use to login to the OpenShift cluster
+*Ansible Inventory Variable:* `openshift_master_default_subdomain=apps.c1-ocp.myorg.com`
 
-*Master Hostname Variable:*`openshift_master_cluster_hostname=console.c1-ocp.myorg.com`
-
-Wildcard DNS entry for Infrastructure(Router) nodes
-
-In addition to the hostnames for the master console and API, A wildcard DNS entry needs to exist under a unique subdomain (i.e. `*.apps.c1-ocp.myorg.com`) that resolves to either the IP addresses (an A record) or the hostnames (a CNAME record) of the three Infrastructure Nodes.   This entry allows new routes to be automatically routable to the cluster under the subdomain such as mynewapp.apps.c1-ocp.myorg.com.   Alternatively, every exposed route would require the entry to be created in order to route it to the OpenShift cluster. 
-
-----
-# default subdomain to use for exposed routes
-openshift_master_default_subdomain=apps.c1-ocp.myorg.com
-----
+In addition to the hostnames for the master console and API, A wildcard DNS entry needs to exist under a unique subdomain (i.e. *.apps.c1-ocp.myorg.com`) that resolves to either the IP addresses (an A record) or the hostnames (a CNAME record) of the three Infrastructure Nodes.   This entry allows new routes to be automatically routable to the cluster under the subdomain such as mynewapp.apps.c1-ocp.myorg.com.   Alternatively, every exposed route would require the entry to be created in order to route it to the OpenShift cluster. If this is desired, it is highly recommended to implement an automated integration between OpenShift and an external DNS system to automatically provision new DNS entries whenever a new route is created. link:https://github.com/redhat-cop/openshift-event-controller[OpenShift Event Controller] is an open source project that provides a good reference for such an implementation.
 
 image::/images/dnsmasterinfra.png[DNS Diagram]
 
+==== Ansible Inventory Update
 
 Having added all of the above to your inventory file we should have something like the following in your inventory file.
-
-==== Ansible Inventory Update
 
 ----
 ...
@@ -166,17 +160,22 @@ deployment_type=openshift-enterprise
 openshift_release=v3.5
 
 openshift_master_api_port=443
+openshift_master_console_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
-openshift_master_cluster_hostname=console.c1-ocp.myorg.com <1>
+openshift_master_cluster_hostname=console-int.c1-ocp.myorg.com <1>
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com <2>
-
-openshift_master_default_subdomain=apps.c1-ocp.myorg.com
+openshift_master_default_subdomain=apps.c1-ocp.myorg.com <3>
 ...
 ----
 <1> Hostname used by nodes and other cluster internals
 <2> Hostname used by platform users
+<3> Application wildcard subdomain
+
+=== SSL/TLS Certificates
+
+The Ansible config playbook will by default generate a bunch of certificates that will be used by various components. If you have need to customize these certificates, consult link:/playbooks/installation/custom_certificates{outfilesuffix}[Configuring OpenShift to use Custom Certificates].
 
 === Load Balancing & HA
 
@@ -206,6 +205,7 @@ openshift_deployment_type=openshift-enterprise
 openshift_release=v3.5
 
 openshift_master_api_port=443
+openshift_master_console_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
@@ -240,6 +240,7 @@ openshift_deployment_type=openshift-enterprise
 openshift_release=v3.5
 
 openshift_master_api_port=443
+openshift_master_console_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
@@ -338,6 +339,7 @@ openshift_deployment_type=openshift-enterprise
 openshift_release=v3.5
 
 openshift_master_api_port=443
+openshift_master_console_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
@@ -425,16 +427,46 @@ ssh-copy-id -i ~/.ssh/Myidrsa.pub remote.server.com
 
 ssh will require you to accept the new ssh key for the first time into the `~/.ssh/known_hosts` file by either shelling into each of the nodes one by one and typing yes each time or adding the file `~/.ssh/config` file with perms of 600 with a line that includes `StrictHostKeyChecking no`.  Once this is completed you can test that ansible will no longer ask to accept the key
 
-Test ansible in an adhoc way to ensure it can get to all the nodes
-
-----
-ansible -i /some/path/to/my/hosts/inventory/file -hosts OSEv3 -m ping
-----
-
 ==== Cloud-Specific Provisioning Guides
 
 * Provisioning infrastructure on OpenStack using the openstack CLI (Coming Soon)
 * Provigioning infrastructure on Amazon EC2 using the awscli (Coming Soon)
+
+==== Configuring Node Host Labels
+
+Labels are simple key/value pairs that are used to organize, group, or select API objects. You can assign labels to node hosts during the Ansible install by configuring the /etc/ansible/hosts file. Labels are useful for determining the placement of pods onto nodes using the scheduler. Other than `region=infra` (discussed in link:#configuring-labels-for-dedicated-infrastructure-nodes[Configuring Labels For Dedicated Infrastructure Nodes]]), the actual label names and values are arbitrary and can be assigned however you see fit per your cluster’s requirements.
+
+To assign labels to a node host during the advanced installation, use the `openshift_node_labels` variable with the desired labels added to the desired node host entry in the `[nodes]` section. For example:
+
+----
+[nodes]
+node1.example.com openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
+----
+
+===== Configuring Labels For Application Nodes
+
+The `osm_default_node_selector` Ansible setting determines the label that projects will use by default when placing pods on Application nodes. It is set to `region=primary` by default:
+
+----
+...
+# default project node selector
+#osm_default_node_selector='region=primary'
+...
+----
+
+===== Configuring Labels For Dedicated Infrastructure Nodes
+
+The `openshift_router_selector` and `openshift_registry_selector` Ansible settings determine the label selectors used when placing registry and router pods. They are set to `region=infra` by default:
+
+----
+...
+# default selectors for router and registry services
+# openshift_router_selector='region=infra'
+# openshift_registry_selector='region=infra'
+...
+----
+
+The default router and registry will be automatically deployed during installation if nodes exist in the `[nodes]` section that match the selector settings.
 
 ==== Ansible Inventory Update
 
@@ -449,10 +481,18 @@ openshift-master-[1:3].c1-ocp.myorg.com
 openshift-master-[1:3].c1-ocp.myorg.com
 
 [nodes]
-openshift-infranode-[1:3].c1-ocp.myorg.com
-openshift-appnode-1.c1-ocp.myorg.com.com
-openshift-appnode-2.c1-ocp.myorg.com
+openshift-master-[1:3].c1-ocp.myorg.com openshift_node_labels="{'region': 'master'}"
+openshift-infranode-[1:3].c1-ocp.myorg.com openshift_node_labels="{'region': 'infra'}"
+openshift-appnode-1.c1-ocp.myorg.com openshift_node_labels="{'region': 'primary'}"
+openshift-appnode-2.c1-ocp.myorg.com openshift_node_labels="{'region': 'primary'}"
 ----
+
+Test ansible in an adhoc way to ensure it can get to all the nodes
+
+----
+ansible -i c1-ocp.myorg.com/hosts OSEv3 -m ping
+----
+
 
 === Create Standalone Registry
 
@@ -525,6 +565,7 @@ openshift_deployment_type=openshift-enterprise
 openshift_release=v3.5
 
 openshift_master_api_port=443
+openshift_master_console_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
@@ -671,6 +712,7 @@ openshift_deployment_type=openshift-enterprise
 openshift_release=v3.5
 
 openshift_master_api_port=443
+openshift_master_console_port=443
 openshift_portal_net=172.30.0.0/16
 osm_cluster_network_cidr=10.128.0.0/14
 
@@ -803,4 +845,6 @@ link:/playbooks/installation/install_validation{outfilesuffix}[Validating an Ope
 
 == What's Next?
 
-Adding LDAP for Authentication (Coming soon!)
+* link:/playbooks/installation/admin_overview{outfilesuffix}[Overview of OpenShift for Administrators]
+* link:/playbooks/installation/custom_certificates{outfilesuffix}[Configuring OpenShift to use Custom Certificates]
+* link:/playbooks/installation/ldap_integration{outfilesuffix}[Adding LDAP for Authentication]

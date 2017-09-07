@@ -235,7 +235,7 @@ Edit the secure-forward.conf file contained within the ConfigMap using the comma
 <1> Value shared between both ends of the secure forward plugin
 <2> Location of the certificate used by the secure forward plugin
 <3> Location of the private key used by the secure forward plugin
-<4> Privae key passphrase
+<4> Private key passphrase
 <5> Hostname or IP address of the standalone Fluentd instance
 <6> Port number of the standalone Fluentd instance
 
