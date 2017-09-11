@@ -1,6 +1,6 @@
 ---
 ---
-= How Full is my OpenShift Cluster?
+= Building a Capacity Management Strategy for OpenShift
 Raffaele Spazzoli <rspazzol@redhat.com>
 v1.0, 2017-08-28
 :toc: macro
@@ -9,8 +9,6 @@ v1.0, 2017-08-28
 toc::[]
 
 
-
-= Building a Capacity Management Strategy for OpenShift?
 
 In this article we will lay the foundations to do proper capacity management in OpenShift . +
 But before that we need to make sure we understand the question.
@@ -41,13 +39,15 @@ Requests are an estimate of what a container will consume when it runs. OpenShif
 image::images/HowFullIsMyCluster.png[title=How full is my cluster?]
 
 
-In this example, a new pod which is requesting 2GB of memory needs to be allocated to nodes with already committed memory. OpenShift can place this pod only on node1 because node2 does not have enough available resources. +
-OpenShift can deny scheduling of pods if there is no node that can satisfy the request constraint. +
+In this example, a new pod which is requesting 2GB of memory needs to be allocated to nodes with already committed memory. OpenShift can place this pod only on node1 because node2 does not have enough available resources.
+OpenShift can deny scheduling of pods if there is no node that can satisfy the request constraint.
 We can get an idea of how OpenShift estimates a node being utilized with the following command:  +
+----
 oc describe node <name of a node>
+----
 
 This will produce an output of the form (only the relevant fragments are reported): +
-```
+----
 Allocatable: 
  alpha.kubernetes.io/nvidia-gpu:  0 
  cpu:         2 
@@ -59,14 +59,14 @@ Allocated resources:
   CPU Requests  CPU Limits  Memory Requests Memory Limits +
   ------------  ----------  --------------- ------------- 
   300m (15%)  400m (20%)  2660Mi (22%)  2248Mi (18%)
-```
-In this particular example, we have a node with 12GB of memory, of which 2.6GB are booked by requests coming from the 20 pods that are deployed.  +
-Notice that this figure (22%) has nothing to do with the actual memory used on the node. This value represents the memory that has been reserved. The same applies to the CPU. +
+----
+In this particular example, we have a node with 12GB of memory, of which 2.6GB are booked by requests coming from the 20 pods that are deployed.  
+Notice that this figure (22%) has nothing to do with the actual memory used on the node. This value represents the memory that has been reserved. The same applies to the CPU. 
 Also, if you don’t specify what amount of resources you container needs, OpenShift assumes zero. This implies that if you don’t specify the requests for your containers, you can easily run out of resources while OpenShift will still think that all your nodes have capacity available.
 
 *Best practice:* specify the request for all of your containers. You can mandate that requests for all your containers be specified by setting a min request in the limit range object associated to your projects, here is an example:
 
-```
+----
 apiVersion: "v1" 
 kind: "LimitRange" 
 metadata: 
@@ -77,7 +77,7 @@ spec:
       min: 
         cpu: "1m"  
         memory: "1Mi"
-``` 
+----
 In the above example very small minimums are specified that will not affect the value of the requests for containers, but will make it mandatory to specify it.
 
 It is also worth noting that in version 3.5, a link:https://docs.openshift.com/container-platform/latest/dev_guide/compute_resources.html#opaque-integer-resources[generalized framework for tracking additional node resources] has been introduced. These resources are called opaque integer resources and the main use case is to be able to track link:https://blog.openshift.com/use-gpus-openshift-kubernetes/[GPUs’ resources].
@@ -89,8 +89,8 @@ The knapsack problem is a link:https://en.wikipedia.org/wiki/NP-completeness[np-
 
 === Limits
 
-Limits determine the maximum amount of resources (CPU and/or memory) that can be used by a container at runtime. Setting a limit corresponds to passing to the docker run command the link:https://docs.docker.com/engine/reference/run/#user-memory-constraints[*--memory*] parameter for memory limits and the link:https://docs.docker.com/engine/reference/run/#cpu-quota-constraint[*--cpu-quota*] parameter for CPU limits. +
-This influences the link:https://en.wikipedia.org/wiki/Cgroups[cgroup] that is created around the given container, limiting the resources it can use. +
+Limits determine the maximum amount of resources (CPU and/or memory) that can be used by a container at runtime. Setting a limit corresponds to passing to the docker run command the link:https://docs.docker.com/engine/reference/run/#user-memory-constraints[*--memory*] parameter for memory limits and the link:https://docs.docker.com/engine/reference/run/#cpu-quota-constraint[*--cpu-quota*] parameter for CPU limits. 
+This influences the link:https://en.wikipedia.org/wiki/Cgroups[cgroup] that is created around the given container, limiting the resources it can use. 
 For memory, docker assumes that if you ask for a given amount of RAM, you should also get twice as much swap size. This implies that if you have swap active, your container will actually see thrice as much memory as you have assigned to it, and it could potentially swap. 
 
 *Best Practice*: link:https://docs.openshift.com/container-platform/3.5/admin_guide/overcommit.html#disabling-swap-memory[disable swap for nodes] (note that beginning with OpenShift 3.6, the node service will not start if swap is enabled).
@@ -99,10 +99,10 @@ Again if you don’t specify limits for your containers, then OpenShift assumes 
 To get an idea of the actual resources available in a node you can run (this command requires https://docs.openshift.com/container-platform/latest/install_config/cluster_metrics.html[cluster metrics] to be installed) +
 `oc adm top node --heapster-namespace=openshift-infra --heapster-scheme=https <node-name>` +
 Which will output something as follows: +
-```
+----
 NAME             CPU(cores)   CPU%      MEMORY(bytes)   MEMORY%   
 192.168.99.100   1007m        50%       5896Mi          49%
-```
+----
 
 This is the same node of the above example. Notice that the actual consumption of resources is much higher than what OpenShift estimated. The difference is due to the fact that in this node there are several pods that do not declare requests and limits.
 
@@ -127,10 +127,10 @@ Kube-ops-view requires https://docs.openshift.com/container-platform/latest/inst
 === Running kube-ops-view on you laptop
 
 For a local installation, you need to be logged in as a cluster administrator and then run the following: +
-```
+----
 oc proxy &
 docker run -it --net=host raffaelespazzoli/ocp-ops-view 
-```
+----
 
 And then point your browser to `http://localhost:8080`.
 
@@ -138,13 +138,14 @@ And then point your browser to `http://localhost:8080`.
 
 An in-cluster installation allows you to make the console available to user who are not cluster-admin. +
 You can install kube-ops-view in this mode by running the following:
-```
-oc new-project kube-ops-view 
-oc create sa kube-ops-view 
-oc adm policy add-cluster-role-to-user cluster-admin system:serviceaccount:kube-ops-view:kube-ops-view
-oc apply -f https://raw.githubusercontent.com/raffaelespazzoli/kube-ops-view/ocp/deploy-openshift/kube-ops-view.yaml 
-oc expose svc kube-ops-view 
+----
+oc new-project ocp-ops-view
+oc create sa kube-ops-view
+oc adm policy add-scc-to-user anyuid -z kube-ops-view
+oc adm policy add-cluster-role-to-user cluster-admin system:systemaccount:ocp-ops-view:kube-ops-view
+oc apply -f https://raw.githubusercontent.com/raffaelespazzoli/kube-ops-view/ocp/deploy-openshift/kube-ops-view.yaml
+oc expose svc kube-ops-view
 oc get route | grep kube-ops-view | awk '{print $2}'
-```
+----
 The application will be available at the url printed by the last command.
 
