@@ -1,6 +1,6 @@
-```
 ---
 ---
+= KDL a notation to describe Kubernetes application deployments
 Raffaele Spazzoli <rspazzol@redhat.com>
 v1.0, 2017-08-28
 :toc: macro
@@ -8,13 +8,13 @@ v1.0, 2017-08-28
 
 toc::[]
 
-= KDL a notation to describe Kubernetes application deployments
+
 
 == Introduction
 
 This blog posts illustrates a graphical notation for Kubernetes API objects: Kubernetes Deployment Language (in short KDL). Kubernetes API objects can be used to describe how a solution will be deployed in Kubernetes.
 
-I think there is a need to describe and document how applications will be deployed in Kubernetes, especially when these applications are comprised of several components. +
+I think there is a need to describe and document how applications will be deployed in Kubernetes, especially when these applications are comprised of several components. 
 I wanted to create a simple graphical convention to describe these deployments, so that these diagram could be easily whiteboard and the capture in a document.
 
 To better explain the objective we can draw a parallel to https://en.wikipedia.org/wiki/Unified_Modeling_Language[UML], which had several graphical languages to describe different aspects of an application architecture. A difference with UML is, though, that here in KDL, we don’t have the objective to do forward or reverse engineering (i.e. we don’t convert the diagrams in yaml files or vice versa). This way we have the opportunity to manage how much of information we want to display in the diagrams. As a general rule of thumb we will only display architecturally relevant information.
@@ -41,9 +41,9 @@ Here is the API object notation convention.
 
 The Kubernetes cluster is simply represented as a rectangle:
 
-image::./images/kubernetes-template.png
+image::./images/kubernetes-template.png[]
 
-All the other API objects will live inside the cluster or at its edges. +
+All the other API objects will live inside the cluster or at its edges. 
 There should never be a need to call out individual nodes of an Kubernetes cluster.
 
 You can represents components outside the cluster and how they connect to components inside the cluster. This graphical convention does not cover components outside the cluster.
@@ -52,7 +52,7 @@ You can represents components outside the cluster and how they connect to compon
 
 The compute objects are the most complex. In general they are represented by a rectangle with badges around it to show additional information. Here is a template:
 
-image::./images/compute-template.png
+image::./images/compute-template.png[]
 
 The central section of the picture represents a https://kubernetes.io/docs/concepts/workloads/pods/pod/[pod]. In it we can find one or more containers. Both pod and containers should have a name.
 
@@ -91,18 +91,18 @@ On the bottom we have the cardinality of the instances of that pod. This field a
 
 At the top of the pod we have the exposed ports. You can use the little badges to just show the port number or also add the port name. Here is an example:
 
-image::./images/port-example.png
+image::./images/port-example.png[]
 
-These badges are in yellow because the represent networking config. +
+These badges are in yellow because the represent networking config. 
 You can connect each port with the container that is actually exposing that port if relevant. But in most cases this will not be necessary because most pods have just one container.
 
 At the bottom of the pod we have the https://kubernetes.io/docs/concepts/storage/volumes/[attached volumes]. The name of the volume should be displayed in the rectangle. In most cases these will be persistent volumes. If the volume type is not persistent volume it may be relevant to show it. Also, sometimes it may be important to also show the mount point. Here are examples of acceptable notation:
 
-image::./images/volume-example.png
+image::./images/volume-example.png[]
 
 On the right side of the pod with have volumes that pertain to the configuration of the pod: https://kubernetes.io/docs/concepts/configuration/secret/[secrets] and https://kubernetes.io/docs/tasks/configure-pod-container/configmap/[configmaps]. As for the data volumes, the name of the volume should be indicated, usually it is important to distinguish between configmaps and secrets, so also the type of volume should be indicated and if necessary also the mount point can be shown. Here are some examples:
 
-image::./images/secret-example.png
+image::./images/secret-example.png[]
 
 === Networking
 
@@ -112,7 +112,7 @@ There are two types of networking objects: https://kubernetes.io/docs/concepts/s
 
 A service can be represented with an oval as in the following picture:
 
-image::./images/service-template.png
+image::./images/service-template.png[]
 
 On the left side there is a badge representing the type of service. Here are the possible abbreviations
 
@@ -134,7 +134,7 @@ The service should be connected to a compute object. This will implicitly define
 
 If a service is allows traffic from the outside of the cluster to internal pods (such as for Load Balancer or Node Port or External IP) it should be depicted on the edge of the cluster.
 
-image::./images/edge-service.png
+image::./images/edge-service.png[]
 
 Same concept applies to services that regulate outbound traffic (such as External Name), although in this case they would probably appear at the bottom of the openshift cluster rectangle.
 
@@ -142,31 +142,31 @@ Same concept applies to services that regulate outbound traffic (such as Externa
 
 Ingresses can be indicated with a parallelogram as in the following picture:
 
-image::./images/ingress-template.png
+image::./images/ingress-template.png[]
 
-An ingress shows the ingress name and optionally the host exposed. An ingress will be connected to a service (the same rules apply to OpenShift routes).  +
+An ingress shows the ingress name and optionally the host exposed. An ingress will be connected to a service (the same rules apply to OpenShift routes).  
 Ingresses are always shown at the edge of the openshift cluster. 
 
-image::./images/edge-ingress.png
+image::./images/edge-ingress.png[]
 
 === Storage
 
 Storage is used to indicate persistent volumes. The color of storage is blues and it’s shape is a bucket deployed as the following picture:
 
-image::./images/storage-template.png
+image::./images/storage-template.png[]
 
-Storage should indicate the persistent volume name and the storage provider (example NFS, gluster etc...). +
-Persistent Storage is always depicted at the edge of the cluster because it is a configuration pointing to an externally available storage. +
-￼￼
-image::./images/edge-storage.png
+Storage should indicate the persistent volume name and the storage provider (example NFS, gluster etc...). 
+Persistent Storage is always depicted at the edge of the cluster because it is a configuration pointing to an externally available storage. 
+￼
+image::./images/edge-storage.png[]
 
 == Putting it all together
 
-In this section we will go over an example of how this notation can be used to describe the deployment of an application. +
-Our application is an bank service application that uses a mariadb database as its datastore. +
+In this section we will go over an example of how this notation can be used to describe the deployment of an application. 
+Our application is an bank service application that uses a mariadb database as its datastore. 
 Here is the deployment diagram:
 
-image::./images/mariadb-example.png
+image::./images/mariadb-example.png[]
 
 
 Notice that the mariadb pod uses StatefulSet and a persistent volume for its data. This pod is not exposed externally to the cluster, but its service is consumed by the BankService app. +
