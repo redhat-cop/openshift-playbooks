@@ -96,8 +96,10 @@ For memory, docker assumes that if you ask for a given amount of RAM, you should
 *Best Practice*: link:https://docs.openshift.com/container-platform/3.5/admin_guide/overcommit.html#disabling-swap-memory[disable swap for nodes] (note that beginning with OpenShift 3.6, the node service will not start if swap is enabled).
 
 Again if you don’t specify limits for your containers, then OpenShift assumes that they are unbounded and that the container can consume all the resources available on the node. +
-To get an idea of the actual resources available in a node you can run (this command requires https://docs.openshift.com/container-platform/latest/install_config/cluster_metrics.html[cluster metrics] to be installed) +
-`oc adm top node --heapster-namespace=openshift-infra --heapster-scheme=https <node-name>` +
+To get an idea of the actual resources available in a node you can run (this command requires https://docs.openshift.com/container-platform/latest/install_config/cluster_metrics.html[cluster metrics] to be installed) 
+----
+oc adm top node --heapster-namespace=openshift-infra --heapster-scheme=https <node-name>
+----
 Which will output something as follows: +
 ----
 NAME             CPU(cores)   CPU%      MEMORY(bytes)   MEMORY%   
@@ -116,8 +118,8 @@ Cluster administrators should watch the ratio between estimated resources and ac
 
 == Monitoring the cluster available capacity
 
-Implementing a mature, enterprise-grade monitoring tool for OpenShift can take some time. I wanted to provide something that would allow to answer the resource availability question from day one. +
-One way is to script the above commands (oc describe node and oc adm top) and come up with some calculation to get to the answer. Another way is to use https://github.com/hjacobs/kube-ops-view[Kube-ops-view]. A ported version to support OpenShift is available https://github.com/raffaelespazzoli/kube-ops-view/tree/ocp[here]. +
+Implementing a mature, enterprise-grade monitoring tool for OpenShift can take some time. I wanted to provide something that would allow to answer the resource availability question from day one. 
+One way is to script the above commands (oc describe node and oc adm top) and come up with some calculation to get to the answer. Another way is to use https://github.com/hjacobs/kube-ops-view[Kube-ops-view]. A ported version to support OpenShift is available https://github.com/raffaelespazzoli/kube-ops-view/tree/ocp[here]. 
 Kube-ops-view features a dashboard that allows to get information on the capacity of your cluster among other things. Here is an example of the dashboard:
 
 
