@@ -8,7 +8,7 @@ v1.0, 2017-08-28
 
 toc::[]
 
-
+== Overview
 
 
 One of the things to think about when designing promotion pipelines for applications deployed in OpenShift is a strategy for managing environment-dependent properties. +
@@ -102,7 +102,7 @@ Environment and config service endpoint will have to be passed using one of the 
 This methods is appropriate when application properties need to be reloaded at runtime. One shortcoming of this method is that your application now has a dependency on an external service (which may be down) to start. To overcome this limit, you should have defaults for all your properties so that your application can start even if the property store service is down. 
 https://github.com/Netflix/archaius/wiki[Archaius] is a NetFlix library designed to aggregate properties from different sources and ping these sources at regular interval to look for updates. It http://cloud.spring.io/spring-cloud-static/spring-cloud-netflix/1.2.4.RELEASE[integrates] with Spring Cloud.
 
-=== Conclusions
+== Conclusions
 
 As said in the introduction, none of these methods is better than the others. The choice of which one to use should be done on a case-by-case basis. One more thing to keep in mind is that these methods can be combined. If you are planning to port a large number of applications to OpenShift and your applications are all built using the same framework and basic architectures, then it may be a good idea to standardize on one of these methods.
 
