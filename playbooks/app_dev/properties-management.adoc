@@ -11,15 +11,18 @@ toc::[]
 == Overview
 
 
-One of the things to think about when designing promotion pipelines for applications deployed in OpenShift is a strategy for managing environment-dependent properties. +
-When an application is promoted through environments (such a DEV, IT, QA) some of its configuration properties need to change, for example the connection string to a database or the URL of a called web service. +
-How an application expects to read its configurations is completely application-dependent. That said, over the course of several projects we have seen some patterns emerge that we have found to be successful. There is no better or worse approach - it is the responsibility of the pipeline designer to choose the best approach for a given context. +
-This article focuses on environment-dependent properties, but the same approaches could be potentially used for all properties, whether or not they are environment-dependent. Credential management is out of scope of this article.  +
+One of the things to think about when designing promotion pipelines for applications deployed in OpenShift is a strategy for managing environment-dependent properties. 
+When an application is promoted through environments (such a DEV, IT, QA) some of its configuration properties need to change, for example the connection string to a database or the URL of a called web service. 
+
+How an application expects to read its configurations is completely application-dependent. That said, over the course of several projects we have seen some patterns emerge that we have found to be successful. There is no better or worse approach - it is the responsibility of the pipeline designer to choose the best approach for a given context. 
+
+This article focuses on environment-dependent properties, but the same approaches could be potentially used for all properties, whether or not they are environment-dependent. Credential management is out of scope of this article.  
+
 Here are four approaches that that cover the most common use cases. 
 
 == Using Environment Variables
 
-Properties are passed by OpenShift as environment variables. The following is a fragment of how a such a pod template (or higher structures such as replication controllers and deployment configs) would be configured: +
+Properties are passed by OpenShift as environment variables. The following is a fragment of how a such a pod template (or higher structures such as replication controllers and deployment configs) would be configured: 
 ----
           env: 
             - name: MY_EXTERNAL_ENDPOINT 
@@ -31,42 +34,45 @@ Your application needs to be trained to read its properties this way. If you are
 private String myExternalEndpoint;
 ----
 
-Things to keep in mind when adopting this approach are that if the value of a property changes, your CI/CD workflow needs to be able to change it in the pod template and if a property is added or removed, your CI/CD workflow needs to be able to manage this event appropriately. +
+Things to keep in mind when adopting this approach are that if the value of a property changes, your CI/CD workflow needs to be able to change it in the pod template and if a property is added or removed, your CI/CD workflow needs to be able to manage this event appropriately. 
 In general, this approach does not scale well when you have more than a dozen of properties.
 
 == Using One Environment Variable to Determine the Environment
 
-In this approach, we use an environment variable to determine in which environment the application is being deployed. The pod template would look like the following: +
+In this approach, we use an environment variable to determine in which environment the application is being deployed. The pod template would look like the following: 
 ----
           env: 
             - name: ENV 
               value: {IT|QA|PROD}
 ----
-The docker image of your application will need to contain all the properties for each possible environment and to be able to select the right configuration file based on the ENV environment variable. +
-Using Spring, this can be elegantly achieved using profiles. Here is an example: +
-You will have several config classes, one per environment with the following annotations: +
+The docker image of your application will need to contain all the properties for each possible environment and to be able to select the right configuration file based on the ENV environment variable. 
+
+Using Spring, this can be elegantly achieved using profiles. Here is an example: 
+You will have several config classes, one per environment with the following annotations: 
 ----
 @Configuration  
 @PropertySource("file:///<well-known-location>/application-dev.properties")  
 @Profile("dev")
 ----
-Then this pod configuration to activate the right profile: +
+Then this pod configuration to activate the right profile: 
 ----
           env: 
             - name: SPRING_ACTIVE_PROFILE 
               value: dev
 ----
-Note: in this case we don’t even need the ENV variable +
+NOTE: In this case we don’t even need the ENV variable.
+ 
 This approach makes your CI/CD easier to implement because now you don’t have to manage changing the values of the properties or adding and removing properties. 
+
 This approach falls short when the number and type of your environments start to change (for example because you start provisioning environments dynamically).
 
 == ConfigMap
 
-ConfigMap is an OpenShift API object that is managed by OpenShift with the purpose of injecting application configurations. You can create a ConfigMap to contain a properties file as follows: +
+ConfigMap is an OpenShift API object that is managed by OpenShift with the purpose of injecting application configurations. You can create a ConfigMap to contain a properties file as follows: 
 ----
 oc create configmap my-app-config --from-file=path/to/application.properties 
 ----
-This config map will be mounted as a file called `application.properties` in a directory that you can configure in your pod template. Here are the relevant sections: +
+This config map will be mounted as a file called `application.properties` in a directory that you can configure in your pod template. Here are the relevant sections: 
 ----
       volumes: 
         - name: my-app-config 
@@ -81,16 +87,19 @@ This config map will be mounted as a file called `application.properties` in a d
               mountPath: /etc/myapp/config
 ----
 Notice that we use an environment variable to pass the location of the properties file to the application. This environment variable must match the volume mount point and never needs to change.
+
 The application will need to initialize its properties by looking at the environment variables that specified the location of the properties. If you are using Spring, this can be done as follows: 
 ----
 @PropertySource("file:///${CONFIG_LOCATION}/application.properties")
 ----
 This approach allows for easily sharing  properties between different applications, because they can all mount the same configmap.
+
 With this approach, you have to manage an additional OpenShift API object in your CI/CD pipeline: the configmap. Someone or some process must be able to create them and update them when properties are changed, added, or removed.
 
 == Config Store Service
 
 In this approach, a service that we will refer to as config store is servicing configurations for one or more apps. Presumably, this server can manage different environments so when an application starts it will call the service passing its identification and the environment for which it wants the configuration and the service will respond with the appropriate properties.
+
 Environment and config service endpoint will have to be passed using one of the previous methods. If using environment variables it the pod template would look as follows:
 ----
           env: 
@@ -100,6 +109,7 @@ Environment and config service endpoint will have to be passed using one of the 
               value: http://myconfig.xxx.yyy[http://myconfig.xxx.yyy]
 ----
 This methods is appropriate when application properties need to be reloaded at runtime. One shortcoming of this method is that your application now has a dependency on an external service (which may be down) to start. To overcome this limit, you should have defaults for all your properties so that your application can start even if the property store service is down. 
+
 https://github.com/Netflix/archaius/wiki[Archaius] is a NetFlix library designed to aggregate properties from different sources and ping these sources at regular interval to look for updates. It http://cloud.spring.io/spring-cloud-static/spring-cloud-netflix/1.2.4.RELEASE[integrates] with Spring Cloud.
 
 == Conclusions
