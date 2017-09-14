@@ -1,0 +1,4 @@
+APPLICATION_NAME=site
+NAMESPACE=field-guides-dev
+SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/openshift-playbooks.git
+SOURCE_REPOSITORY_REF=copedia
