@@ -38,9 +38,9 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', containers: [
 
     stage('Build Code') {
       sh """
-        . /opt/app-root/etc/scl_enable
         bundle install
         bundle exec jekyll build
+        gem env
       """
 
     }

@@ -42,15 +42,20 @@ objects:
 
               stage('SCM Checkout') {
                 checkout([
-                        $class: 'GitSCM', branches: [[name: '*/master']],
-                        userRemoteConfigs: [[url: 'https://github.com/redhat-cop/openshift-playbooks.git' ]]
+                        $class: 'GitSCM', branches: [[name: '*/copedia']],
+                        userRemoteConfigs: [[url: 'https://github.com/etsauer/openshift-playbooks.git' ]]
                 ])
               }
 
               stage('Build Code') {
 
-                sh "bundle install"
-                sh "bundle exec jekyll build"
+                sh """
+                  pwd
+                  env
+                  bundle install
+                  gem env
+                  bundle exec jekyll build
+                """
 
               }
             }
