@@ -646,8 +646,9 @@ create ltm virtual OpenShift-Master pool master.c1-ocp.myorg.com source-address-
 create ltm node openshift-infranode-1.c1-ocp.myorg.com fqdn { name openshift-infranode-1.c1-ocp.myorg.com }
 create ltm node openshift-infranode-2.c1-ocp.myorg.com fqdn { name openshift-infranode-2.c1-ocp.myorg.com }
 create ltm node openshift-infranode-3.c1-ocp.myorg.com fqdn { name openshift-infranode-3.c1-ocp.myorg.com }
-create ltm pool infra.c1-ocp.myorg.com-http monitor http members add { openshift-infranode-1.c1-ocp.myorg.com:80 openshift-infranode-2.c1-ocp.myorg.com:80 openshift-infranode-3.c1-ocp.myorg.com:80 }
-create ltm pool infra.c1-ocp.myorg.com-https monitor https members add { openshift-infranode-1.c1-ocp.myorg.com:443 openshift-infranode-2.c1-ocp.myorg.com:443 openshift-infranode-3.c1-ocp.myorg.com:443 }
+create ltm monitor http ocp-router defaults-from http send "GET /healthz" destination "*.1936"
+create ltm pool infra.c1-ocp.myorg.com-http monitor ocp-router members add { openshift-infranode-1.c1-ocp.myorg.com:80 openshift-infranode-2.c1-ocp.myorg.com:80 openshift-infranode-3.c1-ocp.myorg.com:80 }
+create ltm pool infra.c1-ocp.myorg.com-https monitor ocp-router members add { openshift-infranode-1.c1-ocp.myorg.com:443 openshift-infranode-2.c1-ocp.myorg.com:443 openshift-infranode-3.c1-ocp.myorg.com:443 }
 create ltm virtual infra.c1-ocp.myorg.com-http  pool infra.c1-ocp.myorg.com-http  persist replace-all-with { source_addr } source-address-translation { type automap } destination 192.168.10.101:80
 create ltm virtual infra.c1-ocp.myorg.com-https pool infra.c1-ocp.myorg.com-https persist replace-all-with { source_addr } source-address-translation { type automap } destination 192.168.10.101:443
 ----
@@ -668,19 +669,20 @@ bind serviceGroup ose-console_443_sslbridge openshift-master-3.c1-ocp.myorg.com 
 ===== Infra Node / Router LB
 
 ----
+add lb monitor ocp-router HTTP -destPort 1936 -httpRequest “GET /healthz”
 add serviceGroup ose-wildcard_443_sslbridge SSL_BRIDGE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
 add lb vserver ose-wildcard_443_sslbridge SSL_BRIDGE 192.168.10.102 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
 bind lb vserver ose-wildcard_443_sslbridge ose-wildcard_443_sslbridge
-bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-1.c1-ocp.myorg.com 443
-bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-2.c1-ocp.myorg.com 443
-bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-3.c1-ocp.myorg.com 443
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-1.c1-ocp.myorg.com 443 -monitorName ocp-router
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-2.c1-ocp.myorg.com 443 -monitorName ocp-router
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-3.c1-ocp.myorg.com 443 -monitorName ocp-router
 
 add serviceGroup ose-wildcard_80 -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
 add lb vserver ose-wildcard_80 192.168.10.102 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
 bind lb vserver ose-wildcard_80 ose-wildcard_80
-bind serviceGroup ose-wildcard_80 openshift-infranode-1.c1-ocp.myorg.com 80
-bind serviceGroup ose-wildcard_80 openshift-infranode-2.c1-ocp.myorg.com 80
-bind serviceGroup ose-wildcard_80 openshift-infranode-3.c1-ocp.myorg.com 80
+bind serviceGroup ose-wildcard_80 openshift-infranode-1.c1-ocp.myorg.com 80 -monitorName ocp-router
+bind serviceGroup ose-wildcard_80 openshift-infranode-2.c1-ocp.myorg.com 80 -monitorName ocp-router
+bind serviceGroup ose-wildcard_80 openshift-infranode-3.c1-ocp.myorg.com 80 -monitorName ocp-router
 
 ----
 
