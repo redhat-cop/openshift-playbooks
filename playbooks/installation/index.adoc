@@ -633,10 +633,11 @@ The example configuration below is a basic setup that works, but may not be the 
 ===== Master LB
 
 ----
+create ltm monitor https ocp-master defaults-from https send "GET /healthz"
 create ltm node openshift-master-1.c1-ocp.myorg.com fqdn { name openshift-master-1.c1-ocp.myorg.com }
 create ltm node openshift-master-2.c1-ocp.myorg.com fqdn { name openshift-master-2.c1-ocp.myorg.com }
 create ltm node openshift-master-3.c1-ocp.myorg.com fqdn { name openshift-master-3.c1-ocp.myorg.com }
-create ltm pool master.c1-ocp.myorg.com monitor https members add { openshift-master-1.c1-ocp.myorg.com:443 openshift-master-2.c1-ocp.myorg.com:443 openshift-master-3.c1-ocp.myorg.com.com:443 }
+create ltm pool master.c1-ocp.myorg.com monitor ocp-master members add { openshift-master-1.c1-ocp.myorg.com:443 openshift-master-2.c1-ocp.myorg.com:443 openshift-master-3.c1-ocp.myorg.com.com:443 }
 create ltm virtual OpenShift-Master pool master.c1-ocp.myorg.com source-address-translation { type automap } destination 192.168.10.100:443
 ----
 
@@ -657,12 +658,13 @@ create ltm virtual infra.c1-ocp.myorg.com-https pool infra.c1-ocp.myorg.com-http
 ===== Master LB
 
 ----
+add lb monitor ocp-master HTTPS -httpRequest “GET /healthz”
 add serviceGroup ose-console_443_sslbridge SSL_BRIDGE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
 add lb vserver ose-console_443_sslbridge SSL_BRIDGE 192.168.10.101 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
 bind lb vserver ose-console_443_sslbridge ose-console_443_sslbridge
-bind serviceGroup ose-console_443_sslbridge openshift-master-1.c1-ocp.myorg.com 443
-bind serviceGroup ose-console_443_sslbridge openshift-master-2.c1-ocp.myorg.com 443
-bind serviceGroup ose-console_443_sslbridge openshift-master-3.c1-ocp.myorg.com 443
+bind serviceGroup ose-console_443_sslbridge openshift-master-1.c1-ocp.myorg.com 443 -monitorName ocp-master
+bind serviceGroup ose-console_443_sslbridge openshift-master-2.c1-ocp.myorg.com 443 -monitorName ocp-master
+bind serviceGroup ose-console_443_sslbridge openshift-master-3.c1-ocp.myorg.com 443 -monitorName ocp-master
 ----
 
 ===== Infra Node / Router LB
