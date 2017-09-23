@@ -311,7 +311,7 @@ This proposed architecture installs OpenShift via RPM. This is the most common w
 In addition to RPM content, OpenShift requires the ability to pull container images from an external image registry. In order to bring this in house we suggest the following options to build and sync a Standalone Registry.
 
 * A Simple Bootstrap Registry (link:#simple-docker-registry-docker-distribution[See below.])
-* Using the OpenShift Standalone Registry (Coming soon)
+* Using the OpenShift Standalone Registry (link:#syncing-images-using-satellite-6[See below])
 * Syncing image content to Satellite 6 (Coming soon)
 
 ==== Application Content
@@ -602,6 +602,12 @@ hammer repository create --name "openshift3/ose" --organization-id "Lab" --conte
 NOTE: Satellite will sync ALL tags for each image repository you create so it might be space intensive.
 
 There is a script available at https://github.com/redhat-cop/openshift-toolkit/tree/master/satellite/populate-ocp.sh that can be used to save time.
+
+Update ORG_ID and PRODUCT_NAME if desired in the above script and run it. Note that you will need to have configured hammer authentication as described in the https://access.redhat.com/documentation/en-us/red_hat_satellite/6.2/html-single/hammer_cli_guide/#sect-CLI_Guide-Authentication[documentation].
+
+----
+$ ./populate-docker.sh
+----
 
 By adding the below 2 lines in your inventory file you configure OpenShift to consume the images from Satellite that was synced above.
 
