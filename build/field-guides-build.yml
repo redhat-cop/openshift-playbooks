@@ -33,36 +33,14 @@ objects:
     strategy:
       type: "JenkinsPipeline"
       jenkinsPipelineStrategy:
-        jenkinsfile: |
-          podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", containers: [
-            containerTemplate(name: 'jnlp', image: 'docker-registry.default.svc:5000/field-guides-dev/jenkins-slave-ruby', privileged: false, alwaysPullImage: false, workingDir: '/tmp', args: '${computer.jnlpmac} ${computer.name}', ttyEnabled: false)
-          ]) {
-
-            node('slave-ruby') {
-
-              stage('SCM Checkout') {
-                checkout([
-                        $class: 'GitSCM', branches: [[name: '*/copedia']],
-                        userRemoteConfigs: [[url: 'https://github.com/etsauer/openshift-playbooks.git' ]]
-                ])
-              }
-
-              stage('Build Code') {
-
-                sh """
-                  pwd
-                  env
-                  bundle install
-                  gem env
-                  bundle exec jekyll build
-                """
-
-              }
-            }
-          }
-      env:
+        jenkinsfilePath: "Jenkinsfile"
+        env:
         - name: "BUILD_CONTEXT_DIR"
           value: "demo"
+        - name: "SOURCE_REPOSITORY_URL"
+          value: "${SOURCE_REPOSITORY_URL}"
+        - name: "SOURCE_REPOSITORY_REF"
+          value: "${SOURCE_REPOSITORY_REF}"
 - apiVersion: v1
   kind: BuildConfig
   metadata:
@@ -85,6 +63,12 @@ objects:
           name: ${IMAGE_STREAM_TAG_NAME}
           namespace: ${IMAGE_STREAM_NAMESPACE}
       type: Source
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: s2i-gows
+  spec:
+    dockerImageRepository: "docker.io/redhatcop/s2i-gows"
 parameters:
 - description: The name for the application.
   name: APPLICATION_NAME

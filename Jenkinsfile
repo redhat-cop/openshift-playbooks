@@ -15,52 +15,43 @@ node('master') {
 
   env.APP_NAME = "${env.JOB_NAME}".replaceAll(/-?pipeline-?/, '').replaceAll(/-?${env.NAMESPACE}-?/, '')
   def projectBase = "${env.NAMESPACE}".replaceAll(/-dev/, '')
-  env.STAGE1 = "${projectBase}-dev"
-  env.STAGE2 = "${projectBase}-stage"
-  env.STAGE3 = "${projectBase}-prod"
+//  env.STAGE1 = "${projectBase}-dev"
+//  env.STAGE2 = "${projectBase}-prod"
 
-  sh(returnStdout: true, script: "${env.OC_CMD} get is jenkins-slave-image-mgmt --template=\'{{ .status.dockerImageRepository }}\' -n openshift > /tmp/jenkins-slave-image-mgmt.out")
-  env.SKOPEO_SLAVE_IMAGE = readFile('/tmp/jenkins-slave-image-mgmt.out').trim()
-  println "${env.SKOPEO_SLAVE_IMAGE}"
+//  sh(returnStdout: true, script: "${env.OC_CMD} get is jenkins-slave-image-mgmt --template=\'{{ .status.dockerImageRepository }}\' -n openshift > /tmp/jenkins-slave-image-mgmt.out")
+//  env.SKOPEO_SLAVE_IMAGE = readFile('/tmp/jenkins-slave-image-mgmt.out').trim()
+//  println "${env.SKOPEO_SLAVE_IMAGE}"
 
 }
 
-podTemplate(label: 'slave-ruby', cloud: 'openshift', containers: [
-  containerTemplate(name: 'jenkins-slave-ruby', image: 'jenkins-slave-ruby', ttyEnabled: true, command: 'cat'),
-  containerTemplate(name: 'jnlp', image: 'jenkinsci/jnlp-slave:2.62-alpine', args: '${computer.jnlpmac} ${computer.name}')
+podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", containers: [
+  containerTemplate(name: 'jnlp', image: 'docker-registry.default.svc:5000/field-guides-dev/jenkins-slave-ruby', privileged: false, alwaysPullImage: false, workingDir: '/tmp', args: '${computer.jnlpmac} ${computer.name}', ttyEnabled: false)
 ]) {
 
   node('slave-ruby') {
 
-    stage('Checkout Source Code') {
-      checkout scm
+    stage('SCM Checkout') {
+      checkout([
+              $class: 'GitSCM', branches: [[name: '*/copedia']],
+              userRemoteConfigs: [[url: 'https://github.com/etsauer/openshift-playbooks.git' ]]
+      ])
     }
 
     stage('Build Code') {
+
       sh """
+        pwd
+        env
         bundle install
-        bundle exec jekyll build
         gem env
+        bundle exec jekyll build
+        ls .
       """
 
     }
 
     stage('Build Image') {
-
-      sh """
-         rm -rf oc-build && mkdir -p oc-build/deployments
-
-         for t in \$(echo "jar;war;ear" | tr ";" "\\n"); do
-           cp -rfv ./target/*.\$t oc-build/deployments/ 2> /dev/null || echo "No \$t files"
-         done
-
-         for i in oc-build/deployments/*.war; do
-            mv -v oc-build/deployments/\$(basename \$i) oc-build/deployments/ROOT.war
-            break
-         done
-
-         ${env.OC_CMD} start-build ${env.APP_NAME} --from-dir=oc-build --wait=true --follow=true || exit 1
-      """
+      sh "oc start-build site --from-dir=./_site/ --wait --follow"
     }
 
     stage("Verify Deployment to ${env.STAGE1}") {
@@ -68,31 +59,6 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', containers: [
       openshiftVerifyDeployment(deploymentConfig: "${env.APP_NAME}", namespace: "${STAGE1}", verifyReplicaCount: true)
 
       input "Promote Application to Stage?"
-    }
-
-    stage("Promote To ${env.STAGE2}") {
-      sh """
-      ${env.OC_CMD} tag ${env.STAGE1}/${env.APP_NAME}:latest ${env.STAGE2}/${env.APP_NAME}:latest
-      """
-    }
-
-    stage("Verify Deployment to ${env.STAGE2}") {
-
-      openshiftVerifyDeployment(deploymentConfig: "${env.APP_NAME}", namespace: "${STAGE2}", verifyReplicaCount: true)
-
-      input "Promote Application to Prod?"
-    }
-
-    stage("Promote To ${env.STAGE3}") {
-      sh """
-      ${env.OC_CMD} tag ${env.STAGE2}/${env.APP_NAME}:latest ${env.STAGE3}/${env.APP_NAME}:latest
-      """
-    }
-
-    stage("Verify Deployment to ${env.STAGE3}") {
-
-      openshiftVerifyDeployment(deploymentConfig: "${env.APP_NAME}", namespace: "${STAGE3}", verifyReplicaCount: true)
-
     }
   }
 }
