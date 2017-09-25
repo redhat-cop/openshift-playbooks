@@ -8,7 +8,7 @@ This pipeline depends on https://github.com/etsauer/containers-quickstarts/tree/
 First, instantiate the project
 ```
 cd ./openshift-playbooks
-oc apply -f ./projects/projects.yml
+oc create -f ./projects/projects.yml
 ```
 
 Build and push the slave image
@@ -26,5 +26,6 @@ docker push docker-registry-default.apps.d1.casl.rht-labs.com/field-guides-dev/j
 Deploy the pipeline
 ```
 oc process openshift//jenkins-ephemeral | oc apply -f- -n field-guides-dev
+oc process -f deploy/field-guides-deploy-template.yml --param-file=deploy/dev/params | oc apply -f -
 oc process -f build/field-guides-build.yml --param-file=build/dev/params | oc apply -f-
 ```

@@ -2,3 +2,4 @@ APPLICATION_NAME=site
 NAMESPACE=field-guides-dev
 SOURCE_REPOSITORY_URL=https://github.com/etsauer/openshift-playbooks.git
 SOURCE_REPOSITORY_REF=copedia
+IMAGE_STREAM_NAMESPACE=field-guides-dev
