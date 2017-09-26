@@ -50,7 +50,12 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", 
         bundle exec jekyll build
         ls .
       """
+    }
 
+    stage('Run Automated Tests') {
+      sh """
+        bundle exec htmlproofer ./_site --check-html
+      """
     }
 
     stage('Build Image') {
