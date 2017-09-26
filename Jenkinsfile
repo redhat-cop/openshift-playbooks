@@ -54,6 +54,7 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", 
 
     stage('Run Automated Tests') {
       sh """
+        export LANG=en_US.UTF-8
         bundle exec htmlproofer ./_site --check-html
       """
     }
