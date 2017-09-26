@@ -13,19 +13,24 @@ oc create -f ./projects/projects.yml
 
 Build and push the slave image
 ```
-cd ~/src
-git clone https://github.com/etsauer/containers-quickstarts.git
-cd containers-quickstarts
-git checkout jenkins-slave-ruby
-cd jenkins-slaves/jenkins-slave-ruby
-docker build -t docker-registry-default.apps.d1.casl.rht-labs.com/field-guides-dev/jenkins-slave-ruby .
-docker login -u $(oc whoami) -p $(oc whoami -t) docker-registry-default.apps.d1.casl.rht-labs.com
-docker push docker-registry-default.apps.d1.casl.rht-labs.com/field-guides-dev/jenkins-slave-ruby
+oc new-build https://github.com/etsauer/containers-quickstarts.git#jenkins-slave-ruby --context-dir='jenkins-slaves/jenkins-slave-ruby' --to='jenkins-slave-ruby'
 ```
 
 Deploy the pipeline
 ```
+oc process -f https://raw.githubusercontent.com/redhat-cop/containers-quickstarts/master/jenkins-slaves/templates/jenkins-slave-image-mgmt-template.json | oc apply -f-
 oc process openshift//jenkins-ephemeral | oc apply -f- -n field-guides-dev
 oc process -f deploy/field-guides-deploy-template.yml --param-file=deploy/dev/params | oc apply -f -
 oc process -f build/field-guides-build.yml --param-file=build/dev/params | oc apply -f-
+```
+
+## Production Setup
+
+```
+oc login https://api.pro-us-east-1.openshift.com --token=<token>
+oc create -f projects/projects-prod.yml
+oc create serviceaccount promoter -n field-guides-prod
+oc adm policy add-role-to-user edit -z promoter -n field-guides-prod
+oc serviceaccounts get-token promoter -n field-guides-prod
+oc process -f deploy/field-guides-deploy-template.yml --param-file=deploy/prod/params | oc apply -f -
 ```
