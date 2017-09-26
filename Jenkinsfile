@@ -22,9 +22,14 @@ node('master') {
   env.SKOPEO_SLAVE_IMAGE = readFile('/tmp/jenkins-slave-image-mgmt.out').trim()
   println "${env.SKOPEO_SLAVE_IMAGE}"
 
-  env.PROD_API="https://api.pro-us-east-1.openshift.com"
-  env.PROD_REGISTRY="registry.pro-us-east-1.openshift.com"
-  env.PROD_TOKEN="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJmaWVsZC1ndWlkZXMtcHJvZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJwcm9tb3Rlci10b2tlbi0wbjU0MyIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJwcm9tb3RlciIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjdlMzM3YTMwLWEyNTgtMTFlNy05ODcwLTEyNWIwMzRkMmY0NiIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpmaWVsZC1ndWlkZXMtcHJvZDpwcm9tb3RlciJ9.aCZEKDG_N5TAAJzUOaHlpzXJbSuFwi2n20ZCv1S52CkQ5xOUceDMa5qyoVSYjq63K7uy85XwQU3N6gZzKHN0JvnTrC2K36-qs1JkMFirnAVSzGVOOm2mNIls9wcnmeiUUNXNTaiQ5l1bN2NMH9Viav4NsHL6DjRLWPSb5LTKBPcKGsqCWZZd0ta-vqyBdDEVbPCH1OHcUFmIKGE1uq08y5GTSyZsnEsoAUVksOBlQD0sOoIWOVLxbBzhe5BieCNy1-6wBytxA4Dew7iokJAuucmKq9Gg9aPW-saiQaNoGzcv8S3WIpOcvulO1w3QVLVoreFRoO_D2NUwzcEb_XJv2A"
+  sh(returnStdout: true, script: "oc get secret prod-credentials -o jsonpath='{ .data.api }' | base64 --decode > /tmp/prod_api")
+  env.PROD_API= readFile('/tmp/prod_api').trim()
+
+  sh(returnStdout: true, script: "oc get secret prod-credentials -o jsonpath='{ .data.registry }' | base64 --decode > /tmp/prod_registry")
+  env.PROD_REGISTRY = readFile('/tmp/prod_registry').trim()
+
+  sh(returnStdout: true, script: "oc get secret prod-credentials -o jsonpath='{ .data.token }' | base64 --decode > /tmp/prod_token")
+  env.PROD_TOKEN = readFile('/tmp/prod_token').trim()
 }
 
 podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", containers: [
@@ -78,7 +83,7 @@ podTemplate(label: 'promotion-slave', cloud: 'openshift', containers: [
 
   node('promotion-slave') {
 
-    stage("Promote To ${env.STAGE3}") {
+    stage("Promote To ${env.STAGE2}") {
 
       container('jenkins-slave-image-mgmt') {
         sh """
