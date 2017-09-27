@@ -601,7 +601,7 @@ hammer repository create --name "openshift3/ose" --organization-id "Lab" --conte
 
 NOTE: Satellite will sync ALL tags for each image repository you create so it might be space intensive.
 
-There is a script available at https://github.com/redhat-cop/openshift-toolkit/tree/master/satellite/populate-ocp.sh that can be used to save time.
+There is a script available at https://github.com/redhat-cop/openshift-toolkit/tree/master/satellite/populate-docker.sh that can be used to save time.
 
 Update ORG_ID and PRODUCT_NAME if desired in the above script and run it. Note that you will need to have configured hammer authentication as described in the https://access.redhat.com/documentation/en-us/red_hat_satellite/6.2/html-single/hammer_cli_guide/#sect-CLI_Guide-Authentication[documentation].
 
