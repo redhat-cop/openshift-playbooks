@@ -9,9 +9,5 @@ chmod ug+rwx ${HOME}
 # runtime user will need to be able to self-insert in /etc/passwd
 chmod g+rw /etc/passwd
 
-# ensure that the ansible content is accessible
-#chmod -R g+r ${HOME}
-#find ${HOME} -type d -exec chmod g+x {} +
-
 # no need for this script to remain in the image after running
 rm $0
