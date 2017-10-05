@@ -4,5 +4,5 @@ services:
     ports:
      - "4000:4000"
     volumes:
-    - ./:/opt/jekyll
+    - $PWD:/opt/jekyll:Z
     image: redhatcop/jekyll-asciidoctor
