@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SOURCE_DIR=/opt/jekyll
+SOURCE_DIR=/home/jekyll/src
 
 if [ ! -d "$SOURCE_DIR" ]; then
    echo "Error: Source volume not mounted or available"

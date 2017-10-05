@@ -19,7 +19,11 @@ git clone https://github.com/redhat-cop/openshift-playbooks.git
 +
 ----
 cd openshift-playbooks
-docker-compose up -d
+docker run \
+  -u `id -u` -it \
+  -v $PWD/:/home/jekyll/src/:Z \
+  -p 4000:4000 \
+  redhatcop/jekyll-local-builder
 ----
 3. Launch browser and navigate to `http://localhost:4000`
 
