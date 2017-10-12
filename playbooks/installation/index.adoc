@@ -675,8 +675,8 @@ bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-1.c1-ocp.myorg.
 bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-2.c1-ocp.myorg.com 443
 bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-3.c1-ocp.myorg.com 443
 
-add serviceGroup ose-wildcard_80 -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
-add lb vserver ose-wildcard_80 192.168.10.102 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
+add serviceGroup ose-wildcard_80 http -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
+add lb vserver ose-wildcard_80 192.168.10.102 80 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
 bind lb vserver ose-wildcard_80 ose-wildcard_80
 bind serviceGroup ose-wildcard_80 openshift-infranode-1.c1-ocp.myorg.com 80
 bind serviceGroup ose-wildcard_80 openshift-infranode-2.c1-ocp.myorg.com 80
