@@ -24,6 +24,8 @@
 
 == OCP Release Notes
 
+* link:https://docs.openshift.com/container-platform/3.6/release_notes/ocp_3_6_release_notes.html#ocp-36-known-issues[OCP 3.6 Known Issues]
+* link:https://docs.openshift.com/container-platform/3.5/release_notes/ocp_3_5_release_notes.html#ocp-35-known-issues[OCP 3.5 Known Issues]
 * link:https://docs.openshift.com/container-platform/3.4/release_notes/ocp_3_4_release_notes.html#ocp-34-known-issues[OCP 3.4 Known Issues]
 * link:https://docs.openshift.com/container-platform/3.3/release_notes/ocp_3_3_release_notes.html#ocp-33-known-issues[OCP 3.3 Known Issues]
 * link:https://docs.openshift.com/enterprise/3.2/release_notes/ose_3_2_release_notes.html#ose-32-known-issues[OCP 3.2 Known Issues]
