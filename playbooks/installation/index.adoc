@@ -311,8 +311,8 @@ This proposed architecture installs OpenShift via RPM. This is the most common w
 In addition to RPM content, OpenShift requires the ability to pull container images from an external image registry. In order to bring this in house we suggest the following options to build and sync a Standalone Registry.
 
 * A Simple Bootstrap Registry (link:#simple-docker-registry-docker-distribution[See below.])
-* Using the OpenShift Standalone Registry (link:#syncing-images-using-satellite-6[See below])
-* Syncing image content to Satellite 6 (Coming soon)
+* Using the OpenShift Standalone Registry (Coming Soon)
+* Syncing image content to Satellite 6 (link:#syncing-images-using-satellite-6[See below])
 
 ==== Application Content
 
@@ -613,7 +613,7 @@ By adding the below 2 lines in your inventory file you configure OpenShift to co
 
 ----
 oreg_url=satellite.example.com:5000/lab-ocp_docker_images-openshift3_ose-${component}:${version}
-cli_docker_additional_registries=satellite.example.com:5000
+openshift_docker_additional_registries=satellite.example.com:5000
 ----
 
 Satellite does not give you an option of the above naming scheme so you will need to modify imagestreams accordingly.
