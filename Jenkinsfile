@@ -18,7 +18,7 @@ node('master') {
   env.STAGE1 = "${projectBase}-dev"
   env.STAGE2 = "${projectBase}-prod"
 
-  sh(returnStdout: true, script: "${env.OC_CMD} get is jenkins-slave-image-mgmt --template=\'{{ .status.dockerImageRepository }}\' > /tmp/jenkins-slave-image-mgmt.out")
+  sh(returnStdout: true, script: "${env.OC_CMD} get is jenkins-slave-image-mgmt -o jsonpath='\{ .status.dockerImageRepository \}' | tee /tmp/jenkins-slave-image-mgmt.out")
   env.SKOPEO_SLAVE_IMAGE = readFile('/tmp/jenkins-slave-image-mgmt.out').trim()
   println "${env.SKOPEO_SLAVE_IMAGE}"
 
