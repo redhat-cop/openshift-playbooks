@@ -33,16 +33,17 @@ node('master') {
 }
 
 podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", containers: [
-  containerTemplate(name: 'jnlp', image: 'docker-registry.default.svc:5000/field-guides-dev/jenkins-slave-ruby', privileged: false, alwaysPullImage: false, workingDir: '/tmp', args: '${computer.jnlpmac} ${computer.name}', ttyEnabled: false)
+  containerTemplate(name: 'jnlp', image: 'docker.io/redhatcop/jenkins-slave-ruby', privileged: false, alwaysPullImage: false, workingDir: '/tmp', args: '${computer.jnlpmac} ${computer.name}', ttyEnabled: false)
 ]) {
 
   node('slave-ruby') {
 
     stage('SCM Checkout') {
-      checkout([
-              $class: 'GitSCM', branches: [[name: '*/copedia']],
-              userRemoteConfigs: [[url: 'https://github.com/etsauer/openshift-playbooks.git' ]]
-      ])
+//      checkout([
+//              $class: 'GitSCM', branches: [[name: '*/copedia']],
+//              userRemoteConfigs: [[url: 'https://github.com/etsauer/openshift-playbooks.git' ]]
+//      ])
+      checkout scm
     }
 
     stage('Build Code') {
