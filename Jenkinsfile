@@ -18,32 +18,6 @@ node('master') {
   env.STAGE1 = "${projectBase}-dev"
   env.STAGE2 = "${projectBase}-prod"
 
-  stage ('Setup Script') {
-
-    sh"""
-      bash -x;
-      ${env.OC_CMD} get is jenkins-slave-image-mgmt -o jsonpath='{ .status.dockerImageRepository }' | tee /tmp/jenkins-slave-image-mgmt.out;
-    """
-
-  }
-  env.SKOPEO_SLAVE_IMAGE = readFile('/tmp/jenkins-slave-image-mgmt.out').trim()
-  println "${env.SKOPEO_SLAVE_IMAGE}"
-
-  sh"""
-    bash -x;
-    oc get secret prod-credentials -o jsonpath='{ .data.api }' | base64 --decode | tee /tmp/prod_api;
-  """
-  env.PROD_API= readFile('/tmp/prod_api').trim()
-
-  sh"""
-    oc get secret prod-credentials -o jsonpath='{ .data.registry }' | base64 --decode | tee /tmp/prod_registry
-  """
-  env.PROD_REGISTRY = readFile('/tmp/prod_registry').trim()
-
-  sh"""
-    oc get secret prod-credentials -o jsonpath='{ .data.token }' | base64 --decode | tee /tmp/prod_token
-  """
-  env.PROD_TOKEN = readFile('/tmp/prod_token').trim()
 }
 
 podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", containers: [
@@ -51,6 +25,32 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", 
 ]) {
 
   node('slave-ruby') {
+
+    stage ('Setup Script') {
+
+      sh"""
+        oc get is jenkins-slave-image-mgmt -o jsonpath='{ .status.dockerImageRepository }' | tee /tmp/jenkins-slave-image-mgmt.out;
+      """
+
+    }
+    env.SKOPEO_SLAVE_IMAGE = readFile('/tmp/jenkins-slave-image-mgmt.out').trim()
+    println "${env.SKOPEO_SLAVE_IMAGE}"
+
+    sh"""
+      bash -x;
+      oc get secret prod-credentials -o jsonpath='{ .data.api }' | base64 --decode | tee /tmp/prod_api;
+    """
+    env.PROD_API= readFile('/tmp/prod_api').trim()
+
+    sh"""
+      oc get secret prod-credentials -o jsonpath='{ .data.registry }' | base64 --decode | tee /tmp/prod_registry
+    """
+    env.PROD_REGISTRY = readFile('/tmp/prod_registry').trim()
+
+    sh"""
+      oc get secret prod-credentials -o jsonpath='{ .data.token }' | base64 --decode | tee /tmp/prod_token
+    """
+    env.PROD_TOKEN = readFile('/tmp/prod_token').trim()
 
     stage('SCM Checkout') {
 //      checkout([
