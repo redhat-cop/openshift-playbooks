@@ -26,6 +26,7 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", 
   node('slave-ruby') {
 
     sh"""
+      oc version
       oc get is jenkins-slave-image-mgmt -o jsonpath='{ .status.dockerImageRepository }' | tee /tmp/jenkins-slave-image-mgmt.out;
       oc get secret prod-credentials -o jsonpath='{ .data.api }' | base64 --decode | tee /tmp/prod_api;
       oc get secret prod-credentials -o jsonpath='{ .data.registry }' | base64 --decode | tee /tmp/prod_registry
