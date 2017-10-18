@@ -11,7 +11,6 @@ node('master') {
 
   env.NAMESPACE = readFile('/var/run/secrets/kubernetes.io/serviceaccount/namespace').trim()
   env.TOKEN = readFile('/var/run/secrets/kubernetes.io/serviceaccount/token').trim()
-  env.OC_CMD = "oc --token=${env.TOKEN} --server=${ocpApiServer} --certificate-authority=/run/secrets/kubernetes.io/serviceaccount/ca.crt --namespace=${env.NAMESPACE}"
 
   env.APP_NAME = "${env.JOB_NAME}".replaceAll(/-?pipeline-?/, '').replaceAll(/-?${env.NAMESPACE}-?/, '')
   def projectBase = "${env.NAMESPACE}".replaceAll(/-dev/, '')
@@ -26,37 +25,18 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", 
 
   node('slave-ruby') {
 
-    stage ('Setup Script') {
-
-      sh"""
-        oc get is jenkins-slave-image-mgmt -o jsonpath='{ .status.dockerImageRepository }' | tee /tmp/jenkins-slave-image-mgmt.out;
-      """
-
-    }
-    env.SKOPEO_SLAVE_IMAGE = readFile('/tmp/jenkins-slave-image-mgmt.out').trim()
-    println "${env.SKOPEO_SLAVE_IMAGE}"
-
     sh"""
-      bash -x;
+      oc get is jenkins-slave-image-mgmt -o jsonpath='{ .status.dockerImageRepository }' | tee /tmp/jenkins-slave-image-mgmt.out;
       oc get secret prod-credentials -o jsonpath='{ .data.api }' | base64 --decode | tee /tmp/prod_api;
-    """
-    env.PROD_API= readFile('/tmp/prod_api').trim()
-
-    sh"""
       oc get secret prod-credentials -o jsonpath='{ .data.registry }' | base64 --decode | tee /tmp/prod_registry
-    """
-    env.PROD_REGISTRY = readFile('/tmp/prod_registry').trim()
-
-    sh"""
       oc get secret prod-credentials -o jsonpath='{ .data.token }' | base64 --decode | tee /tmp/prod_token
     """
+    env.SKOPEO_SLAVE_IMAGE = readFile('/tmp/jenkins-slave-image-mgmt.out').trim()
+    env.PROD_API= readFile('/tmp/prod_api').trim()
+    env.PROD_REGISTRY = readFile('/tmp/prod_registry').trim()
     env.PROD_TOKEN = readFile('/tmp/prod_token').trim()
 
     stage('SCM Checkout') {
-//      checkout([
-//              $class: 'GitSCM', branches: [[name: '*/copedia']],
-//              userRemoteConfigs: [[url: 'https://github.com/etsauer/openshift-playbooks.git' ]]
-//      ])
       checkout scm
     }
 
@@ -104,7 +84,7 @@ podTemplate(label: 'promotion-slave', cloud: 'openshift', containers: [
         sh """
 
         set +x
-        imageRegistry=\$(${env.OC_CMD} get is ${env.APP_NAME} --template='{{ .status.dockerImageRepository }}' -n ${env.STAGE1} | cut -d/ -f1)
+        imageRegistry=\$(oc get is ${env.APP_NAME} --template='{{ .status.dockerImageRepository }}' -n ${env.STAGE1} | cut -d/ -f1)
 
         strippedNamespace=\$(echo ${env.NAMESPACE} | cut -d/ -f1)
 
