@@ -20,7 +20,7 @@ node('master') {
 }
 
 podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", containers: [
-  containerTemplate(name: 'jnlp', image: 'docker.io/redhatcop/jenkins-slave-ruby', privileged: false, alwaysPullImage: false, workingDir: '/tmp', args: '${computer.jnlpmac} ${computer.name}', ttyEnabled: false)
+  containerTemplate(name: 'jnlp', image: 'docker.io/redhatcop/jenkins-slave-ruby', privileged: false, alwaysPullImage: true, workingDir: '/tmp', args: '${computer.jnlpmac} ${computer.name}', ttyEnabled: false)
 ]) {
 
   node('slave-ruby') {
