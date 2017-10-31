@@ -5,6 +5,7 @@ RUN apk add --no-cache --update \
     gcc \
     libc-dev \
     python \
+    libcurl \
     ;
 
 ENV USER_UID=1001 \

@@ -81,7 +81,7 @@ Many OpenShift components expose HTTP based endpoints for interrogating the heal
 
 |Registry |Check the health of the Registry| `curl -I https://docker-registry.default.svc.cluster.local:5000/healthz \| grep 200`
 
-|Logging | Check the health of the EFK Logging Stack | Because of the various components and complexities involved, we recommend the link:https://github.com/redhat-cop/openshift-toolkit/blob/master/health_check/elasticsearch-health-check-ocp34.sh[OpenShift Metrics health check script].
+|Logging | Check the health of the EFK Logging Stack | Because of the various components and complexities involved, we recommend the link:https://github.com/redhat-cop/openshift-toolkit/blob/master/health_check/elasticsearch-health-check-ocp34.sh[OpenShift Logging health check script].
 
 |Metrics | Check the health of the Metrics Stack | Because of the various components and complexities involved, we recommend the https://github.com/redhat-cop/openshift-toolkit/blob/master/health_check/metrics-health-check.sh[OpenShift Metrics health check script].
 
