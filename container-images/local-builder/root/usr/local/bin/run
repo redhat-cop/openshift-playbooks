@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 SOURCE_DIR=/home/jekyll/src
 
@@ -10,4 +11,6 @@ fi
 cd "$SOURCE_DIR"
 
 bundle install
+bundle exec jekyll build
+bundle exec htmlproofer ./_site --check-html
 bundle exec jekyll serve --host=0.0.0.0

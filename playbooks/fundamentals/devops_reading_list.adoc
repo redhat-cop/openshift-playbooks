@@ -28,7 +28,7 @@ OK, so now you have some base understand about what DevOps is. This section is i
 * link:http://blog.crisp.se/2016/01/25/henrikkniberg/making-sense-of-mvp[Making Sense of MVP] (Article)
 * link:http://itrevolution.com/learn-more-about-concepts-in-phoenix-project/[Phoenix Project Reference Guide part 1] and link:http://itrevolution.com/resource-guide-for-the-phoenix-project-kanbans-part-2/[Part 2] (Articles)
 * link:http://theleanstartup.com/book[The Lean Startup] (Book)
-* link:http://www.personalkanban.com/pk/personal-kanban-the-book/#sthash.9h5jtSMZ.dpbs[Personal Kanban] (Book)
+* link:http://personalkanban.com/pk/book/[Personal Kanban] (Book)
 * link:http://www.sae.org/manufacturing/lean/column/leanjun01.htm[Lean Manufacturing and the Toyota Production System] (Article)
 
 == Deep Dives & Further Learning
