@@ -18,16 +18,15 @@ cd ./openshift-playbooks
 oc create -f ./projects/projects.yml
 ```
 
-Build the slave images
+Build the slave image
 ```
-oc new-build https://github.com/etsauer/containers-quickstarts.git#jenkins-slave-ruby --context-dir='jenkins-slaves/jenkins-slave-ruby' --to='jenkins-slave-ruby'
 oc process -f https://raw.githubusercontent.com/redhat-cop/containers-quickstarts/master/jenkins-slaves/templates/jenkins-slave-image-mgmt-template.json | oc apply -f-
 ```
 
 Deploy the pipeline infrastructure
 ```
 oc process openshift//jenkins-ephemeral | oc apply -f- -n field-guides-dev
-oc process -f deploy/field-guides-deploy-template.yml --param-file=deploy/dev/params | oc apply -f -
+oc process -f deploy/template.yml --param-file=deploy/dev/params | oc apply -f -
 ```
 
 ## 2 Production Setup
@@ -38,7 +37,7 @@ oc login <prod cluster>
 oc create -f projects/projects-prod.yml
 oc create serviceaccount promoter -n field-guides-prod
 oc adm policy add-role-to-user edit -z promoter -n field-guides-prod
-oc process -f deploy/field-guides-deploy-template.yml --param-file=deploy/prod/params | oc apply -f -
+oc process -f deploy/template.yml --param-file=deploy/prod/params | oc apply -f -
 ```
 
 Now, grab the token value for the service account created above and save for later
@@ -48,7 +47,7 @@ TOKEN=$(oc serviceaccounts get-token promoter -n field-guides-prod)
 
 Log back into the Development Cluster, and create the production secret, passing the Clusters API URL, Registry Hostname, and the Token from above.
 ```
-
+oc login <dev cluster>
 ```
 ## Deploy pipeline
 

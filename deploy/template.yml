@@ -106,6 +106,26 @@ objects:
     name: ${APPLICATION_NAME}
     namespace: ${NAMESPACE}
   spec:
+    host: ''
+    port:
+      targetPort: 8080-tcp
+    to:
+      kind: Service
+      name: ${APPLICATION_NAME}
+      weight: 100
+    wildcardPolicy: None
+- apiVersion: v1
+  kind: Route
+  metadata:
+    annotations:
+      openshift.io/host.generated: "true"
+    creationTimestamp: null
+    labels:
+      app: ${APPLICATION_NAME}
+      template: jekyll-pipeline
+    name: ${APPLICATION_NAME}-vanity
+    namespace: ${NAMESPACE}
+  spec:
     host: ${APPLICATION_HOSTNAME}
     port:
       targetPort: 8080-tcp
