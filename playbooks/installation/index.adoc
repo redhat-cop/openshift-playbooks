@@ -311,8 +311,8 @@ This proposed architecture installs OpenShift via RPM. This is the most common w
 In addition to RPM content, OpenShift requires the ability to pull container images from an external image registry. In order to bring this in house we suggest the following options to build and sync a Standalone Registry.
 
 * A Simple Bootstrap Registry (link:#simple-docker-registry-docker-distribution[See below.])
-* Using the OpenShift Standalone Registry (Coming soon)
-* Syncing image content to Satellite 6 (Coming soon)
+* Using the OpenShift Standalone Registry (Coming Soon)
+* Syncing image content to Satellite 6 (link:#syncing-images-using-satellite-6[See below])
 
 ==== Application Content
 
@@ -592,7 +592,35 @@ TODO
 
 ==== Syncing Images using Satellite 6
 
-TODO
+To sync Docker images in Satellite all you need to do is create a product and in that product create an repository for each image.
+
+----
+hammer product create --name "OCP Docker Images" --organization "Lab"
+hammer repository create --name "openshift3/ose" --organization-id "Lab" --content-type docker --url "https://registry.access.redhat.com" --docker-upstream-name "openshift3/ose" --product "OCP Docker Images"
+----
+
+NOTE: Satellite will sync ALL tags for each image repository you create so it might be space intensive.
+
+There is a script available at https://github.com/redhat-cop/openshift-toolkit/tree/master/satellite/populate-docker.sh that can be used to save time.
+
+Update ORG_ID and PRODUCT_NAME if desired in the above script and run it. Note that you will need to have configured hammer authentication as described in the https://access.redhat.com/documentation/en-us/red_hat_satellite/6.2/html-single/hammer_cli_guide/#sect-CLI_Guide-Authentication[documentation].
+
+----
+$ ./populate-docker.sh
+----
+
+By adding the below 2 lines in your inventory file you configure OpenShift to consume the images from Satellite that was synced above.
+
+----
+oreg_url=satellite.example.com:5000/lab-ocp_docker_images-openshift3_ose-${component}:${version}
+openshift_docker_additional_registries=satellite.example.com:5000
+----
+
+Satellite does not give you an option of the above naming scheme so you will need to modify imagestreams accordingly.
+
+What sets the name is the Satellite organization, product and repository name. In the above example in oreg_url the organization is *Lab* product name *OCP Docker Images* and repository name *openshift3/ose*.
+
+Note that the above example also references Library, if you are using Capsules and are syncing only specific environments for example Production the name production will be appended between the organization and product name so the above example would be *lab-production-ocp_docker_images-openshift3_ose-${component}:${version}*.
 
 === Sync RPM Channels
 
@@ -633,10 +661,11 @@ The example configuration below is a basic setup that works, but may not be the 
 ===== Master LB
 
 ----
+create ltm monitor https ocp-master defaults-from https send "GET /healthz"
 create ltm node openshift-master-1.c1-ocp.myorg.com fqdn { name openshift-master-1.c1-ocp.myorg.com }
 create ltm node openshift-master-2.c1-ocp.myorg.com fqdn { name openshift-master-2.c1-ocp.myorg.com }
 create ltm node openshift-master-3.c1-ocp.myorg.com fqdn { name openshift-master-3.c1-ocp.myorg.com }
-create ltm pool master.c1-ocp.myorg.com monitor https members add { openshift-master-1.c1-ocp.myorg.com:443 openshift-master-2.c1-ocp.myorg.com:443 openshift-master-3.c1-ocp.myorg.com.com:443 }
+create ltm pool master.c1-ocp.myorg.com monitor ocp-master members add { openshift-master-1.c1-ocp.myorg.com:443 openshift-master-2.c1-ocp.myorg.com:443 openshift-master-3.c1-ocp.myorg.com.com:443 }
 create ltm virtual OpenShift-Master pool master.c1-ocp.myorg.com source-address-translation { type automap } destination 192.168.10.100:443
 ----
 
@@ -646,8 +675,9 @@ create ltm virtual OpenShift-Master pool master.c1-ocp.myorg.com source-address-
 create ltm node openshift-infranode-1.c1-ocp.myorg.com fqdn { name openshift-infranode-1.c1-ocp.myorg.com }
 create ltm node openshift-infranode-2.c1-ocp.myorg.com fqdn { name openshift-infranode-2.c1-ocp.myorg.com }
 create ltm node openshift-infranode-3.c1-ocp.myorg.com fqdn { name openshift-infranode-3.c1-ocp.myorg.com }
-create ltm pool infra.c1-ocp.myorg.com-http monitor http members add { openshift-infranode-1.c1-ocp.myorg.com:80 openshift-infranode-2.c1-ocp.myorg.com:80 openshift-infranode-3.c1-ocp.myorg.com:80 }
-create ltm pool infra.c1-ocp.myorg.com-https monitor https members add { openshift-infranode-1.c1-ocp.myorg.com:443 openshift-infranode-2.c1-ocp.myorg.com:443 openshift-infranode-3.c1-ocp.myorg.com:443 }
+create ltm monitor http ocp-router defaults-from http send "GET /healthz" destination "*.1936"
+create ltm pool infra.c1-ocp.myorg.com-http monitor ocp-router members add { openshift-infranode-1.c1-ocp.myorg.com:80 openshift-infranode-2.c1-ocp.myorg.com:80 openshift-infranode-3.c1-ocp.myorg.com:80 }
+create ltm pool infra.c1-ocp.myorg.com-https monitor ocp-router members add { openshift-infranode-1.c1-ocp.myorg.com:443 openshift-infranode-2.c1-ocp.myorg.com:443 openshift-infranode-3.c1-ocp.myorg.com:443 }
 create ltm virtual infra.c1-ocp.myorg.com-http  pool infra.c1-ocp.myorg.com-http  persist replace-all-with { source_addr } source-address-translation { type automap } destination 192.168.10.101:80
 create ltm virtual infra.c1-ocp.myorg.com-https pool infra.c1-ocp.myorg.com-https persist replace-all-with { source_addr } source-address-translation { type automap } destination 192.168.10.101:443
 ----
@@ -657,30 +687,32 @@ create ltm virtual infra.c1-ocp.myorg.com-https pool infra.c1-ocp.myorg.com-http
 ===== Master LB
 
 ----
+add lb monitor ocp-master HTTPS -httpRequest “GET /healthz”
 add serviceGroup ose-console_443_sslbridge SSL_BRIDGE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
 add lb vserver ose-console_443_sslbridge SSL_BRIDGE 192.168.10.101 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
 bind lb vserver ose-console_443_sslbridge ose-console_443_sslbridge
-bind serviceGroup ose-console_443_sslbridge openshift-master-1.c1-ocp.myorg.com 443
-bind serviceGroup ose-console_443_sslbridge openshift-master-2.c1-ocp.myorg.com 443
-bind serviceGroup ose-console_443_sslbridge openshift-master-3.c1-ocp.myorg.com 443
+bind serviceGroup ose-console_443_sslbridge openshift-master-1.c1-ocp.myorg.com 443 -monitorName ocp-master
+bind serviceGroup ose-console_443_sslbridge openshift-master-2.c1-ocp.myorg.com 443 -monitorName ocp-master
+bind serviceGroup ose-console_443_sslbridge openshift-master-3.c1-ocp.myorg.com 443 -monitorName ocp-master
 ----
 
 ===== Infra Node / Router LB
 
 ----
+add lb monitor ocp-router HTTP -destPort 1936 -httpRequest “GET /healthz”
 add serviceGroup ose-wildcard_443_sslbridge SSL_BRIDGE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
 add lb vserver ose-wildcard_443_sslbridge SSL_BRIDGE 192.168.10.102 443 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
 bind lb vserver ose-wildcard_443_sslbridge ose-wildcard_443_sslbridge
-bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-1.c1-ocp.myorg.com 443
-bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-2.c1-ocp.myorg.com 443
-bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-3.c1-ocp.myorg.com 443
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-1.c1-ocp.myorg.com 443 -monitorName ocp-router
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-2.c1-ocp.myorg.com 443 -monitorName ocp-router
+bind serviceGroup ose-wildcard_443_sslbridge openshift-infranode-3.c1-ocp.myorg.com 443 -monitorName ocp-router
 
 add serviceGroup ose-wildcard_80 http -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -cltTimeout 180 -svrTimeout 360 -CKA YES -TCPB YES -CMP NO
 add lb vserver ose-wildcard_80 192.168.10.102 80 -persistenceType SSLSESSION -timeout 60 -cltTimeout 180
 bind lb vserver ose-wildcard_80 ose-wildcard_80
-bind serviceGroup ose-wildcard_80 openshift-infranode-1.c1-ocp.myorg.com 80
-bind serviceGroup ose-wildcard_80 openshift-infranode-2.c1-ocp.myorg.com 80
-bind serviceGroup ose-wildcard_80 openshift-infranode-3.c1-ocp.myorg.com 80
+bind serviceGroup ose-wildcard_80 openshift-infranode-1.c1-ocp.myorg.com 80 -monitorName ocp-router
+bind serviceGroup ose-wildcard_80 openshift-infranode-2.c1-ocp.myorg.com 80 -monitorName ocp-router
+bind serviceGroup ose-wildcard_80 openshift-infranode-3.c1-ocp.myorg.com 80 -monitorName ocp-router
 
 ----
 
