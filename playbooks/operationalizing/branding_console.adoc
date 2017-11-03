@@ -276,9 +276,9 @@ Use the css class in a template::
 == Ansible Playbooks
 Using below ansible playbook, it can be easy to change logo of OpenShift Login Page and Web Console. 
 
-*Playbook Lists*
+*Playbooks Links*
 
-- https://github.com/redhat-cop/openshift-toolkit/tree/master/ansible-playbook-openshift-custom-login-page[ansible-playbook-openshift-custom-login-page]
-- https://github.com/redhat-cop/openshift-toolkit/tree/master/ansible-playbook-openshift-custom-webconsole-logo[ansible-playbook-openshift-custom-webconsole-logo]
+- link:https://github.com/redhat-cop/openshift-toolkit/tree/master/ansible-playbook-openshift-custom-login-page[ansible-playbook-openshift-custom-login-page]
+- link:https://github.com/redhat-cop/openshift-toolkit/tree/master/ansible-playbook-openshift-custom-webconsole-logo[ansible-playbook-openshift-custom-webconsole-logo]
 
 
