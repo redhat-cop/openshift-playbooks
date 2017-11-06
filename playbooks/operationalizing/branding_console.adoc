@@ -273,17 +273,12 @@ Use the css class in a template::
 <1> This value must be same as the css style in extension.css
 
 []
-== Ansible Playbook
-This ansible playbook contains 4 roles : resize_image, configure_login_logo, configure_webconsole_logo, demo_template_icon_change.
-Those roles can be executed by 1 playbook or each role can be executed. This chapter will explain how to configure "Branding console" with ansible playbook.
+== Ansible Playbooks
+Using below ansible playbook, it can be easy to change logo of OpenShift Login Page and Web Console. 
 
+*Playbooks Links*
 
-=== Ansible role
-- resize_image
-- configure_login_logo
-- configure_webconsole_logo
-- demo_template_icon_change
+- link:https://github.com/redhat-cop/openshift-toolkit/tree/master/ansible-playbook-openshift-custom-login-page[ansible-playbook-openshift-custom-login-page]
+- link:https://github.com/redhat-cop/openshift-toolkit/tree/master/ansible-playbook-openshift-custom-webconsole-logo[ansible-playbook-openshift-custom-webconsole-logo]
 
-=== Usage
-TBD
 
