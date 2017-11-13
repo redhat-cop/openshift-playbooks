@@ -7,7 +7,6 @@ before_script:
  - gem update --system 2.6.11
  - gem --version
  - gem install bundler
- - bundler --version
 
 script:
  - ./script/cibuild.sh
