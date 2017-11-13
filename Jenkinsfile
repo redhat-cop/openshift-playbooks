@@ -27,10 +27,10 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", 
 
     sh"""
       oc version
-      oc get is jenkins-slave-image-mgmt -o jsonpath='{ .status.dockerImageRepository }' | tee /tmp/jenkins-slave-image-mgmt.out;
-      oc get secret prod-credentials -o jsonpath='{ .data.api }' | base64 --decode | tee /tmp/prod_api;
-      oc get secret prod-credentials -o jsonpath='{ .data.registry }' | base64 --decode | tee /tmp/prod_registry
-      oc get secret prod-credentials -o jsonpath='{ .data.token }' | base64 --decode | tee /tmp/prod_token
+      oc get is jenkins-slave-image-mgmt -o jsonpath='{ .status.dockerImageRepository }' > /tmp/jenkins-slave-image-mgmt.out;
+      oc get secret prod-credentials -o jsonpath='{ .data.api }' | base64 --decode > /tmp/prod_api;
+      oc get secret prod-credentials -o jsonpath='{ .data.registry }' | base64 --decode > /tmp/prod_registry
+      oc get secret prod-credentials -o jsonpath='{ .data.token }' | base64 --decode > /tmp/prod_token
     """
     env.SKOPEO_SLAVE_IMAGE = readFile('/tmp/jenkins-slave-image-mgmt.out').trim()
     env.PROD_API= readFile('/tmp/prod_api').trim()
@@ -44,12 +44,9 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", 
     stage('Build Code') {
 
       sh """
-        pwd
-        env
         bundle install
         gem env
         bundle exec jekyll build
-        ls .
       """
     }
 
@@ -84,7 +81,6 @@ podTemplate(label: 'promotion-slave', cloud: 'openshift', serviceAccount: "jenki
       container('jenkins-slave-image-mgmt') {
         sh """
 
-        set +x
         imageRegistry=\$(oc get is ${env.APP_NAME} --template='{{ .status.dockerImageRepository }}' -n ${env.STAGE1} | cut -d/ -f1)
 
         strippedNamespace=\$(echo ${env.NAMESPACE} | cut -d/ -f1)
@@ -94,13 +90,6 @@ podTemplate(label: 'promotion-slave', cloud: 'openshift', serviceAccount: "jenki
         """
       }
     }
-
-//              stage("Verify Deployment to ${env.STAGE3}") {
-
-//                openshiftVerifyDeployment(deploymentConfig: "${env.APP_NAME}", apiURL: "${PROD_API}", authToken: "${PROD_TOKEN}", namespace: "${STAGE2}", verifyReplicaCount: true)
-
-//              }
-
   }
 }
 println "Application ${env.APP_NAME} is now in Production!"

@@ -15,7 +15,7 @@ First, log in to the Dev cluster instantiate the project
 ```
 oc login <dev cluster>
 cd ./openshift-playbooks
-oc create -f ./projects/projects.yml
+oc create -f ./projects/projects-dev.yml
 ```
 
 Build the slave image
@@ -45,9 +45,17 @@ Now, grab the token value for the service account created above and save for lat
 TOKEN=$(oc serviceaccounts get-token promoter -n field-guides-prod)
 ```
 
+Might as well set some variables for some other key info:
+```
+# Set these to the right values
+API_URL=https://master.openshift.example.com
+REGISTRY_HOSTNAME=registry.apps.openshift.example.com
+```
+
 Log back into the Development Cluster, and create the production secret, passing the Clusters API URL, Registry Hostname, and the Token from above.
 ```
 oc login <dev cluster>
+oc process -f deploy/prod-credentials.yml -p API_URL=${API_URL} REGISTRY_URL=${REGISTRY_HOSTNAME} TOKEN=${TOKEN} | oc apply -f- -n field-guides-dev
 ```
 ## Deploy pipeline
 
