@@ -1,6 +1,6 @@
 ---
 ---
-=  Troubleshooting Guide for OpenShift Enterprise
+=  Troubleshooting Guide for OpenShift Container Platform
 Steve Ovens, Justin Jarae
 v1.0, 2016-05-27
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
