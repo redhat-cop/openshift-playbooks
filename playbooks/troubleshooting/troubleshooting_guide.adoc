@@ -1,6 +1,6 @@
 ---
 ---
-=  Troubleshooting Guide for OpenShift Enterprise 3.1
+=  Troubleshooting Guide for OpenShift Enterprise
 Steve Ovens, Justin Jarae
 v1.0, 2016-05-27
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
@@ -647,6 +647,84 @@ one master to all other masters.
  +
  +
 
+== Build Issues
+
+=== oc new-app runs s2i instead of Docker build
+
+An application that was created containing a builder image appears to
+ignore any Dockerfile that is in the github repo. To ensure a Docker
+build occurs instead of an s2i build, the application only needs to be
+created with a github repo. 
+
+----
+oc new-app https://github.com/lawnjarae/eap-openshift-rhc-license.git
+----
+
+----
+--> Found Docker image 5c93a30 (5 months old) from registry.access.redhat.com for "registry.access.redhat.com/jboss-eap-6/eap-openshift"
+    * An image stream will be created as "eap-openshift:latest" that will track the source image
+    * A Docker build using source code from https://github.com/lawnjarae/eap-openshift-rhc-license.git will be created
+      * The resulting image will be pushed to image stream "eap-openshift-rhc-license:latest"
+      * Every time "eap-openshift:latest" changes a new build will be triggered
+    * This image will be deployed in deployment config "eap-openshift-rhc-license"
+    * Ports 8080/tcp, 8443/tcp will be load balanced by service "eap-openshift-rhc-license"
+--> Creating resources with label app=eap-openshift-rhc-license ...
+    ImageStream "eap-openshift" created
+    ImageStream "eap-openshift-rhc-license" created
+    BuildConfig "eap-openshift-rhc-license" created
+    DeploymentConfig "eap-openshift-rhc-license" created
+    Service "eap-openshift-rhc-licens" created
+--> Success
+    Build scheduled for "eap-openshift-rhc-license" - use the logs command to track its progress.
+    Run 'oc status' to view your app.
+----
+
+=== Binary Build Fails, citing "BadRequest"
+
+Running of a binary build using:
+
+----
+oc start-build my-app --from-dir=./build-dir
+----
+
+Fails with the following error message:
+
+----
+Uploading directory "oc-build" as binary input for the build ...
+Error from server (BadRequest): cannot upload file to build sprint-rest-2 with status New
+----
+
+==== Solution:
+
+It's likely that there is a problem with one of your `ImageStream` objects. Take a look at your buildConfig
+
+----
+$ oc describe bc/spring-rest
+Name:		spring-rest
+Namespace:	spring-rest-dev
+Created:	29 minutes ago
+Labels:		application=spring-rest
+		template=generic-java-jenkins-pipeline
+Annotations:	kubectl.kubernetes.io/last-applied-configuration={"apiVersion":"v1","kind":"BuildConfig","metadata":{"annotations":{},"labels":{"application":"spring-rest","template":"generic-java-jenkins-pipeline"},"name":"spring-rest","namespace":"spring-rest-dev"},"spec":{"output":{"to":{"kind":"ImageStreamTag","name":"spring-rest:latest"}},"source":{"binary":{},"type":"Binary"},"strategy":{"sourceStrategy":{"from":{"kind":"ImageStreamTag","name":"redhat-openjdk18-openshift:1.1","namespace":"openshift"}},"type":"Source"}}}
+
+Latest Version:	1
+
+Strategy:	Source
+From Image:	ImageStreamTag openshift/redhat-openjdk18-openshift:1.1
+Output to:	ImageStreamTag spring-rest:latest
+Binary:		provided on build
+
+Build Run Policy:	Serial
+Triggered by:		<none>
+
+Build		Status		Duration	Creation Time
+spring-rest-1 	complete 	50s 		2017-11-20 20:55:21 -0500 EST
+
+Events:	<none>
+----
+
+Notice the two lines that say `From Image:` and `Output to:`. Its likely that one of those imagestreams are either misspelled, or have not yet been created. Ensure your imagestreams are created and correct, and try running the build again.
+
 == Misc
 
 === Docker won't start
@@ -686,34 +764,4 @@ will be regenerated
 ----
 # rm -f /etc/docker/key.json
 # systemctl restart docker
-----
-
-=== oc new-app runs s2i instead of Docker build
-
-An application that was created containing a builder image appears to
-ignore any Dockerfile that is in the github repo. To ensure a Docker
-build occurs instead of an s2i build, the application only needs to be
-created with a github repo. 
-
-----
-oc new-app https://github.com/lawnjarae/eap-openshift-rhc-license.git
-----
-
-----
---> Found Docker image 5c93a30 (5 months old) from registry.access.redhat.com for "registry.access.redhat.com/jboss-eap-6/eap-openshift"
-    * An image stream will be created as "eap-openshift:latest" that will track the source image
-    * A Docker build using source code from https://github.com/lawnjarae/eap-openshift-rhc-license.git will be created
-      * The resulting image will be pushed to image stream "eap-openshift-rhc-license:latest"
-      * Every time "eap-openshift:latest" changes a new build will be triggered
-    * This image will be deployed in deployment config "eap-openshift-rhc-license"
-    * Ports 8080/tcp, 8443/tcp will be load balanced by service "eap-openshift-rhc-license"
---> Creating resources with label app=eap-openshift-rhc-license ...
-    ImageStream "eap-openshift" created
-    ImageStream "eap-openshift-rhc-license" created
-    BuildConfig "eap-openshift-rhc-license" created
-    DeploymentConfig "eap-openshift-rhc-license" created
-    Service "eap-openshift-rhc-licens" created
---> Success
-    Build scheduled for "eap-openshift-rhc-license" - use the logs command to track its progress.
-    Run 'oc status' to view your app.
 ----
