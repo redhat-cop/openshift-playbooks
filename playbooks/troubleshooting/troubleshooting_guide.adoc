@@ -679,6 +679,12 @@ oc new-app https://github.com/lawnjarae/eap-openshift-rhc-license.git
     Run 'oc status' to view your app.
 ----
 
+Additionally, if you would like to force `oc new-app` to a docker _strategy_, you can pass the `--strategy=docker` flag to the command.
+
+----
+oc new-app https://github.com/lawnjarae/eap-openshift-rhc-license.git --strategy=docker
+----
+
 === Binary Build Fails, citing "BadRequest"
 
 Running of a binary build using:
