@@ -25,6 +25,9 @@
 </head>
 <body>
 
+  <div id="note">
+      <span class="callout">Notice: </span> Our URL has changed! Please update your bookmarks. <a id="close">Dismiss</a>
+  </div>
 
 <!-- Nav Bar -->
 <nav class="top-bar" data-topbar>
@@ -95,6 +98,13 @@
 
     var doc = document.documentElement;
     doc.setAttribute('data-useragent', navigator.userAgent);
+</script>
+<script>
+ close = document.getElementById("close");
+ close.addEventListener('click', function() {
+   note = document.getElementById("note");
+   note.style.display = 'none';
+ }, false);
 </script>
 {% include google_analytics.html %}
 </body>
