@@ -1,0 +1,3 @@
+APPLICATION_NAME=site
+NAMESPACE=field-guides-prod
+APPLICATION_HOSTNAME=v1.uncontained.io

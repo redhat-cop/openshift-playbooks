@@ -1,0 +1,3 @@
+APPLICATION_NAME=site
+NAMESPACE=field-guides-dev
+APPLICATION_HOSTNAME=v1.dev.uncontained.io

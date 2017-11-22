@@ -1,13 +1,12 @@
 language: ruby
 rvm:
-- 2.3.4
+- 2.4.0
 
 before_script:
  - chmod +x ./script/*
  - gem update --system 2.6.11
  - gem --version
  - gem install bundler
- - bundler --version
 
 script:
  - ./script/cibuild.sh

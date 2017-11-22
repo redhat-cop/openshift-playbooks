@@ -9,3 +9,4 @@ asciidoctor:
     - hardbreaks!
     - source-highlighter=pygments
     - pygments-css=style
+encoding: utf-8
