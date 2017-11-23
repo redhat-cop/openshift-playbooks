@@ -1,4 +1,4 @@
-FROM ruby:alpine3.4
+FROM ruby:2.4.0-alpine
 
 RUN apk add --no-cache --update \
     make \
