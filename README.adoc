@@ -74,6 +74,13 @@ bundle exec jekyll build
 bundle exec jekyll serve
 ----
 
+=== Building the Image
+
+```
+cd container-images/local-builder
+docker build -t redhatcop/jekyll-local-builder:latest .
+```
+
 === Further Development
 
 See our full link:./development_guide.adoc[contribution guide] for more details

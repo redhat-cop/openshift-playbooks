@@ -11,7 +11,7 @@ RUN apk add --no-cache --update \
 ENV USER_UID=1001 \
     HOME=/home/jekyll
 
-ADD container-images/local-builder/root /
+ADD root /
 
 RUN /usr/local/bin/user_setup
 
