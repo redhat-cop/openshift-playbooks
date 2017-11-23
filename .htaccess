@@ -1,0 +1,2 @@
+RewriteEngine On
+RewriteRule ^(.*)$ http://v1.uncontained.io/$1 [L,R=301]
