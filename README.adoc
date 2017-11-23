@@ -42,11 +42,11 @@ curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.29.0/install.sh | b
 1. link:https://rvm.io/[Install RVM]
 +
 NOTE: For `gnome-terminal` users, you'll need to do this link:https://rvm.io/integration/gnome-terminal[additional step]
-2. Install and use Ruby 2.0
+2. Install and use Ruby 2.4
 +
 ----
-rvm install 2.3.0
-rvm use 2.3.0
+rvm install 2.4.0
+rvm use 2.4.0
 ----
 3. Install and set up RubyGems
 +
