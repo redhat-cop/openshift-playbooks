@@ -10,20 +10,33 @@
 * link:https://docs.openshift.com/container-platform/latest/admin_guide/sdn_troubleshooting.html[Troubleshooting OpenShift SDN]
 * link:https://docs.openshift.com/container-platform/latest/admin_guide/diagnostics_tool.html[Diagnostic Tool]
 
-== Red Hat CSP Solutions
+== Red Hat Customer Portal Solutions
 
-* link:https://access.redhat.com/solutions/2068843[How to verify OpenShift Container Platform has been deployed successfully]
+=== Troubleshooting
 * link:https://access.redhat.com/solutions/1599603[Common issues on OpenShift Container Platform 3]
-* link:https://access.redhat.com/solutions/2216951[Configure log levels for OpenShift Container Platform]
 * link:https://access.redhat.com/solutions/1542293[Troubleshooting OpenShift Container Platform: Basics]
-* link:https://access.redhat.com/solutions/2046063[Troubleshooting OpenShift Container Platform: Ansible Installer]
+* link:https://access.redhat.com/articles/3135421[Troubleshooting OpenShift Container Platform: Middleware Containers]
+* link:https://access.redhat.com/solutions/2046063[Troubleshooting OpenShift Container Platform: OpenShift Ansible Playbooks]
 * link:https://access.redhat.com/solutions/2529411[Troubleshooting OpenShift Container Platform: DNS]
+* link:https://access.redhat.com/articles/3093761[Troubleshooting OpenShift Container Platform: Etcd]
 * link:https://access.redhat.com/solutions/1616953[Troubleshooting OpenShift Container Platform: Integrated Container Registry]
 * link:https://access.redhat.com/solutions/2354291[Troubleshooting OpenShift Container Platform: Aggregating Container Logging]
 * link:https://access.redhat.com/articles/2448341[Troubleshooting OpenShift Container Platform: Cluster Metrics]
+* link:https://access.redhat.com/articles/3094821[Troubleshooting an applications (images) on OpenShift]
+* link:https://access.redhat.com/solutions/2921101[Troubleshoot HTTP readinessProbe in Openshift web applications]
+* link:https://access.redhat.com/solutions/2045283[OpenShift Container Platform: internal networking issue]
 
-== OCP Release Notes
+=== How To's
+* link:https://access.redhat.com/solutions/2068843[How to verify OpenShift Container Platform has been deployed successfully]
+* link:https://access.redhat.com/solutions/2216951[Configure log levels for OpenShift Container Platform]
+* link:https://access.redhat.com/solutions/2178611[How to force a pod to schedule to a specific node in OpenShift Container Platform ]
 
+=== OpenShift Cheat Sheet (PDF)
+* link:https://access.redhat.com/sites/default/files/attachments/openshift_container_platform_support_cheatsheet_0.pdf[OpenShift Container Platform Support Cheat Sheet]
+
+== OCP Release Notes Known Issues
+
+* link:https://docs.openshift.com/container-platform/3.7/release_notes/ocp_3_7_release_notes.html#ocp-37-known-issues[OCP 3.7 Known Issues]
 * link:https://docs.openshift.com/container-platform/3.6/release_notes/ocp_3_6_release_notes.html#ocp-36-known-issues[OCP 3.6 Known Issues]
 * link:https://docs.openshift.com/container-platform/3.5/release_notes/ocp_3_5_release_notes.html#ocp-35-known-issues[OCP 3.5 Known Issues]
 * link:https://docs.openshift.com/container-platform/3.4/release_notes/ocp_3_4_release_notes.html#ocp-34-known-issues[OCP 3.4 Known Issues]
@@ -32,6 +45,9 @@
 * link:https://docs.openshift.com/enterprise/3.1/release_notes/ose_3_1_release_notes.html#ose-31-known-issues[OCP 3.1 Known Issues]
 * link:https://docs.openshift.com/enterprise/3.0/whats_new/ose_3_0_release_notes.html#known-issues[OCP 3.0 Known Issues]
 
-== Other Known Issues
-
-* link:known_bugs{outfilesuffix}[Known Bugs]
+== OpenShift Container Platform FAQs
+* link:https://access.redhat.com/solutions/1542293[What basic information should I provide on a support case?]
+* link:https://access.redhat.com/sites/default/files/attachments/openshift_get_the_most_out_of_support.pdf[How to get the most out of your Red Hat OpenShift Container Platform Support?]
+* link:https://access.redhat.com/articles/2176281[What versions of different OpenShift Container Platform components have been tested?]
+* link:https://access.redhat.com/articles/2208321[When are Container Images Updated?]
+* link:https://access.redhat.com/support/policy/updates/openshift[What is the OpenShift Container Platform Life Cycle Policy?]
