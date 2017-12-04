@@ -107,7 +107,7 @@ Internally, the DNS uses SkyDNS, which uses etcd.  Since OpenShift 3 was release
 - All nodes connect to the masters on TCP/8053
 - Dnsmasq routes queries for cluster.local to Kubernetes Service IP (172.30.0.1:53)
 
-image::images/openshift3.5_dns.png[title=Figure 1. DNS Structure for **OpenShift 3.2 - 3.5**]
+image::images/dns_deep_dive_openshift3.5_dns.png[title=Figure 1. DNS Structure for **OpenShift 3.2 - 3.5**]
 _Note: OpenShift 3.2 - 3.5 has the DNS structure below_
 
 
@@ -192,7 +192,7 @@ hello-openshift.dns-project.svc.cluster.local. 30 IN A 172.30.12.46
 ;; SERVER: 10.10.181.97#53(10.10.181.97)
 ----
 
-== NetworkManager with Dnsmasq
+=== NetworkManager with Dnsmasq
 
 NetworkManager dispatcher 99-origin-dns.sh replicates the functionality of NetworkManager's dns=dnsmasq.  With this script, it makes the default route IP to Dnsmasq listen IP.  Container uses this IP as a default nameserver.
 
@@ -210,17 +210,17 @@ NetworkManager dispatcher 99-origin-dns.sh replicates the functionality of Netwo
 - creates /etc/origin/node/resolv.conf
 
 
-== DNS Query Flow Condition in OpenShift 3.6
+=== DNS Query Flow Condition in OpenShift 3.6
 
 image::images/dns_deep_dive_dns_flow_ocp_36.png[title=Figure 4. DNS Flow of OpenShift 3.6]
-dns_flow_ocp_36.png
 
-== DNS Query Flow in OpenShift 3.6
+=== DNS Query Flow in OpenShift 3.6
+
 image::images/dns_deep_dive_dns_query_flow_ocp_36.png[title=Figure 5. DNS Query Flow of OpenShift 3.6]
 _Note: No need to reach the Master from the Node to get SVC DNS data_
 
 
-== Debugging DNS Flow with tcpdump
+=== Debugging DNS Flow with tcpdump
 
 _Test env:_
 
@@ -293,7 +293,7 @@ sh-4.2# dig  hello-openshift.dns-project.svc.cluster.local
 ```
 
 == Reference:
-- serviceresolver.go
-- network_config.go
-- https://wiki.archlinux.org/index.php/dnsmasq#NetworkManager
+- link:https://goo.gl/pajnvz[serviceresolver.go]
+- link:https://goo.gl/ifsNTE[network_config.go]
+- link:https://wiki.archlinux.org/index.php/dnsmasq#NetworkManager[NetworkManager#dnsmasq]
 
