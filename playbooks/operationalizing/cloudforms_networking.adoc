@@ -99,7 +99,7 @@ To provide the greatest level of flexibility, SSL can be configured in several p
 
 * link:https://docs.openshift.com/container-platform/latest/install_config/cluster_metrics.html#metrics-using-secrets[Metrics Secrets Configuration]
 * link:https://docs.openshift.com/enterprise/latest/install_config/certificate_customization.html[Custom OpenShift certificates]
-* link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/routes.html#secured-routes[OpenShift router reencryption]
+* link:https://docs.openshift.com/container-platform/latest/architecture/networking/routes.html#secured-routes[OpenShift router reencryption]
 
 
 === OpenShift Configuration
