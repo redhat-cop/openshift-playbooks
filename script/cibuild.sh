@@ -2,4 +2,4 @@
 set -e
 
 bundle exec jekyll build
-bundle exec htmlproofer ./_site --check-html
+bundle exec htmlproofer ./_site --only-4xx --check-html
