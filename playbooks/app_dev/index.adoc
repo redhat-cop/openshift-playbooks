@@ -9,3 +9,4 @@ Completed sections:
 * link:builds{outfilesuffix}[Builds]
 * link:binary_deployment_howto{outfilesuffix}[Tutorial: Binary Deployments to Tomcat in OpenShift]
 * link:properties-management{outfilesuffix}[Managing Environment Dependent Properties]
+* link:APM_guidance{outfilesuffix}[APM Guidance]

@@ -3,3 +3,5 @@ Gemfile.lock
 _site
 .jekyll-metadata
 .bundle
+/.settings/
+/.project
