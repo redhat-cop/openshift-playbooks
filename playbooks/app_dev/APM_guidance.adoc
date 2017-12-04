@@ -44,6 +44,7 @@ In this document we will be focusing on Application Performance Monitoring (APM)
 == Application Performance Monitoring
 
 Application Performance Monitoring is about being able to answer these types of questions:
+
  * Why did the container blow up?
  * Why am I running out of memory?
  * Why is this use case taking so long to execute?
@@ -51,9 +52,9 @@ Application Performance Monitoring is about being able to answer these types of 
 
 APM is nowadays achieved by instrumenting the application so that it can generate metrics about what is going on inside the process running it and collecting those metrics to some central database that can then be used to generate dashboards and do alerting.
 
-image::images/APM_guidance-APMArchitecture.png
+image::images/APMGuidance-APMArchitecture.png[]
 
-Normally an application is instrumented by adding a probe that captures the main application events and metrics. In Java this is done via an agent (activated usually with the https://docs.oracle.com/javase/8/docs/technotes/tools/windows/java.html#BABDJJFI[CLI argument ]https://docs.oracle.com/javase/8/docs/technotes/tools/windows/java.html#BABDJJFI[-javaangent]). Other runtimes may have different approaches.
+Normally an application is instrumented by adding a probe that captures the main application events and metrics. In Java this is done via an agent (activated usually with the https://docs.oracle.com/javase/8/docs/technotes/tools/windows/java.html#BABDJJFI[CLI argument ]). Other runtimes may have different approaches.
 
 In the container world there are two ways of installing APM tools.
 
@@ -61,15 +62,15 @@ In the container world there are two ways of installing APM tools.
 
 In this architecture the container image of the application that needs to be monitored has the agent onboard. Upon start of the container, the agent will be activated and start communicating with the metrics collector.
 
-image::images/APM_guidance-APMArch1.png
+image::images/APMGuidance-ContainerAPMArch1.png[]
 
-Notice that this approach requires specifically crafted images and decreases the ability to reuse externally prepared images such as the https://docs.openshift.com/container-platform/latest/creating_images/s2i.html[s2i]https://docs.openshift.com/container-platform/latest/creating_images/s2i.html[ images] from Red Hat. 
+Notice that this approach requires specifically crafted images and decreases the ability to reuse externally prepared images such as the https://docs.openshift.com/container-platform/latest/creating_images/s2i.html[s2i images] from Red Hat. 
 
 ==== Prometheus instrumentation
 
 https://prometheus.io/[Prometheus] is becoming a very popular metrics collector and going forward will be officially supported in OpenShift for collecting infrastructure-related metrics. A possible approach to APM is to have Prometheus also collect application metrics. http://www.opensourcerers.org/monitoring-camel-prometheus-red-hat-openshift/[Here] is an example that uses a JMX exporter to do it.
 
-https://projects.spring.io/spring-boot/[Spring Boot] can expose metrics directly via the https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready[https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready[A]]https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready[ctuator]https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready[ library]. Integrations between Actuator and Prometheus exist in the open source space, for example https://github.com/moelholm/prometheus-spring-boot-starter[here].
+https://projects.spring.io/spring-boot/[Spring Boot] can expose metrics directly via the https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready[Actuator library]. Integrations between Actuator and Prometheus exist in the open source space, for example https://github.com/moelholm/prometheus-spring-boot-starter[here].
 
 Prometheus has the ability to automatically start scraping pods with some specific annotations.  +
 So the setup for this configuration is very minimal. On the other hand, Prometheus does not currently offer a APM-specific dashboard. 
@@ -78,7 +79,7 @@ So the setup for this configuration is very minimal. On the other hand, Promethe
 
 In this approach the agents are deployed as https://docs.openshift.com/container-platform/latest/dev_guide/daemonsets.html[daemon sets]. The containers in this daemon set are privileged and can inspect the other containers running on the same node. Once a new container starts, the agent sends all available information of that container to the metrics collector.
 
-image::images/APM_guidance-APMArch2.png
+image::images/APMGuidance-ContainerAPMArch2.png[]
 
 Note that in this case very little additional work is required in order to enable APM and that no additional image configuration is needed.
 
@@ -86,6 +87,7 @@ Note that in this case very little additional work is required in order to enabl
 
 
 Major market players in APM are:
+
  * https://www.dynatrace.com/[Dynatrace]
  * https://www.appdynamics.com/[appDynamics]
  * https://newrelic.com/[New Relic]
@@ -93,6 +95,7 @@ Major market players in APM are:
 For more information about the APM tools landscape see Gartner’s “Magic Quadrant” report on APM tools (document code https://www.gartner.com/document/3551918?ref=exploremq[G00298377]), available through the Gartner site. 
 
 It is important to be aware that there is a trend for pure infrastructure monitoring tools to invade the APM space and for APM tools to invade the infrastructure space. In fact a new generation of tools try to do both. Some examples are:
+
  * https://sysdig.com/[Sysdig]
  * https://www.instana.com/[Instana]
 
@@ -135,7 +138,7 @@ The reference implementation of OpenTracing is https://github.com/jaegertracing/
 
 The general architecture of Jaeger is the following:
 
-image::images/jaeger_architecture.png
+image::images/jaeger_architecture.png[]
 
 A jaeger client (http://jaeger.readthedocs.io/en/latest/client_libraries/[client libraries] for various languages exist) will generate trace information and sends them via a local UDP to a jaeger agent, running as a http://blog.kubernetes.io/2015/06/the-distributed-system-toolkit-patterns.html[sidecar]. The jaeger agent will perform the necessary sampling and throttling, and then send the traces to the central jaeger collector, which stores them in http://cassandra.apache.org/[Cassandra]. Once the traces are stored they can be visualized using the UI.
 
@@ -143,7 +146,7 @@ Instructions on how to install jaeger in OpenShift can be found https://github.c
 
 The UI presents result as follows:
 
-image::images/jaeger_ui.png
+image::images/jaeger_ui.png[]
 
 If you are building a http://blog.christianposta.com/microservices/application-network-functions-with-esbs-api-management-and-now-service-mesh/[service mesh] with https://istio.io/[istio], consider that istio is naturally integrated with jaeger, as explained https://istio.io/docs/tasks/telemetry/distributed-tracing.html[here].
 
