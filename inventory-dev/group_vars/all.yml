@@ -1,0 +1,28 @@
+---
+
+openshift_cluster_content:
+- object: projectrequest
+  content:
+  - name: "Projects"
+    file: "{{ inventory_dir }}/../projects/projects-dev.yml"
+    file_action: create
+- object: policy
+  content_dir: "{{ inventory_dir }}/../policy"
+- object: deployments
+  content:
+  - name: "jenkins"
+    namespace: "field-guides-dev"
+    template: "openshift//jenkins-ephemeral"
+    params: "{{ inventory_dir }}/../deploy/dev/jenkins-params"
+  - name: "dev-deployment"
+    template: "{{ inventory_dir }}/../deploy/template.yml"
+    params: "{{ inventory_dir }}/../deploy/dev/params"
+- object: builds
+  content:
+  - name: "image build"
+    namespace: "field-guides-dev"
+    template: "https://raw.githubusercontent.com/redhat-cop/containers-quickstarts/master/jenkins-slaves/templates/jenkins-slave-image-mgmt-template.json"
+    params: "{{ inventory_dir }}/../deploy/dev/slave-params"
+  - name: "site build"
+    template: "{{ inventory_dir }}/../build/template.yml"
+    params: "{{ inventory_dir }}/../build/dev/params"

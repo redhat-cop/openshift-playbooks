@@ -11,36 +11,24 @@ The following are instructions to get the application deployed.
 
 ## 1 Development/Testing Setup
 
-First, log in to the Dev cluster instantiate the project
+First, log in to the Dev cluster and run the dev inventory to set up the dev environment.
 ```
 oc login <dev cluster>
 cd ./openshift-playbooks
-oc create -f ./projects/projects-dev.yml
-```
-
-Build the slave image
-```
-oc process -f https://raw.githubusercontent.com/redhat-cop/containers-quickstarts/master/jenkins-slaves/templates/jenkins-slave-image-mgmt-template.json | oc apply -f-
-```
-
-Deploy the pipeline infrastructure
-```
-oc process openshift//jenkins-ephemeral | oc apply -f- -n field-guides-dev
-oc process -f deploy/template.yml --param-file=deploy/dev/params | oc apply -f -
+ansible-playbook -i inventory-dev/ ../casl-ansible/playbooks/openshift-cluster-seed.yml --connection=local
 ```
 
 ## 2 Production Setup
 
-Log into the Production cluster and setup the following
+Log into the Production cluster and run the production setup inventory.
 ```
 oc login <prod cluster>
-oc create -f projects/projects-prod.yml
-oc create serviceaccount promoter -n field-guides-prod
-oc adm policy add-role-to-user edit -z promoter -n field-guides-prod
-oc process -f deploy/template.yml --param-file=deploy/prod/params | oc apply -f -
+ansible-playbook -i inventory-prod/ ../casl-ansible/playbooks/openshift-cluster-seed.yml --connection=local
 ```
 
-Now, grab the token value for the service account created above and save for later
+## 3 Create the Promoter Secret
+
+As part of the ansible run above, a service account called _promoter_ gets created with the "edit" role, in order to facilitate the promotion of the site from dev to production. Grab the token value for the service account created above and save for later
 ```
 TOKEN=$(oc serviceaccounts get-token promoter -n field-guides-prod)
 ```
@@ -57,8 +45,5 @@ Log back into the Development Cluster, and create the production secret, passing
 oc login <dev cluster>
 oc process -f deploy/prod-credentials.yml -p API_URL=${API_URL} REGISTRY_URL=${REGISTRY_HOSTNAME} TOKEN=${TOKEN} | oc apply -f- -n field-guides-dev
 ```
-## Deploy pipeline
 
-```
-oc process -f build/field-guides-build.yml --param-file=build/dev/params | oc apply -f-
-```
+At this point the pipeline should be fully functional and able to build, deploy, and promote the site.
