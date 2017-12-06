@@ -98,6 +98,8 @@ It is important to be aware that there is a trend for pure infrastructure monito
 
  * https://sysdig.com/[Sysdig]
  * https://www.instana.com/[Instana]
+ 
+When choosing a product, you may want to consider whether it is part of the https://hub.openshift.com/primed[OpenShift Primed list].
 
 Below we have a series of link to help getting started with each of the mentioned products.
 
@@ -148,7 +150,7 @@ The UI presents result as follows:
 
 image::images/jaeger_ui.png[]
 
-(https://github.com/redhat-helloworld-msa/helloworld-msa)[Helloworld-MSA] is an example of how to instrument an application with Jaeger. 
+https://github.com/redhat-helloworld-msa/helloworld-msa[Helloworld-MSA] is an example of how to instrument an application with Jaeger. 
 
 If you are building a http://blog.christianposta.com/microservices/application-network-functions-with-esbs-api-management-and-now-service-mesh/[service mesh] with https://istio.io/[istio], consider that istio is naturally integrated with jaeger, as explained https://istio.io/docs/tasks/telemetry/distributed-tracing.html[here].
 
