@@ -89,7 +89,7 @@ Note that in this case very little additional work is required in order to enabl
 Major market players in APM are:
 
  * https://www.dynatrace.com/[Dynatrace]
- * https://www.appdynamics.com/[appDynamics]
+ * https://www.appdynamics.com/[AppDynamics]
  * https://newrelic.com/[New Relic]
 
 For more information about the APM tools landscape see Gartner’s “Magic Quadrant” report on APM tools (document code https://www.gartner.com/document/3551918?ref=exploremq[G00298377]), available through the Gartner site. 
@@ -147,6 +147,8 @@ Instructions on how to install jaeger in OpenShift can be found https://github.c
 The UI presents result as follows:
 
 image::images/jaeger_ui.png[]
+
+(https://github.com/redhat-helloworld-msa/helloworld-msa)[Helloworld-MSA] is an example of how to instrument an application with Jaeger. 
 
 If you are building a http://blog.christianposta.com/microservices/application-network-functions-with-esbs-api-management-and-now-service-mesh/[service mesh] with https://istio.io/[istio], consider that istio is naturally integrated with jaeger, as explained https://istio.io/docs/tasks/telemetry/distributed-tracing.html[here].
 
