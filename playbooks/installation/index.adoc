@@ -288,7 +288,7 @@ openshift_hosted_registry_storage_volume_name=registry
 openshift_hosted_registry_storage_volume_size=100Gi
 ----
 
-Other options for configuring Registry storage can be found in the link:https://github.com/openshift/openshift-ansible/blob/master/inventory/byo/hosts.example[example Ansible hosts file here].
+Other options for configuring Registry storage can be found in the link:https://github.com/openshift/openshift-ansible/blob/master/inventory/hosts.example[example Ansible hosts file here].
 
 This is all we need for persistent storage for now. We'll revisit this topic when we add Metrics & Logging.
 
