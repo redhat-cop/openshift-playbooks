@@ -793,8 +793,8 @@ Sample ansible command using a host file located at /repository/playbooks-ocplab
 
 
 ```
-ansible -i c1-ocp.myorg.com/hosts nodes -a 'rpm -ivh http://satellite6.c1-ocp.myorg.com/pub/katello-ca-consumer-latest.noarch.rpm'
-ansible -i c1-ocp.myorg.com/hosts nodes -a 'subscription-manager register --org="<My_Org>" --activationkey="<my-activation-key>"'
+ansible -i c1-ocp.myorg.com/hosts nodes -m shell -a 'rpm -ivh http://satellite6.c1-ocp.myorg.com/pub/katello-ca-consumer-latest.noarch.rpm'
+ansible -i c1-ocp.myorg.com/hosts nodes -m shell -a 'subscription-manager register --org="<My_Org>" --activationkey="<my-activation-key>"'
 ```
 
 
@@ -807,9 +807,9 @@ cat /etc/yum.repos.d/ ...
 ==== Subscribing directly to Red Hat
 
 ----
-ansible -i c1-ocp.myorg.com/hosts OSEv3 -a 'subscription-manager register --username bob@acme.com --password='mypassword'
-ansible -i c1-ocp.myorg.com/hosts OSEv3 -a 'subscription-manager attach --pool=8a85f98144844aff014488d058bf15be'
-ansible -i c1-ocp.myorg.com/hosts OSEv3 -a 'subscription-manager repos --disable="*" --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.6-rpms" --enable="rhel-7-fast-datapath-rpms'
+ansible -i c1-ocp.myorg.com/hosts OSEv3 -m shell -a 'subscription-manager register --username bob@acme.com --password='mypassword'
+ansible -i c1-ocp.myorg.com/hosts OSEv3 -m shell -a 'subscription-manager attach --pool=8a85f98144844aff014488d058bf15be'
+ansible -i c1-ocp.myorg.com/hosts OSEv3 -m shell -a 'subscription-manager repos --disable="*" --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.6-rpms" --enable="rhel-7-fast-datapath-rpms'
 ----
 
 NOTE: The `rhel-7-fast-datapath-rpms` channel is only required for OpenShift Container Platform version 3.5 and later. For versions 3.4 and earlier, this channel should be omitted.
@@ -823,7 +823,7 @@ NOTE: There are other options for configuring docker storage. They are outlined 
 We can do this simply with a single ansible command across all of our nodes.
 
 ----
-ansible -i c1-ocp.myorg.com/hosts nodes -a 'echo "DEVS=/dev/vdb" > /etc/sysconfig/docker-storage-setup'
+ansible -i c1-ocp.myorg.com/hosts nodes -m shell -a 'echo "DEVS=/dev/vdb" > /etc/sysconfig/docker-storage-setup'
 ----
 
 This file will be consumed by the docker engine once it is installed by Ansible.
@@ -833,26 +833,64 @@ This file will be consumed by the docker engine once it is installed by Ansible.
 Just as with the Docker Storage, during the link:#provision-servers[Provision Servers] step of this guide, we provisioned our masters and nodes with an extra volume to be used for `/var/lib/etcd` (for masters) and `/var/lib/origin` (for nodes), attached as `/dev/vdc` in this guide. (Make sure to replace this with the disk available in your environment.) We will now demonstrate the steps involved with using LVM to set up and use this volume for backing storage.
 
 ----
-ansible -i c1-ocp.myorg.com/hosts etcd -a 'yum -y install lvm2'
+ansible -i c1-ocp.myorg.com/hosts etcd -m shell -a 'yum -y install lvm2'
 
-ansible -i c1-ocp.myorg.com/hosts etcd -a 'pvcreate /dev/vdc'
-ansible -i c1-ocp.myorg.com/hosts etcd -a 'vgcreate etcd-vg /dev/vdc'
-ansible -i c1-ocp.myorg.com/hosts etcd -a 'lvcreate -n etcd-lv -l 100%VG etcd-vg'
-ansible -i c1-ocp.myorg.com/hosts etcd -a 'mkfs.xfs /dev/mapper/etcd--vg-etcd--lv'
+ansible -i c1-ocp.myorg.com/hosts etcd -m shell -a 'pvcreate /dev/vdc'
+ansible -i c1-ocp.myorg.com/hosts etcd -m shell -a 'vgcreate etcd-vg /dev/vdc'
+ansible -i c1-ocp.myorg.com/hosts etcd -m shell -a 'lvcreate -n etcd-lv -l 100%VG etcd-vg'
+ansible -i c1-ocp.myorg.com/hosts etcd -m shell -a 'mkfs.xfs /dev/mapper/etcd--vg-etcd--lv'
 ansible -i c1-ocp.myorg.com/hosts etcd -m shell -a 'mkdir /var/lib/etcd'
 ansible -i c1-ocp.myorg.com/hosts etcd -m lineinfile -a 'path=/etc/fstab regexp=etcd line="/dev/mapper/etcd--vg-etcd--lv /var/lib/etcd xfs defaults 0 0"'
 ansible -i c1-ocp.myorg.com/hosts etcd -m shell -a 'mount -a'
 
-ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -a 'yum -y install lvm2'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd -m shell -a 'yum -y install lvm2'
 
-ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -a 'pvcreate /dev/vdc'
-ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -a 'vgcreate origin-vg /dev/vdc'
-ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -a 'lvcreate -n origin-lv -l 100%VG origin-vg'
-ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -a 'mkfs.xfs /dev/mapper/origin--vg-origin--lv'
-ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -m shell -a 'mkdir /var/lib/origin'
-ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -m lineinfile -a 'path=/etc/fstab regexp=origin line="/dev/mapper/origin--vg-origin--lv /var/lib/origin xfs defaults 0 0"'
-ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -m shell -a 'mount -a'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd -m shell -a 'pvcreate /dev/vdc'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd -m shell -a 'vgcreate origin-vg /dev/vdc'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd -m shell -a 'lvcreate -n origin-lv -l 100%VG origin-vg'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd -m shell -a 'mkfs.xfs /dev/mapper/origin--vg-origin--lv'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd -m shell -a 'mkdir /var/lib/origin'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd -m lineinfile -a 'path=/etc/fstab regexp=origin line="/dev/mapper/origin--vg-origin--lv /var/lib/origin xfs defaults 0 0"'
+ansible -i c1-ocp.myorg.com/hosts nodes:!etcd -m shell -a 'mount -a'
 ----
+
+=== System Resource Reservations
+OpenShift has tunable parameters to futher enhance and protect the cluster/nodes.  These parameters should be added to your ansible hosts file.  
+NOTE: OpenShift will use all the resources supplied to it from the node for the pods unless otherwise defined.  
+
+----
+openshift_node_kubelet_args:
+  kube-reserved:
+  - "cpu=250m,memory=500M" <1>
+  system-reserved:
+  - "cpu=250m,memory=500M" <2>
+  eviction-hard:
+  - "memory.available<100Mi" <3>
+  minimum-container-ttl-duration:
+  - "10s"<4>
+  maximum-dead-containers-per-container:
+  - "2"<5>
+  maximum-dead-containers:
+  - "50"<6>
+  pods-per-core:
+  - '10'<7>
+  max-pods:
+  - '250'<8>
+  image-gc-high-threshold:
+  - '80'<9>
+  image-gc-low-threshold:
+  - '60'<10>
+----
+<1> Resources reserved for node components
+<2> Resources reserved for the remaining system components
+<3> Value the node attempts to evict pods whenever memory availability on the node drops below the absolute value
+<4> The minimum age that a container is eligible for garbage collection
+<5> The number of instances to retain per pod container
+<6> node removes the dead containers, all files inside those containers are removed as well
+<7> How many pods will be allowed to run per core
+<8> Max number of pods on a node
+<9> The percent of disk usage which triggers image garbage collection
+<10> The percent of disk usage to which image garbage collection attempts to free
 
 === Validating Pre-requisites
 
