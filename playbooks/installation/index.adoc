@@ -854,6 +854,45 @@ ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -m lineinfile -a 'path=/etc/fstab
 ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -m shell -a 'mount -a'
 ----
 
+=== System Resource Reservations
+OpenShift has tunable parameters to futher enhance and protect the cluster/nodes.  These parameters should be added to your ansible hosts file.  
+NOTE: OpenShift will use all the resources supplied to it from the node for the pods unless otherwise defined.  
+
+----
+openshift_node_kubelet_args:
+  kube-reserved:
+  - "cpu=250m,memory=500M" <1>
+  system-reserved:
+  - "cpu=250m,memory=500M" <2>
+  eviction-hard:
+  - "memory.available<100Mi" <3>
+  minimum-container-ttl-duration:
+  - "10s"<4>
+  maximum-dead-containers-per-container:
+  - "2"<5>
+  maximum-dead-containers:
+  - "50"<6>
+  pods-per-core:
+  - '10'<7>
+  max-pods:
+  - '250'<8>
+  image-gc-high-threshold:
+  - '80'<9>
+  image-gc-low-threshold:
+  - '60'<10>
+----
+<1> Resources reserved for node components
+<2> Resources reserved for the remaining system components
+<3> Value the node attempts to evict pods whenever memory availability on the node drops below the absolute value
+<4> The minimum age that a container is eligible for garbage collection
+<5> The number of instances to retain per pod container
+<6> node removes the dead containers, all files inside those containers are removed as well
+<7> How many pods will be allowed to run per core
+<8> Max number of pods on a node
+<9> The percent of disk usage which triggers image garbage collection
+<10> The percent of disk usage to which image garbage collection attempts to free
+
+
 === Validating Pre-requisites
 
 Once we have everything prepped, it's a good idea to run through our link:/playbooks/installation/pre-validation{outfilesuffix}[OpenShift Pre-Install Validation Checklist].
