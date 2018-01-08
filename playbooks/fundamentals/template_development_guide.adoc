@@ -1,0 +1,153 @@
+---
+---
+= OpenShift Templates Development Guide
+Eric Sauer <esauer@redhat.com>
+:toc: macro
+:toc-title:
+
+This doc provides some guidance, tips, and best practices for using, developing and managing templates in OpenShift.
+
+toc::[]
+
+== Overview
+
+link:https://docs.openshift.com/container-platform/3.7/dev_guide/templates.html[OpenShift Templates] are best known as the way in which the OpenShift Web Console is populated with quickstart applications and other content. However, they are also a very powerful tool that, used thoughtfully, can be the building block of an _Infrastructure as Code_ solution for managing many aspects of cluster and application state.
+
+== Exploring Templates
+
+In order to get kicked off in template exploration, let's start by spinning up a Java application using `oc new-app`.
+
+```
+$ oc new-app --template=openjdk18-web-basic-s2i
+--> Deploying template "openshift/openjdk18-web-basic-s2i" to project eric-test
+
+     Red Hat OpenJDK 8
+     ---------
+     Application template for Java applications built using S2I.
+
+     A new java application has been created in your project.
+
+     * With parameters:
+        * Application Name=openjdk-app
+        * Custom http Route Hostname=
+        * Git Repository URL=https://github.com/jboss-openshift/openshift-quickstarts
+        * Git Reference=master
+        * Context Directory=undertow-servlet
+        * Github Webhook Secret=4sPr4Br3 # generated
+        * Generic Webhook Secret=V218WEHy # generated
+        * ImageStream Namespace=openshift
+
+--> Creating resources ...
+    service "openjdk-app" created
+    route "openjdk-app" created
+    imagestream "openjdk-app" created
+    buildconfig "openjdk-app" created
+    deploymentconfig "openjdk-app" created
+--> Success
+    Build scheduled, use 'oc logs -f bc/openjdk-app' to track its progress.
+    Run 'oc status' to view your app.
+```
+
+Looking at what was done here, we used an `oc` command to instantiate a template by name. The template we used (`openjdk18-web-basic-s2i`) is a template that has been preloaded into OpenShift for convenience. We can also see that several objects were created as a result, including a `Service`, `Route`, `ImageStream`, `BuildConfig` and a `DeploymentConfig`. We can take a look at these templates using some oc commands.
+
+```
+$ oc get templates -n openshift
+NAME                                            DESCRIPTION                                                                        PARAMETERS        OBJECTS
+...
+openjdk18-web-basic-s2i                         Application template for Java applications built using S2I.                        8 (1 blank)       5
+...
+```
+
+If we want to get a few more details, we can use oc `describe` instead:
+
+```
+$ oc describe template openjdk18-web-basic-s2i -n openshift
+Name:		openjdk18-web-basic-s2i
+Namespace:	openshift
+Created:	2 weeks ago
+Labels:		<none>
+Description:	Application template for Java applications built using S2I.
+Annotations:	iconClass=icon-jboss
+		openshift.io/display-name=Red Hat OpenJDK 8
+		tags=java,xpaas
+		version=1.1.0
+
+Parameters:
+    Name:		APPLICATION_NAME
+    Display Name:	Application Name
+    Description:	The name for the application.
+    Required:		true
+    Value:		openjdk-app
+
+    Name:		HOSTNAME_HTTP
+    Display Name:	Custom http Route Hostname
+    Description:	Custom hostname for http service route.  Leave blank for default hostname, e.g.: <application-name>-<project>.<default-domain-suffix>
+    Required:		false
+    Value:		<none>
+
+    Name:		SOURCE_REPOSITORY_URL
+    Display Name:	Git Repository URL
+    Description:	Git source URI for application
+    Required:		true
+    Value:		https://github.com/jboss-openshift/openshift-quickstarts
+
+    Name:		SOURCE_REPOSITORY_REF
+    Display Name:	Git Reference
+    Description:	Git branch/tag reference
+    Required:		false
+    Value:		master
+
+    Name:		CONTEXT_DIR
+    Display Name:	Context Directory
+    Description:	Path within Git project to build; empty for root project directory.
+    Required:		false
+    Value:		undertow-servlet
+
+    Name:		GITHUB_WEBHOOK_SECRET
+    Display Name:	Github Webhook Secret
+    Description:	GitHub trigger secret
+    Required:		true
+    Generated:		expression
+    From:		[a-zA-Z0-9]{8}
+
+    Name:		GENERIC_WEBHOOK_SECRET
+    Display Name:	Generic Webhook Secret
+    Description:	Generic build trigger secret
+    Required:		true
+    Generated:		expression
+    From:		[a-zA-Z0-9]{8}
+
+    Name:		IMAGE_STREAM_NAMESPACE
+    Display Name:	ImageStream Namespace
+    Description:	Namespace in which the ImageStreams for Red Hat Middleware images are installed. These ImageStreams are normally installed in the openshift namespace. You should only need to modify this if you've installed the ImageStreams in a different namespace/project.
+    Required:		true
+    Value:		openshift
+
+
+Object Labels:	template=openjdk18-web-basic-s2i,xpaas=1.4.0
+
+Message:	A new java application has been created in your project.
+
+Objects:
+    Service		${APPLICATION_NAME}
+    Route		${APPLICATION_NAME}
+    ImageStream		${APPLICATION_NAME}
+    BuildConfig		${APPLICATION_NAME}
+    DeploymentConfig	${APPLICATION_NAME}
+```
+
+Here, we can see that there are parameters available that we can pass to the template to customize the object we want to create. Let's try to use a few of these to make our sample application more relevant to us.
+
+```
+oc new-app --template=openjdk18-web-basic-s2i -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR=''
+```
+
+
+
+== Templates for Infrastructure as Code (IaC)
+
+== Using oc apply
+
+This presentation from KubeCon 2017 provides more interesting deep dives into using oc apply.
+
+video::CW3ZuQy_YZw[youtube]
