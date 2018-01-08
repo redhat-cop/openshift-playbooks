@@ -36,3 +36,7 @@ commented out due to travis build failure:
 === Learning
 // * link:https://learn.openshift.com/[OpenShift Interactive Learning Portal^] to experiment, learn OpenShift and see how we can help solve real-world problems.
 ////
+
+== OpenShift Guides
+
+* link:./template_development_guide{outfilesuffix}[A Comprehensive Guide to OpenShift Templates]

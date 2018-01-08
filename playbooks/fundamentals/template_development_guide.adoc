@@ -144,6 +144,8 @@ Here, we can see that there are parameters available that we can pass to the tem
 oc new-app --template=openjdk18-web-basic-s2i -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR=''
 ```
 
+
+
 == Building Custom Templates
 
 Custom templates allow a user to truly unlock the power of OpenShift in many ways. This section will dive into various approaches to building custom templates. But first, let's dive into the basic structure and makeup of a template.
@@ -229,11 +231,77 @@ parameters:
 ...
 ```
 
-=== Modify an existing template
+=== Methods for Writing or Generating Templates
 
-=== Build from Scratch
+==== Start from an existing template
 
-=== Export existing objects as a Template
+Exporting and modifying an existing template is many times the fastest path to success. Simply peruse through the set of templates provided out of the box by OpenShift, find the one closest to what you need, and export it.
+
+```
+$ oc get templates -n openshift
+...
+s2i-spring-boot-camel-config                    Spring Boot and Camel using ConfigMaps and Secrets. This quickstart demonstra...   13 (2 blank)      3
+...
+
+$ oc export template/s2i-spring-boot-camel-config -n openshift > my-new-spring-template.yml
+```
+
+Once exported the first thing to do is make sure to rename it. Just make sure and be thorough, a templates name is generally used multiple times in the template.
+
+```
+$ grep 's2i-spring-boot-camel-config\|my-new-spring-template' ./my-new-spring-template.yml
+  template: s2i-spring-boot-camel-config
+  name: s2i-spring-boot-camel-config
+  value: s2i-spring-boot-camel-config
+
+$ sed -i 's/s2i-spring-boot-camel-config/my-new-spring-template/g' ./my-new-spring-template.yml
+
+$ grep 's2i-spring-boot-camel-config\|my-new-spring-template' ./my-new-spring-template.yml
+  template: my-new-spring-template
+  name: my-new-spring-template
+  value: my-new-spring-template
+```
+
+From here, you're free to modify whatever needs modifying to meet your needs. When modifying an existing template, be aware that there is a lot of metadata in the form of labels and annotations that may or may not be relevant to your new template. The good news is that, if you are writing a template for automation purposes, and not for use in the Web Console, much of that stuff can be cleaned out, as it is mostly used to populate parts of the UI and little else. Just keep in mind that you may want to spend the time updating those values if you plan to create new Web Console quickstarts.
+
+==== Build from Scratch
+
+A more barebones approach is to simply write the template from scratch. This is especially nice when you need a very minimal template, and you want to keep it clean of any leftover metadata from the original template. Just start with this skeleton and you'll be good to go.
+
+```
+apiVersion: v1
+kind: Template
+labels:
+message: <Creation message>
+metadata:
+  name: <template name>
+objects:
+parameters:
+```
+
+==== Export existing objects as a Template
+
+Maybe the most powerful mode of creating a new template is to use `oc export` to generate one from a set of already created objects. This allows you to first build and wire up and application manually using the client tools and/or the Web Console, and then capture your work in the form of a repeatable template.
+
+=== Best Practices for Template Writing
+
+The following is a list of suggested best practices for template writing.
+
+- **Include a `template` label in all objects.**
++
+Including a common label across all objects created from a template allows users and admins to track objects created from a particular template as a group.
++
+- **Include an `app` label in all objects.**
++
+In addition to a template label, which will have a static value, including an `app=${APPLICATION_NAME}` label provides a dynamic label that can be used to query a specific instance of a template.
++
+- **Keep Templates confined to a scope**
++
+When building a new template, it's good to keep both the user and the use case in mind. For example, if I created a template that defines an application, but also defined a `ClusterRole` and `ClusterRoleBinding`, then that template would require a `cluster-admin`, or someone with elevated privileges in order to instantiate it. This makes it less useful to regular developers. A better design would be to create one template for the local application components and a separate one for the cluster-level objects.
++
+- **Separate Build templates from Deploy templates.**
++
+Similarly to the previous point. It's important to consider _when_ a template would be instantiated. A common example is a template defining `BuildConfigs` and `Deployments`/`Services`/etc. Typically, an app only builds in a single project (representing a _development_ environment), but may get deployed to multiple projects (_dev_, _uat_, _production_). For this reason, its helpful to have one template that defines all of your build components, and a separate template that defines the deployment related componentns. A good example of this can be seen in our link:https://github.com/redhat-cop/container-pipelines/tree/master/basic-spring-boot#openshift-templates[Container Pipelines Quickstarts].
 
 == Templates for Infrastructure as Code (IaC)
 
