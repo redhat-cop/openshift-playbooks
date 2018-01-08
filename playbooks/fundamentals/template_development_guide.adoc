@@ -13,6 +13,8 @@ toc::[]
 
 link:https://docs.openshift.com/container-platform/3.7/dev_guide/templates.html[OpenShift Templates] are best known as the way in which the OpenShift Web Console is populated with quickstart applications and other content. However, they are also a very powerful tool that, used thoughtfully, can be the building block of an _Infrastructure as Code_ solution for managing many aspects of cluster and application state.
 
+In this guide, we dive deep into the usage and makeup of OpenShift templates, covering first how they can be used, then how to write custom templates, and finally, how to put all of this knowledge together to create powerful automation workflows for managing workloads in OpenShift.
+
 == Exploring Templates
 
 In order to get kicked off in template exploration, let's start by spinning up a Java application using `oc new-app`.
@@ -142,11 +144,100 @@ Here, we can see that there are parameters available that we can pass to the tem
 oc new-app --template=openjdk18-web-basic-s2i -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR=''
 ```
 
+== Building Custom Templates
 
+Custom templates allow a user to truly unlock the power of OpenShift in many ways. This section will dive into various approaches to building custom templates. But first, let's dive into the basic structure and makeup of a template.
+
+=== Template Structure
+
+The basic top level structure of an OpenShift template is as follows:
+
+```
+apiVersion: v1
+kind: Template
+labels:
+message: <Creation message>
+metadata:
+  name: <template name>
+objects:
+parameters:
+```
+
+The important sections here are:
+
+- `kind: Template` - defines the object as a template
+- `message` - An optional message to return to the user when the template is created using the Web Console
+- `metadata` - Standard metadata section for all Kubernetes objects, including object `name`.
+- `objects` - Yaml list of Object definitions to be included in the template. (same format as `<kind: List>.items`)
+- `parameters` - Optional list of parameters with which to do substitution within the `objects` list.
+
+Let's look at an example, using the OpenJDK template we were experimenting with above. We can use `oc export` to get a clean copy of the template code.
+
+```
+$ oc export template/openjdk18-web-basic-s2i -n openshift
+apiVersion: v1
+kind: Template
+labels:
+  template: openjdk18-web-basic-s2i
+  xpaas: 1.4.0
+message: A new java application has been created in your project.
+metadata:
+  annotations:
+    description: Application template for Java applications built using S2I.
+    iconClass: icon-jboss
+    openshift.io/display-name: Red Hat OpenJDK 8
+    tags: java,xpaas
+    version: 1.1.0
+  name: openjdk18-web-basic-s2i
+objects:
+- kind: Service
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+...
+- kind: Route
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+...
+- kind: ImageStream
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+...
+- kind: BuildConfig
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+...
+- kind: DeploymentConfig
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+...
+parameters:
+- description: The name for the application.
+  displayName: Application Name
+  name: APPLICATION_NAME
+  required: true
+  value: openjdk-app
+...
+```
+
+=== Modify an existing template
+
+=== Build from Scratch
+
+=== Export existing objects as a Template
 
 == Templates for Infrastructure as Code (IaC)
 
-== Using oc apply
+=== Use oc apply for repeatable process
 
 This presentation from KubeCon 2017 provides more interesting deep dives into using oc apply.
 
