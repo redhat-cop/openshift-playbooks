@@ -144,6 +144,57 @@ Here, we can see that there are parameters available that we can pass to the tem
 oc new-app --template=openjdk18-web-basic-s2i -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR=''
 ```
 
+If we look at what's created in our project, we can see that we now have two of everything. Since we passed a new value for `APPLICATION_NAME`, and the template sets all objects to use `${APPLICATION_NAME}` in the `name:` field, the `new-app` command resulted in all new objects created with new names.
+
+```
+$ oc get all
+NAME             TYPE      FROM         LATEST
+bc/openjdk-app   Source    Git@master   1
+bc/spring-rest   Source    Git@master   1
+
+NAME                   TYPE      FROM          STATUS     STARTED       DURATION
+builds/openjdk-app-1   Source    Git@08c923a   Complete   3 weeks ago   30s
+builds/spring-rest-1   Source    Git@978d4b0   Complete   3 weeks ago   1m7s
+
+NAME             DOCKER REPO                                              TAGS      UPDATED
+is/openjdk-app   docker-registry.default.svc:5000/eric-test/openjdk-app   latest    3 weeks ago
+is/spring-rest   docker-registry.default.svc:5000/eric-test/spring-rest   latest    3 weeks ago
+
+NAME             REVISION   DESIRED   CURRENT   TRIGGERED BY
+dc/openjdk-app   1          1         1         config,image(openjdk-app:latest)
+dc/spring-rest   1          1         1         config,image(spring-rest:latest)
+
+NAME               DESIRED   CURRENT   READY     AGE
+rc/openjdk-app-1   1         1         1         21d
+rc/spring-rest-1   1         1         1         20d
+
+NAME                 HOST/PORT                                         PATH      SERVICES      PORT      TERMINATION   WILDCARD
+routes/openjdk-app   openjdk-app-eric-test.apps.d1.casl.rht-labs.com             openjdk-app   <all>                   None
+routes/spring-rest   spring-rest-eric-test.apps.d1.casl.rht-labs.com             spring-rest   <all>                   None
+
+NAME              CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+svc/openjdk-app   172.30.125.201   <none>        8080/TCP   21d
+svc/spring-rest   172.30.61.234    <none>        8080/TCP   20d
+
+NAME                     READY     STATUS      RESTARTS   AGE
+po/openjdk-app-1-build   0/1       Completed   0          21d
+po/openjdk-app-1-gwtj9   1/1       Running     0          21d
+po/spring-rest-1-build   0/1       Completed   0          20d
+po/spring-rest-1-xtbx2   1/1       Running     0          20d
+```
+
+Let's go ahead and clean up the old `openjdk-app` resources.
+
+```
+$ oc delete all -l application=openjdk-app
+buildconfig "openjdk-app" deleted
+imagestream "openjdk-app" deleted
+deploymentconfig "openjdk-app" deleted
+route "openjdk-app" deleted
+service "openjdk-app" deleted
+pod "openjdk-app-1-gwtj9" deleted
+```
+
 
 
 == Building Custom Templates
