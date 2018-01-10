@@ -278,7 +278,7 @@ Using below ansible playbook, it can be easy to change logo of OpenShift Login P
 
 *Playbooks Links*
 
-- link:https://github.com/redhat-cop/openshift-toolkit/tree/master/ansible-playbook-openshift-custom-login-page[ansible-playbook-openshift-custom-login-page]
-- link:https://github.com/redhat-cop/openshift-toolkit/tree/master/ansible-playbook-openshift-custom-webconsole-logo[ansible-playbook-openshift-custom-webconsole-logo]
+- link:https://github.com/redhat-cop/openshift-toolkit/tree/master/branding/ansible-playbook-openshift-custom-login-page[ansible-playbook-openshift-custom-login-page]
+- link:https://github.com/redhat-cop/openshift-toolkit/tree/master/branding/ansible-playbook-openshift-custom-webconsole-logo[ansible-playbook-openshift-custom-webconsole-logo]
 
 
