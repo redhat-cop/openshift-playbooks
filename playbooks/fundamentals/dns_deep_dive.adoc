@@ -10,12 +10,12 @@ toc::[]
 
 == DNS in OpenShift?
 
-Regarding OpenShift, we are usually talking about two DNS servers.
+In OpenShift, there are 2 locations of DNS resolution to be concerned with.
 
 - Corporate DNS (outside OCP) for Master internal/external hostname and router wildcard name.
 - OpenShift DNS for communication between internal services.
 
-In this blog, I would like to talk about the latter DNS, which is based on skyDNS. 
+In this document, I would like to talk about the latter DNS, which is based on skyDNS. 
 For demonstration purpose, a simple application “hello openshift” will be used. This is the script to deploy it.
 
 []
@@ -40,7 +40,7 @@ $ curl 10.130.2.13:8080
 Hello OpenShift!
 
 # Tip - use this command to use the Pod IP from your environment
-$ curl $(oc get pod hello-openshift --template '{{ .status.podIP}}):8080
+$ curl $(oc get pod hello-openshift --template '{{ .status.podIP}}):8080'
 Hello OpenShift!
 
 # Expose Service from Pod
@@ -127,7 +127,7 @@ image::images/dns_deep_dive_openshift_3.6_dns_1.png[title=Figure 3. DNS Structur
 
 
 
-== Deep Dive
+== Deeper Dive
 
 === Daemons & Port Mapping:
 
@@ -226,10 +226,10 @@ _Test env:_
 
 - Master Node
 .. IP: 10.10.181.97
-.. Hostname: dhcp181-97.gsslab.rdu2.redhat.com
+.. Hostname: dhcp181-97.example.com
 - App Node
 .. IP: 10.10.181.196
-.. Hostname: dhcp181-196.gsslab.rdu2.redhat.com
+.. Hostname: dhcp181-196.example.com
 - SkyDNS
 .. IP: 127.0.0.1
 - Upstream Nameserver
@@ -248,13 +248,13 @@ Node query will access Dnsmasq and forward it to upstream DNS.
 
 ```
 # Command
-$ dig dhcp181-97.gsslab.rdu2.redhat.com
+$ dig dhcp181-97.example.com
 
 # Result
-1 10.10.181.196   10.10.181.196  DNS  … dhcp181-97.gsslab.rdu2.redhat.com OPT
-2 10.10.181.196   10.10.182.21   DNS ... dhcp181-97.gsslab.rdu2.redhat.com OPT
-3 10.10.182.21    10.10.181.196   DNS ...  dhcp181-97.gsslab.rdu2.redhat.com A 10.10.181.97 NS ns01.xxx.redhat.com NS ns02.xxx.redhat.com A x.x.x.x A x.x.x.x OPT
-4 10.10.181.196   10.10.181.196   DNS dhcp181-97.gsslab.rdu2.redhat.com A 10.10.181.97 NS ns01.xxx.redhat.com NS ns02.xxx.redhat.com A x.x.x.x A x.x.x.x OPT
+1 10.10.181.196   10.10.181.196  DNS  … dhcp181-97.example.com OPT
+2 10.10.181.196   10.10.182.21   DNS ... dhcp181-97.example.com OPT
+3 10.10.182.21    10.10.181.196   DNS ...  dhcp181-97.example.com A 10.10.181.97 NS ns01.example.com NS ns02.example.com A x.x.x.x A x.x.x.x OPT
+4 10.10.181.196   10.10.181.196   DNS dhcp181-97.example.com A 10.10.181.97 NS ns01.example.com NS ns02.example.com A x.x.x.x A x.x.x.x OPT
 ```
 
 ==== Scenario 2. Resolve Service hostname from one of app nodes
