@@ -15,7 +15,11 @@ link:https://docs.openshift.com/container-platform/3.7/dev_guide/templates.html[
 
 In this guide, we dive deep into the usage and makeup of OpenShift templates, covering first how they can be used, then how to write custom templates, and finally, how to put all of this knowledge together to create powerful automation workflows for managing workloads in OpenShift.
 
-== Exploring Templates
+== OpenShift Template Discovery
+
+We're going to start by doing an interactive, exploratory deep into templates, starting with the basics and working our way deeper.
+
+=== Kickin' it off with some oc new-app
 
 In order to get kicked off in template exploration, let's start by spinning up a Java application using `oc new-app`.
 
@@ -183,7 +187,7 @@ po/spring-rest-1-build   0/1       Completed   0          20d
 po/spring-rest-1-xtbx2   1/1       Running     0          20d
 ```
 
-Let's go ahead and clean up the old `openjdk-app` resources.
+Let's go ahead and clean up the old `openjdk-app` resources. Because the template we used to create the objects made good use of labels in its `objects` list, we can do this very easily.
 
 ```
 $ oc delete all -l application=openjdk-app
@@ -195,7 +199,23 @@ service "openjdk-app" deleted
 pod "openjdk-app-1-gwtj9" deleted
 ```
 
+So far, we've learned that...
 
+- a _Template_ is a collection of resource definitions that can be parameterized
+- `oc new-app` is a very simple and easy way to quickly instantiate a template
+- templates can be loaded into OpenShift and then referenced by name
+
+This is a great start, but it does leave some further questions that might be worth exploring:
+
+- How else could I work with templates?
+- What about templates that aren't pre-loaded into OpenShift?
+- How might I update resources that were created from a template?
+
+Let's move on to the next phase in our exploration
+
+=== Template files, processing, applying
+
+=== What we've learned and where to go from here
 
 == Building Custom Templates
 
@@ -354,10 +374,14 @@ When building a new template, it's good to keep both the user and the use case i
 +
 Similarly to the previous point. It's important to consider _when_ a template would be instantiated. A common example is a template defining `BuildConfigs` and `Deployments`/`Services`/etc. Typically, an app only builds in a single project (representing a _development_ environment), but may get deployed to multiple projects (_dev_, _uat_, _production_). For this reason, its helpful to have one template that defines all of your build components, and a separate template that defines the deployment related componentns. A good example of this can be seen in our link:https://github.com/redhat-cop/container-pipelines/tree/master/basic-spring-boot#openshift-templates[Container Pipelines Quickstarts].
 
-== Templates for Infrastructure as Code (IaC)
+== Templates & Infrastructure as Code (IaC)
 
 === Use oc apply for repeatable process
 
 This presentation from KubeCon 2017 provides more interesting deep dives into using oc apply.
 
 video::CW3ZuQy_YZw[youtube]
+
+=== Automation using templates & Ansible
+
+=== Developing Template-based workflows
