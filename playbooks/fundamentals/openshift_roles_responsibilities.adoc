@@ -34,9 +34,9 @@ Adopting an iterative schedule in which incremental changes to the environment a
 
 == Responsibilities for IT Organizations Using OpenShift
 
-In this section we will discuss the specific roles and responsibilities that OpenShift organizations generally follow as they process of automation and self-service accelerates through container and PaaS technologies.
+In this section we will discuss the specific roles and responsibilities that OpenShift organizations generally follow as the process of automation and self-service accelerates through container and PaaS technologies.
 
-The following table outlines key high-level responsibilities that will need to be covered by any organization looking to adopt OpenShift, along with example activities and skills required for each. The responsibilities listed should not be misinterpreted as a division of labor, or team structure for an organization, but merely as a set of capabilities that must be covered by the sum skillsets individuals charged with maintaining the environment(s) in order to be successful with Container Platform adoption. In fact, as we’ll see later, the introduction of container technology provides an opening for increased DevOps maturity that should result in more cross-functional orientation and less siloing of responsibility in any particular individual or team.
+The following table outlines key high-level responsibilities that will need to be covered by any organization looking to adopt OpenShift, along with example activities and skills required for each. The responsibilities listed should not be misinterpreted as a division of labor, or team structure for an organization, but merely as a set of capabilities that must be covered by the individuals charged with maintaining the environment(s) in order to be successful with Container Platform adoption. In fact, as we’ll see later, the introduction of container technology provides an opening for increased DevOps maturity that should result in more cross-functional orientation and less siloing of responsibility in any particular individual or team.
 
 .OpenShift Responsibilities definitions
 [width=100%,options="header",cols="asciidoc,asciidoc"]
@@ -185,7 +185,7 @@ a|
 
 As organizations shift toward a more DevOps oriented organizational model, the number of specialized roles may decrease, as cross functional teams and roles increase to maximize collaboration opportunities. These are the core roles we see as relevant in an IT organization using OpenShift.
 
-- **Application Operations Engineer OR Site Reliability Engineer.** May have been formerly Application Server Administrators.
+- **Application Operations Engineer OR Site Reliability Engineer.** May have formerly been Application Server Administrators.
 - **Application Developer/Software Developer/Software Engineer.**
 - **Application Platform/Cluster Administrator.** May have formerly been a System Administrator or Linux Platform Administrator.
 - **Release Manager/Build Engineer.**
@@ -210,6 +210,8 @@ s| Application Operations Engineer/Site Reliability Engineer s| Application Deve
 |===
 
 === RACI Definitions
+
+_Source: link:https://en.wikipedia.org/wiki/Responsibility_assignment_matrix[Wikipedia]_
 
 - **Responsible.** Those who do the work to achieve the task.
 - **Accountable.** The one ultimately answerable for the correct and thorough completion of the deliverable or task, and the one who delegates the work to those responsible.
