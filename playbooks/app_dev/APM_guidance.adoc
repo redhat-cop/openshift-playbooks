@@ -31,8 +31,8 @@ Using these source of information we can build the following types of applicatio
 |*Type of Monitoring*|*Description*
 
 |Application liveness|Determines whether the application is alive and responding appropriately. Used to set off alerts and start automatic recovery procedures.
-|Application SLA|Determines whether the application is responding with the agreed SLAs. Sometimes this involves an external service that can generate requests from multiple geographies and accounts for lags introduced by going through the internet. 
-|Application Performance Monitoring|Provides introspection to the inner working of the application. Generates a series of statistics on the general status of the runtime (memory used, threads, methods called etc…). Can also be used to profile the application and find internal bottlenecks. 
+|Application SLA|Determines whether the application is responding with the agreed SLAs. Sometimes this involves an external service that can generate requests from multiple geographies and accounts for lags introduced by going through the internet.
+|Application Performance Monitoring|Provides introspection to the inner working of the application. Generates a series of statistics on the general status of the runtime (memory used, threads, methods called etc…). Can also be used to profile the application and find internal bottlenecks.
 |Distributed Tracing|Provides visibility on how time is spent when processing a request. This particularly useful in a microservices architecture in which requests are processed by several microservices.
 |Business Activity Monitoring|Provides visibility on business key performance indicators (KPIs) that are influenced by the given application. Can be used to create alerts in situations where the application is performing fine from a technical perspective (or example: app is up and running and SLAs are honored) but not performing from a business perspective (for example: checks are not being processed).
 |===
@@ -64,16 +64,16 @@ In this architecture the container image of the application that needs to be mon
 
 image::images/APMGuidance-ContainerAPMArch1.png[]
 
-Notice that this approach requires specifically crafted images and decreases the ability to reuse externally prepared images such as the https://docs.openshift.com/container-platform/latest/creating_images/s2i.html[s2i images] from Red Hat. 
+Notice that this approach requires specifically crafted images and decreases the ability to reuse externally prepared images such as the https://docs.openshift.com/container-platform/latest/creating_images/s2i.html[s2i images] from Red Hat.
 
 ==== Prometheus instrumentation
 
-https://prometheus.io/[Prometheus] is becoming a very popular metrics collector and going forward will be officially supported in OpenShift for collecting infrastructure-related metrics. A possible approach to APM is to have Prometheus also collect application metrics. http://www.opensourcerers.org/monitoring-camel-prometheus-red-hat-openshift/[Here] is an example that uses a JMX exporter to do it.
+https://prometheus.io/[Prometheus] is becoming a very popular metrics collector and going forward will be officially supported in OpenShift for collecting infrastructure-related metrics. A possible approach to APM is to have Prometheus also collect application metrics.
 
 https://projects.spring.io/spring-boot/[Spring Boot] can expose metrics directly via the https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready[Actuator library]. Integrations between Actuator and Prometheus exist in the open source space, for example https://github.com/moelholm/prometheus-spring-boot-starter[here].
 
 Prometheus has the ability to automatically start scraping pods with some specific annotations.  +
-So the setup for this configuration is very minimal. On the other hand, Prometheus does not currently offer a APM-specific dashboard. 
+So the setup for this configuration is very minimal. On the other hand, Prometheus does not currently offer a APM-specific dashboard.
 
 === Agent deployed as a daemon set
 
@@ -92,13 +92,13 @@ Major market players in APM are:
  * https://www.appdynamics.com/[AppDynamics]
  * https://newrelic.com/[New Relic]
 
-For more information about the APM tools landscape see Gartner’s “Magic Quadrant” report on APM tools (document code https://www.gartner.com/document/3551918?ref=exploremq[G00298377]), available through the Gartner site. 
+For more information about the APM tools landscape see Gartner’s “Magic Quadrant” report on APM tools (document code https://www.gartner.com/document/3551918?ref=exploremq[G00298377]), available through the Gartner site.
 
 It is important to be aware that there is a trend for pure infrastructure monitoring tools to invade the APM space and for APM tools to invade the infrastructure space. In fact a new generation of tools try to do both. Some examples are:
 
  * https://sysdig.com/[Sysdig]
  * https://www.instana.com/[Instana]
- 
+
 When choosing a product, you may want to consider whether it is part of the https://hub.openshift.com/primed[OpenShift Primed list].
 
 Below we have a series of link to help getting started with each of the mentioned products.
@@ -132,7 +132,7 @@ https://instana.atlassian.net/wiki/spaces/DOCS/pages/15630376/Docker+scheduled#D
 
 == Distributed Tracing
 
-Distributed tracing is about understanding how time is spent between all of the hops a request goes through in order to be completed. Distributed tracing is not new but it becomes more relevant in a microservices architecture as the average number of hops per request increases. 
+Distributed tracing is about understanding how time is spent between all of the hops a request goes through in order to be completed. Distributed tracing is not new but it becomes more relevant in a microservices architecture as the average number of hops per request increases.
 
 The current distributed tracing standard is http://opentracing.io/[OpenTracing], which has been https://www.cncf.io/blog/2016/10/11/opentracing-joins-the-cloud-native-computing-foundation/[recently accepted] by the https://www.cncf.io/[CNCF] (thus is likely to be widely embraced).
 
@@ -150,11 +150,6 @@ The UI presents result as follows:
 
 image::images/jaeger_ui.png[]
 
-https://github.com/redhat-helloworld-msa/helloworld-msa[Helloworld-MSA] is an example of how to instrument an application with Jaeger. 
+https://github.com/redhat-helloworld-msa/helloworld-msa[Helloworld-MSA] is an example of how to instrument an application with Jaeger.
 
 If you are building a http://blog.christianposta.com/microservices/application-network-functions-with-esbs-api-management-and-now-service-mesh/[service mesh] with https://istio.io/[istio], consider that istio is naturally integrated with jaeger, as explained https://istio.io/docs/tasks/telemetry/distributed-tracing.html[here].
-
-
-
-
-
