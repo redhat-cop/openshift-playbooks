@@ -17,6 +17,7 @@ Current in-development playbooks include the following:
 * link:playbooks/continuous_delivery[Container-Driven Continuous Delivery]
 * link:playbooks/operationalizing[Operationalizing OpenShift Enterprise 3]
 * link:playbooks/troubleshooting[Troubleshooting]
+* link:playbooks/fundamentals/openshift_roles_responsibilities{outfilesuffix}[Guide: OpenShift & the Organization]
 ////
 * Container Migration Factory
 ////

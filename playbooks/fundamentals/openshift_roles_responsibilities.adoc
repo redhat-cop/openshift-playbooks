@@ -1,0 +1,237 @@
+---
+---
+= OpenShift and The Organization
+Red Hat Consulting
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Organizational Maturity Models when Adopting a PaaS platform
+
+While Platform-as-a-Service technologies alone are not capable of changing the way individuals and teams interact within an organization, they often serves as a catalyst for organizational change to support IT agility. Changes in organizational roles, responsibilities, and relationships are often required, in fact, to achieve the highest return on investment from PaaS platform investments. PaaS products such as OpenShift Container Platform have enough flexibility, however, to allow every organization to choose how much people-and-process change it wishes to pursue and how quickly it wishes to pursue it.
+
+In _the first phase of container adoption_ in the enterprise, the main priority is adoption of the container platform as a new application deployment target. In this phase, organizations are mapping familiar activities into familiar roles to respond to familiar application team requests for things like storage, deployment environments, etc. Later phases of adoption automate or provide self-service capabilities to application teams in order to lessen the burden on system administrators and enable a higher degree of velocity and autonomy for application teams. This begins a process toward DevOps maturity within the organization. In the final phase, organizations have transitioned into a more pure DevOps model, where many previous responsibilities and actions are owned by cross-functional teams organized around delivering application or application service functionality rather than technologies or platforms.
+
+This guide is intended to provide guidance on these organizational changes, including details on how traditional IT roles change over time with the introduction of container technology.
+
+=== Assignment of Actions to Existing Roles
+
+A PaaS organizational model starts at its most basic form as simply providing more flexible compute resources for applications to target as their runtime environment. While this may provide benefits to system administrators, developers are not typically provided with any substantial additional capabilities because the organization may not have started introducing self-service automation or dramatic deployment pipeline improvements.  While minimally disruptive to development processes, this early stage of adoption does provide the administrators a more dynamic system to be able to service requests from application teams. For example, where a task like provisioning a “dev” environment consisting of multiple VMs and backend storage volumes might take days or weeks and involve several teams, the system administrator would now be able to service those requests quicker as an administrator of the new environment. The Development teams would still put in requests as usual, but the actions taken to service those requests would differ from the traditional setup.
+
+=== Building toward a DevOps Organization
+
+Once a platform is up and running, and multiple operational and application teams are onboarded to the platform, organizations can continue the process of adopting DevOps practices in the environment. Some primary principles of DevOps are the following:
+
+- **Work in small chunks** to get feedback early, reduce risk, and avoid “analysis paralysis”
+- **Automate enough** so you are not a blocker or bottleneck in the Application Deployment process
+- **Knowledge sharing** is key to building trust
+- **Pay down technical debt** by committing some time to systemic improvement during every work cycle
+
+In _the second phase of container adoption_, application teams will naturally begin to see opportunities to improve the process and the organization will start to trend toward a more pure DevOps model. Creating service request tickets and waiting for responses will be seen as a bottleneck, and the organization will look to improve by automating repetitive activities and providing self service options to application teams. The capabilities that are delivered to the application teams per their requests can be delivered via a collaborative effort between platform operators and application delivery teams. In the place of the system administrators executing the actions themselves, they will be responsible for defining and enforcing the policies that govern what the application teams are able to do. Automated routines can enforce policies and provide exceptional approval processes for needs outside the current policies.
+
+Adopting an iterative schedule in which incremental changes to the environment and the operational model can be delivered over time is a critical tendency for successfully maturing DevOps capabilities. The degree to which each organization adopts DevOps will be dependent on the organization’s tolerance for change and identification of which changes deliver the most value. For example, if an organization does not frequently create net new environments or applications then optimizing around those activities may be of less importance than pushing more control of the application lifecycle activities to the application teams.
+
+== Responsibilities for IT Organizations Using OpenShift
+
+In this section we will discuss the specific roles and responsibilities that OpenShift organizations generally follow as the process of automation and self-service accelerates through container and PaaS technologies.
+
+The following table outlines key high-level responsibilities that will need to be covered by any organization looking to adopt OpenShift, along with example activities and skills required for each. The responsibilities listed should not be misinterpreted as a division of labor, or team structure for an organization, but merely as a set of capabilities that must be covered by the individuals charged with maintaining the environment(s) in order to be successful with Container Platform adoption. In fact, as we’ll see later, the introduction of container technology provides an opening for increased DevOps maturity that should result in more cross-functional orientation and less siloing of responsibility in any particular individual or team.
+
+.OpenShift Responsibilities definitions
+[width=100%,options="header",cols="asciidoc,asciidoc"]
+|===
+| Responsibilities | Skills Required
+a|
+_Infrastructure Automation and Provisioning_
+
+Activities:
+
+- Design and build hardware solutions
+- Build and manage bootstrapping automation
+- Design and automate VM and host provisioning
+
+a|
+- Datacenter design and implementation
+- Linux system administration
+- Scripting and automation
+- Knowledge of storage
+- Knowledge of network design and implementation
+- Security
+
+a|
+_Installation and Management of the OpenShift Platform_
+
+Activities:
+
+- Perform cluster install
+- Manage infrastructure services
+- Manage platform scale
+- Platform authentication and authorization
+
+a|
+- Linux system administration
+- Knowledge of networking
+- Scripting and automation (Ansible)
+- Knowledge of storage
+- Knowledge of containers and container architectures
+- Knowledge of Kubernetes and OpenShift architecture
+- Platform security
+- Monitoring integration
+
+a|
+_Managing Tenant Provisioning, Isolation, and Capacity_
+
+Activities:
+
+- Adding users and teams to the platform
+- Design and manage quotas
+- Design and implement RBAC
+
+a|
+- Knowledge of Kubernetes and OpenShift architecture
+- Knowledge of containers and container architecture
+- Scripting and automation
+- Deep knowledge of projects, quotas, limits, roles, role bindings, and scheduling
+
+a|
+_Building and Maintaining Base Images_
+
+Activities:
+
+- Develop image change workflow
+- Develop standard base images
+
+a|
+- Linux system administration
+- Scripting and automation
+- Application and middleware runtime configuration
+- Knowledge of container architectures
+- Application build frameworks
+- Deep knowledge of images, imagestreams, templates
+
+a|
+_Design, Maintenance of Deployment Pipeline_
+
+Activities:
+
+- Design and document pipeline standards
+- Develop quickstarts and templates
+- Educate development teams
+
+a|
+- Source code management
+- Application design and implementation
+- Scripting and automation
+- Automated testing
+- Code quality testing
+- Knowledge of container architectures
+- Knowledge of immutable infrastructure
+- Security - access control of pipeline steps, proper approval workflows etc.
+- Deep knowledge of OpenShift templates, buildconfigs, deploymentconfigs, services, routes, configmaps
+
+a|
+_Application/Test development_
+
+Activities:
+
+- Application coding
+- Automated test development
+- Responding to deployment pipeline test failures
+- Responding to application outages
+- User acceptance testing
+
+a|
+- Application design and implementation
+- Automated testing
+- Source code management
+- Application monitoring
+- Knowledge of cloud native application architectures
+
+a|
+_Monitoring and Managing Application Operational Behavior_
+
+Activities:
+
+- Design application for performance
+- Monitor runtime behavior of the application
+- Scale applications (or autoscale)
+- Manage application availability
+- Request quotas and manage resource limits
+- Performance and capacity test
+
+a|
+- Application performance design and implementation
+- Application performance monitoring
+- Performance and load testing
+
+a|
+_User Acceptance Testing_
+
+Activities:
+
+- Testing UIs for design and human interaction
+- Developing automated tests
+
+a|
+- Human/interface design/validation
+- Automated testing patterns
+- Testing frameworks
+- Application design patterns
+
+|===
+
+== Roles for IT Organizations Using OpenShift
+
+As organizations shift toward a more DevOps oriented organizational model, the number of specialized roles may decrease, as cross functional teams and roles increase to maximize collaboration opportunities. These are the core roles we see as relevant in an IT organization using OpenShift.
+
+- **Application Operations Engineer OR Site Reliability Engineer.** May have formerly been Application Server Administrators.
+- **Application Developer/Software Developer/Software Engineer.**
+- **Application Platform/Cluster Administrator.** May have formerly been a System Administrator or Linux Platform Administrator.
+- **Release Manager/Build Engineer.**
+
+== Mapping Roles to Responsibilities: RACI
+
+Finally, we map the defined responsibilities to the just mentioned roles to give a picture of the overall organizational behavior of an enterprise pursuing DevOps maturity through OpenShift. Initially the roles listed below may be carried out by disparate teams in a more siloed situation.  Over time the roles may be consolidated into app centric teams that carry out most or all of the roles depicted below.
+
+[cols="2e,1,1,1,1"]
+|===
+.2+s| Responsibility 4+s| Roles
+s| Application Operations Engineer/Site Reliability Engineer s| Application Developer/Software Engineer s| Application Platform Administrator s| Release Manager/Build Engineer
+
+| Infrastructure Automation and Provisioning | I | I | R/A | C
+| Installation and Management of the OpenShift Platform | C | I | R/A | C
+| Design, Maintenance of Deployment Pipeline | C | C | I | R/A
+| Managing Tenant Provisioning, Isolation, and Capacity | C | I | R/A | I
+| Building and Maintaining Base Images | R | C | R/A | C
+| Application/Test Development | C | R/A | I | I
+| Monitoring and Managing Application Operational Behavior | R/A | C | C | I
+| User Acceptance Testing | C | R | I | I
+|===
+
+=== RACI Definitions
+
+_Source: link:https://en.wikipedia.org/wiki/Responsibility_assignment_matrix[Wikipedia]_
+
+- **Responsible.** Those who do the work to achieve the task.
+- **Accountable.** The one ultimately answerable for the correct and thorough completion of the deliverable or task, and the one who delegates the work to those responsible.
+- **Consulted.** Those whose opinions are sought, typically subject matter experts; and with whom there is two-way communication.
+- **Informed.** Those who are kept up-to-date on progress, often only on completion of the task or deliverable; and with whom there is just one-way communication.
+
+== How Teams Work Together in a DevOps Organization
+
+In a traditional environment the overall pattern of getting resources tends to be a cycle of requests for resources that are then serviced by many teams and eventually all the necessary resources have been provided and validated by the requesting teams. These processes are often partly or completely manual and require frequent back and forth interactions between disparate teams to service each request successfully.
+
+.Traditional IT Organization
+image::/images/traditional-org.png[Traditional IT Organization,500,align=center]
+
+The diagram above depicts the typical relationships between teams in a traditional IT organization. Here, disparate teams make requests to other teams for needed work through formal or informal forms of communication such as ticketing systems, email, etc. Those requests sit and wait in a queue, and long wait times often result in strained relationships between teams. This strain is accentuated by the fact that members of disparate teams rarely meet in person, and tend to share only the minimum information required.
+
+.DevOps Mature Organization
+image::/images/devops-org.png[DevOps Mature Organization,500,align=center]
+
+This diagram shows how more DevOps mature organizations work together. Here, the same teams have abandoned the inefficient communication systems that kept them separate, and replaced them with personal connections by establishing embedded liaisons between the teams. These liaisons work to adopt a hybrid skill set such that they can understand and represent the needs, struggles, and capabilities of the respective teams they represent. The teams enable each other to complete requisite work through automated self-service portals, rather than manually implemented change tickets. And because of the liasons, those self-service systems are able to rapidly adapt to the needs to the teams they serve.￼ In order to attain an even greater level of understanding and knowledge sharing across the organization, team members periodically rotate roles, interfacing with different groups in order to broaden their knowledge of the landscape they are serving, becoming increasingly cross-functional and valuable in the process.
+
+== Conclusion
+
+This field guide has described how introducing a PaaS can push an organization toward introducing DevOps practices. As part of that process, existing roles and responsibilities will change. We introduced major IT responsibilities in an organization implementing OpenShift and the skills related to those responsibilities. We described a core set of organizational roles oriented toward a cross-functional DevOps organization and provided a RACI table mapping those roles to the responsibilities. Finally, we described how OpenShift and associated DevOps practices can change organizational structure in adopters, moving from siloed IT organizations operating through ticketing processes to a cross-functional organization with more direct interpersonal communication.
