@@ -95,11 +95,6 @@ parameters:
   generate: expression
   name: GITHUB_WEBHOOK_SECRET
   required: true
-- description: Generic build trigger secret
-  from: '[a-zA-Z0-9]{8}'
-  generate: expression
-  name: GENERIC_WEBHOOK_SECRET
-  required: true
 - description: Namespace in which the ImageStreams for Red Hat Middleware images are
     installed. These ImageStreams are normally installed in the openshift namespace.
     You should only need to modify this if you've installed the ImageStreams in a
