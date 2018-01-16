@@ -629,7 +629,7 @@ For a successful install and avoid potential challenges with internet connectivi
 ----
 hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat Enterprise Linux 7 Server (RPMs)" --releasever "7Server" --basearch "x86_64"
 hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat Enterprise Linux 7 Server - Extras (RPMs)" --releasever "" --basearch "x86_64"
-hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat OpenShift Container Platform 3.5 (RPMs)" --releasever "" --basearch "x86_64"
+hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat OpenShift Container Platform 3.7 (RPMs)" --releasever "" --basearch "x86_64"
 hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat Enterprise Linux Fast Datapath (RHEL 7 Server) (RPMs)" --releasever "7Server" --basearch "x86_64"
 
 hammer repository synchronize --name "Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server" --organization "c1-ocp.myorg.com"
