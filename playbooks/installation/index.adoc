@@ -634,7 +634,7 @@ hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Ha
 
 hammer repository synchronize --name "Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server" --organization "c1-ocp.myorg.com"
 hammer repository synchronize --name "Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64" --organization "c1-ocp.myorg.com"
-hammer repository synchronize --name "Red Hat OpenShift Container Platform 3.5 RPMs x86_64" --organization "c1-ocp.myorg.com"
+hammer repository synchronize --name "Red Hat OpenShift Container Platform 3.7 RPMs x86_64" --organization "c1-ocp.myorg.com"
 hammer repository synchronize --name "Red Hat Enterprise Linux Fast Datapath RHEL 7 Server RPMs x86_64 7Server" --organization "c1-ocp.myorg.com"
 ----
 
