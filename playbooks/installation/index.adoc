@@ -57,7 +57,7 @@ We'll add to this file as we go.
 
 === Selecting the Version of OpenShift to Install
 
-Red Hat does major releases of OpenShift about once a quarter. As of this writing, the current major version is 3.5. Additionally, "dot releases" of OpenShift tend to be released every 4 to 6 weeks. The latest 3.5, for example, is 3.5.5.5. It's generally a good practice to decide on the major version of OpenShift to target and allow the install playbook to take the latest minor release of that major version. This will make sure you get all of the latest bug fixes and patches for that version.
+Red Hat does major releases of OpenShift about once a quarter. As of this writing, the current major version is 3.7. Additionally, "dot releases" of OpenShift tend to be released every 4 to 6 weeks. The latest 3.7, for example, is 3.7.14-5. It's generally a good practice to decide on the major version of OpenShift to target and allow the install playbook to take the latest minor release of that major version. This will make sure you get all of the latest bug fixes and patches for that version.
 
 You can set the version of OpenShift in your Ansible inventory file under the OSEv3:vars section.
 
