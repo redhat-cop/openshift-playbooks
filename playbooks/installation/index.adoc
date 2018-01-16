@@ -78,7 +78,7 @@ openshift_release=v3.7 <3>
 
 The OpenShift cluster needs to have 2 different network CIDRs defined in order to be able to assign pod and service IPs to its own components as well as the workloads running on it.  These two values are the Pod Network CIDR and the Services Network CIDR
 
-NOTE: Both IP ranges discussed below are _virtual_ ranges, visible only inside of link:https://docs.openshift.com/container-platform/3.7/architecture/additional_concepts/sdn.html[OpenShift's SDN]. This is important as these IPs will not be layer 3 routable and therefore do not require allocation externally within routing/switching infrastructures. The only requirement for selecting these ranges is that they do not conflict with at _real_ address spaces that this cluster, or applications running in the platform may need to communicated with (i.e. ranges in which back-end databases, external services, etc. might occupy).
+NOTE: Both IP ranges discussed below are _virtual_ ranges, visible only inside of link:https://docs.openshift.com/container-platform/3.7/architecture/networking/sdn.html[OpenShift's SDN]. This is important as these IPs will not be layer 3 routable and therefore do not require allocation externally within routing/switching infrastructures. The only requirement for selecting these ranges is that they do not conflict with at _real_ address spaces that this cluster, or applications running in the platform may need to communicated with (i.e. ranges in which back-end databases, external services, etc. might occupy).
 
 ==== Pod Network CIDR
 
