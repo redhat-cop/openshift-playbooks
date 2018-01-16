@@ -260,6 +260,8 @@ openshift_master_cluster_method=native
 openshift_master_cluster_hostname=console.c1-ocp.myorg.com
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
 
+openshift_master_default_subdomain=apps.c1-ocp.myorg.com
+
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}] <1>
 openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'} <2>
 ...
@@ -358,6 +360,8 @@ osm_cluster_network_cidr=10.128.0.0/14
 openshift_master_cluster_method=native
 openshift_master_cluster_hostname=console.c1-ocp.myorg.com
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
+
+openshift_master_default_subdomain=apps.c1-ocp.myorg.com
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
 openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'}
@@ -587,6 +591,8 @@ openshift_master_cluster_method=native
 openshift_master_cluster_hostname=console.c1-ocp.myorg.com
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
 
+openshift_master_default_subdomain=apps.c1-ocp.myorg.com
+
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
 openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'}
 
@@ -767,6 +773,8 @@ osm_cluster_network_cidr=10.128.0.0/14
 openshift_master_cluster_method=native
 openshift_master_cluster_hostname=console.myorg.com
 openshift_master_cluster_public_hostname=console.myorg.com
+
+openshift_master_default_subdomain=apps.c1-ocp.myorg.com
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
 openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'}
