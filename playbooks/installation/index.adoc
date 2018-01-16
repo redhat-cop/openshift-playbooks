@@ -552,7 +552,7 @@ Now we're ready to sync images. To do this, we're going to run link:https://gith
 curl -O https://raw.githubusercontent.com/redhat-cop/openshift-toolkit/master/disconnected_registry/docker-registry-sync.py
 curl -O https://raw.githubusercontent.com/redhat-cop/openshift-toolkit/master/disconnected_registry/docker_tags.json
 chmod +x docker-registry-sync.py
-./docker-registry-sync.py --from=registry.access.redhat.com --to=registry.c1-ocp.myorg.com:5000 --file=./docker_tags.json --openshift-version=3.5
+./docker-registry-sync.py --from=registry.access.redhat.com --to=registry.c1-ocp.myorg.com:5000 --file=./docker_tags.json --openshift-version=3.7
 ----
 
 Finally, we can update our Ansible Inventory file to point OpenShift to our private registry, and disable the default external registries
