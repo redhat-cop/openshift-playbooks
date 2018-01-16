@@ -110,6 +110,8 @@ Once networking decisions have been made, we should be able to add the following
 ----
 ...
 [OSEv3:vars]
+ansible_ssh_user=root
+
 openshift_deployment_type=openshift-enterprise
 openshift_release=v3.7
 
@@ -159,6 +161,8 @@ Having added all of the above to your inventory file we should have something li
 ----
 ...
 [OSEv3:vars]
+ansible_ssh_user=root
+
 deployment_type=openshift-enterprise
 openshift_release=v3.7
 
@@ -205,6 +209,8 @@ The OpenShift installer has the ability to configure a Linux host as a load bala
 ----
 ...
 [OSEv3:vars]
+ansible_ssh_user=root
+
 openshift_deployment_type=openshift-enterprise
 openshift_release=v3.7
 
@@ -240,6 +246,8 @@ Now we can feed those values into our hosts file.
 ----
 ...
 [OSEv3:vars]
+ansible_ssh_user=root
+
 openshift_deployment_type=openshift-enterprise
 openshift_release=v3.7
 
@@ -337,6 +345,8 @@ etcd
 nodes
 
 [OSEv3:vars]
+ansible_ssh_user=root
+
 openshift_deployment_type=openshift-enterprise
 openshift_release=v3.7
 
@@ -563,6 +573,8 @@ Finally, we can update our Ansible Inventory file to point OpenShift to our priv
 ----
 ...
 [OSEv3:vars]
+ansible_ssh_user=root
+
 openshift_deployment_type=openshift-enterprise
 openshift_release=v3.7
 
@@ -742,6 +754,8 @@ etcd
 nodes
 
 [OSEv3:vars]
+ansible_ssh_user=root
+
 openshift_deployment_type=openshift-enterprise
 openshift_release=v3.7
 
