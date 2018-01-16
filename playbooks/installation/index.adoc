@@ -65,7 +65,7 @@ You can set the version of OpenShift in your Ansible inventory file under the OS
 ...
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise <1>
-openshift_release=v3.5 <2>
+openshift_release=v3.7 <2>
 ...
 ----
 <1> Specifies a deployment type of the OpenShift product (OpenShift Container Platform) vs the open source version (OpenShift Origin)
@@ -108,7 +108,7 @@ Once networking decisions have been made, we should be able to add the following
 ...
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_release=v3.7
 
 openshift_master_api_port=443 <1>
 openshift_master_console_port=443 <2>
@@ -157,7 +157,7 @@ Having added all of the above to your inventory file we should have something li
 ...
 [OSEv3:vars]
 deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_release=v3.7
 
 openshift_master_api_port=443
 openshift_master_console_port=443
@@ -203,7 +203,7 @@ The OpenShift installer has the ability to configure a Linux host as a load bala
 ...
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_release=v3.7
 
 openshift_master_api_port=443
 openshift_master_console_port=443
@@ -238,7 +238,7 @@ Now we can feed those values into our hosts file.
 ...
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_release=v3.7
 
 openshift_master_api_port=443
 openshift_master_console_port=443
@@ -335,7 +335,7 @@ nodes
 
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_release=v3.7
 
 openshift_master_api_port=443
 openshift_master_console_port=443
@@ -561,7 +561,7 @@ Finally, we can update our Ansible Inventory file to point OpenShift to our priv
 ...
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_release=v3.7
 
 openshift_master_api_port=443
 openshift_master_console_port=443
@@ -740,7 +740,7 @@ nodes
 
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_release=v3.7
 
 openshift_master_api_port=443
 openshift_master_console_port=443
