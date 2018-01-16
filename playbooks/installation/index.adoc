@@ -64,12 +64,15 @@ You can set the version of OpenShift in your Ansible inventory file under the OS
 ----
 ...
 [OSEv3:vars]
-openshift_deployment_type=openshift-enterprise <1>
-openshift_release=v3.7 <2>
+ansible_ssh_user=root <1>
+
+openshift_deployment_type=openshift-enterprise <2>
+openshift_release=v3.7 <3>
 ...
 ----
-<1> Specifies a deployment type of the OpenShift product (OpenShift Container Platform) vs the open source version (OpenShift Origin)
-<2> Specifies the major version we want to install
+<1> Define user Ansible can login to all nodes through SSH.
+<2> Specifies a deployment type of the OpenShift product (OpenShift Container Platform) vs the open source version (OpenShift Origin)
+<3> Specifies the major version we want to install
 
 === Networking
 
