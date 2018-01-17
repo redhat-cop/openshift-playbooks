@@ -385,19 +385,19 @@ openshift_hosted_registry_storage_volume_size=100Gi
 For our HA OpenShift Cluster (`c1-ocp.myorg.com`), we will provision the following servers. The first in the list is referred to as the Ansible Control Host. We'll use that as a bastion VM from which we will access all of the other cluster hosts, run commands to configure the cluster, run the OpenShift installation playbooks, etc.
 
 * 1 Ansible control host (`control-host.myorg.com`)
-  ** RHEL 7.3 minimal installation
+  ** RHEL 7.4 minimal installation
   ** 8 GB Memory
   ** 2 Cores
   ** 40 GB root drive
 * 3 _Masters_ (openshift-master-[1-3].c1-ocp.myorg.com)
-  ** RHEL 7.3 minimal installation
+  ** RHEL 7.4 minimal installation
   ** 20 GB Memory
   ** 4 Cores
   ** 60 GB for the root (`/`) partition
   ** An additional 50 GB block volume for local Docker storage. (in this guide, available as `/dev/vdb`)
   ** An additional 10 GB disk or logical volume mounted at `/var/lib/etcd` (in this guide, available as `/dev/vdc`)
 * 3 _Infrastructure Nodes_ (openshift-infra[1-3].c1-ocp.myorg.com)
-  ** RHEL 7.3 minimal installation
+  ** RHEL 7.4 minimal installation
   ** 24 GB Memory
   ** 6 Cores
   ** 40 GB for the root (`/`) partition
