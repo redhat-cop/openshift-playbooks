@@ -1,4 +1,4 @@
---
+---
 ---
 = Installing a Highly-Available OpenShift Cluster
 Red Hat Containers & PaaS CoP
