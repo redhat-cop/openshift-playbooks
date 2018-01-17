@@ -21,7 +21,7 @@ We're going to start by doing an interactive, exploratory deep into templates, s
 
 === Kickin' it off with some oc new-app
 
-In order to get kicked off in template exploration, let's start by spinning up a Java application using `oc new-app`.
+In order to get kicked off in template exploration, let's start by spinning up a sample Java application. We'll do this using OpenShift's link:https://docs.openshift.com/container-platform/latest/cli_reference/index.html[Command Line Tool]. Specifically, the `oc new-app` command provides a simple interface for creating new applications using some combination of source code, templates, and container images.
 
 ```
 $ oc new-app --template=openjdk18-web-basic-s2i
@@ -55,6 +55,8 @@ $ oc new-app --template=openjdk18-web-basic-s2i
 ```
 
 Looking at what was done here, we used an `oc` command to instantiate a template by name. The template we used (`openjdk18-web-basic-s2i`) is a template that has been preloaded into OpenShift for convenience. We can also see that several objects were created as a result, including a `Service`, `Route`, `ImageStream`, `BuildConfig` and a `DeploymentConfig`. We can take a look at these templates using some oc commands.
+
+NOTE: Most resources in OpenShift are scoped to a namespace which in the OpenShift world is known as a _project_. The `openshift` _project_ is a special namespace that is globally readable by all users within a cluster and used to provide a base set of _template_ and _imagestream_ resources to help users get started using the platform. This is where commands like `oc new-app` will look by default for templates to instantiate.
 
 ```
 $ oc get templates -n openshift
@@ -198,6 +200,8 @@ route "openjdk-app" deleted
 service "openjdk-app" deleted
 pod "openjdk-app-1-gwtj9" deleted
 ```
+
+NOTE: Passing `all` as a resource to commands like `oc get|delete|describe` does not actually refer to _all_ resource types within OpenShift. Instead it is a shorthand for a defined set of common resource types within a project that are relevant to typical OpenShift users. Some of the resource types that are excluded from the `all` keyword are `Secrets`, `Roles`, and `RoleBindings`.
 
 So far, we've learned that...
 
