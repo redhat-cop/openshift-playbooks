@@ -425,7 +425,7 @@ Register your Ansible Control Host and install the appropriate repos
 ----
 subscription-manager register --username bob@myorg.com --password='mypassword'
 subscription-manager attach --pool=8a85f...
-subscription-manager repos --disable="*" --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.7-rpms"
+subscription-manager repos --disable="*" --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.7-rpms" --enable="rhel-7-fast-datapath-rpms"
 ----
 
 Install the atomic-openshift-utils package
