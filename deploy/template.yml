@@ -54,7 +54,11 @@ objects:
           ports:
           - containerPort: 8080
             protocol: TCP
-          resources: {}
+          resources:
+            requests:
+              memory: ${MEMORY_REQUEST}
+            limits:
+              memory: ${MEMORY_LIMIT}
           terminationMessagePath: /dev/termination-log
         dnsPolicy: ClusterFirst
         restartPolicy: Always
@@ -144,3 +148,11 @@ parameters:
   required: true
 - description: Hostname for your application route
   name: APPLICATION_HOSTNAME
+- description: Requested Memory for Scheduling
+  name: MEMORY_REQUEST
+  required: true
+  value: 64Mi
+- description: Max memory consumption
+  name: MEMORY_LIMIT
+  required: true
+  value: 255Mi
