@@ -57,25 +57,28 @@ We'll add to this file as we go.
 
 === Selecting the Version of OpenShift to Install
 
-Red Hat does major releases of OpenShift about once a quarter. As of this writing, the current major version is 3.5. Additionally, "dot releases" of OpenShift tend to be released every 4 to 6 weeks. The latest 3.5, for example, is 3.5.5.5. It's generally a good practice to decide on the major version of OpenShift to target and allow the install playbook to take the latest minor release of that major version. This will make sure you get all of the latest bug fixes and patches for that version.
+Red Hat does major releases of OpenShift about once a quarter. As of this writing, the current major version is 3.7. Additionally, "dot releases" of OpenShift tend to be released every 4 to 6 weeks. The latest 3.7, for example, is 3.7.14-5. It's generally a good practice to decide on the major version of OpenShift to target and allow the install playbook to take the latest minor release of that major version. This will make sure you get all of the latest bug fixes and patches for that version.
 
 You can set the version of OpenShift in your Ansible inventory file under the OSEv3:vars section.
 
 ----
 ...
 [OSEv3:vars]
-openshift_deployment_type=openshift-enterprise <1>
-openshift_release=v3.5 <2>
+ansible_user=root <1>
+
+openshift_deployment_type=openshift-enterprise <2>
+openshift_release=v3.7 <3>
 ...
 ----
-<1> Specifies a deployment type of the OpenShift product (OpenShift Container Platform) vs the open source version (OpenShift Origin)
-<2> Specifies the major version we want to install
+<1> Define user Ansible can login to all nodes through SSH.
+<2> Specifies a deployment type of the OpenShift product (OpenShift Container Platform) vs the open source version (OpenShift Origin)
+<3> Specifies the major version we want to install
 
 === Networking
 
 The OpenShift cluster needs to have 2 different network CIDRs defined in order to be able to assign pod and service IPs to its own components as well as the workloads running on it.  These two values are the Pod Network CIDR and the Services Network CIDR
 
-NOTE: Both IP ranges discussed below are _virtual_ ranges, visible only inside of link:https://docs.openshift.com/container-platform/3.5/architecture/additional_concepts/sdn.html[OpenShift's SDN]. This is important as these IPs will not be layer 3 routable and therefore do not require allocation externally within routing/switching infrastructures. The only requirement for selecting these ranges is that they do not conflict with at _real_ address spaces that this cluster, or applications running in the platform may need to communicated with (i.e. ranges in which back-end databases, external services, etc. might occupy).
+NOTE: Both IP ranges discussed below are _virtual_ ranges, visible only inside of link:https://docs.openshift.com/container-platform/latest/architecture/networking/sdn.html[OpenShift's SDN]. This is important as these IPs will not be layer 3 routable and therefore do not require allocation externally within routing/switching infrastructures. The only requirement for selecting these ranges is that they do not conflict with at _real_ address spaces that this cluster, or applications running in the platform may need to communicated with (i.e. ranges in which back-end databases, external services, etc. might occupy).
 
 ==== Pod Network CIDR
 
@@ -107,8 +110,10 @@ Once networking decisions have been made, we should be able to add the following
 ----
 ...
 [OSEv3:vars]
+ansible_user=root
+
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_release=v3.7
 
 openshift_master_api_port=443 <1>
 openshift_master_console_port=443 <2>
@@ -156,8 +161,10 @@ Having added all of the above to your inventory file we should have something li
 ----
 ...
 [OSEv3:vars]
+ansible_user=root
+
 deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_release=v3.7
 
 openshift_master_api_port=443
 openshift_master_console_port=443
@@ -202,8 +209,10 @@ The OpenShift installer has the ability to configure a Linux host as a load bala
 ----
 ...
 [OSEv3:vars]
+ansible_user=root
+
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_release=v3.7
 
 openshift_master_api_port=443
 openshift_master_console_port=443
@@ -237,8 +246,10 @@ Now we can feed those values into our hosts file.
 ----
 ...
 [OSEv3:vars]
+ansible_user=root
+
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_release=v3.7
 
 openshift_master_api_port=443
 openshift_master_console_port=443
@@ -248,6 +259,8 @@ osm_cluster_network_cidr=10.128.0.0/14
 openshift_master_cluster_method=native
 openshift_master_cluster_hostname=console.c1-ocp.myorg.com
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
+
+openshift_master_default_subdomain=apps.c1-ocp.myorg.com
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}] <1>
 openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'} <2>
@@ -334,8 +347,10 @@ etcd
 nodes
 
 [OSEv3:vars]
+ansible_user=root
+
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_release=v3.7
 
 openshift_master_api_port=443
 openshift_master_console_port=443
@@ -345,6 +360,8 @@ osm_cluster_network_cidr=10.128.0.0/14
 openshift_master_cluster_method=native
 openshift_master_cluster_hostname=console.c1-ocp.myorg.com
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
+
+openshift_master_default_subdomain=apps.c1-ocp.myorg.com
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
 openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'}
@@ -368,19 +385,19 @@ openshift_hosted_registry_storage_volume_size=100Gi
 For our HA OpenShift Cluster (`c1-ocp.myorg.com`), we will provision the following servers. The first in the list is referred to as the Ansible Control Host. We'll use that as a bastion VM from which we will access all of the other cluster hosts, run commands to configure the cluster, run the OpenShift installation playbooks, etc.
 
 * 1 Ansible control host (`control-host.myorg.com`)
-  ** RHEL 7.2 minimal installation
+  ** RHEL 7.4 minimal installation
   ** 8 GB Memory
   ** 2 Cores
   ** 40 GB root drive
 * 3 _Masters_ (openshift-master-[1-3].c1-ocp.myorg.com)
-  ** RHEL 7.2 minimal installation
+  ** RHEL 7.4 minimal installation
   ** 20 GB Memory
   ** 4 Cores
   ** 60 GB for the root (`/`) partition
   ** An additional 50 GB block volume for local Docker storage. (in this guide, available as `/dev/vdb`)
   ** An additional 10 GB disk or logical volume mounted at `/var/lib/etcd` (in this guide, available as `/dev/vdc`)
 * 3 _Infrastructure Nodes_ (openshift-infra[1-3].c1-ocp.myorg.com)
-  ** RHEL 7.2 minimal installation
+  ** RHEL 7.4 minimal installation
   ** 24 GB Memory
   ** 6 Cores
   ** 40 GB for the root (`/`) partition
@@ -408,7 +425,7 @@ Register your Ansible Control Host and install the appropriate repos
 ----
 subscription-manager register --username bob@myorg.com --password='mypassword'
 subscription-manager attach --pool=8a85f...
-subscription-manager repos --disable="*" --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.6-rpms"
+subscription-manager repos --disable="*" --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.7-rpms" --enable="rhel-7-fast-datapath-rpms"
 ----
 
 Install the atomic-openshift-utils package
@@ -552,7 +569,7 @@ Now we're ready to sync images. To do this, we're going to run link:https://gith
 curl -O https://raw.githubusercontent.com/redhat-cop/openshift-toolkit/master/disconnected_registry/docker-registry-sync.py
 curl -O https://raw.githubusercontent.com/redhat-cop/openshift-toolkit/master/disconnected_registry/docker_tags.json
 chmod +x docker-registry-sync.py
-./docker-registry-sync.py --from=registry.access.redhat.com --to=registry.c1-ocp.myorg.com:5000 --file=./docker_tags.json --openshift-version=3.5
+./docker-registry-sync.py --from=registry.access.redhat.com --to=registry.c1-ocp.myorg.com:5000 --file=./docker_tags.json --openshift-version=3.7
 ----
 
 Finally, we can update our Ansible Inventory file to point OpenShift to our private registry, and disable the default external registries
@@ -560,8 +577,10 @@ Finally, we can update our Ansible Inventory file to point OpenShift to our priv
 ----
 ...
 [OSEv3:vars]
+ansible_user=root
+
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_release=v3.7
 
 openshift_master_api_port=443
 openshift_master_console_port=443
@@ -571,6 +590,8 @@ osm_cluster_network_cidr=10.128.0.0/14
 openshift_master_cluster_method=native
 openshift_master_cluster_hostname=console.c1-ocp.myorg.com
 openshift_master_cluster_public_hostname=console.c1-ocp.myorg.com
+
+openshift_master_default_subdomain=apps.c1-ocp.myorg.com
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
 openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'}
@@ -629,12 +650,12 @@ For a successful install and avoid potential challenges with internet connectivi
 ----
 hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat Enterprise Linux 7 Server (RPMs)" --releasever "7Server" --basearch "x86_64"
 hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat Enterprise Linux 7 Server - Extras (RPMs)" --releasever "" --basearch "x86_64"
-hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat OpenShift Container Platform 3.5 (RPMs)" --releasever "" --basearch "x86_64"
+hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat OpenShift Container Platform 3.7 (RPMs)" --releasever "" --basearch "x86_64"
 hammer repository-set enable --organization "c1-ocp.myorg.com" --product "Red Hat Enterprise Linux Server" --name "Red Hat Enterprise Linux Fast Datapath (RHEL 7 Server) (RPMs)" --releasever "7Server" --basearch "x86_64"
 
 hammer repository synchronize --name "Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server" --organization "c1-ocp.myorg.com"
 hammer repository synchronize --name "Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64" --organization "c1-ocp.myorg.com"
-hammer repository synchronize --name "Red Hat OpenShift Container Platform 3.5 RPMs x86_64" --organization "c1-ocp.myorg.com"
+hammer repository synchronize --name "Red Hat OpenShift Container Platform 3.7 RPMs x86_64" --organization "c1-ocp.myorg.com"
 hammer repository synchronize --name "Red Hat Enterprise Linux Fast Datapath RHEL 7 Server RPMs x86_64 7Server" --organization "c1-ocp.myorg.com"
 ----
 
@@ -739,8 +760,10 @@ etcd
 nodes
 
 [OSEv3:vars]
+ansible_user=root
+
 openshift_deployment_type=openshift-enterprise
-openshift_release=v3.5
+openshift_release=v3.7
 
 openshift_master_api_port=443
 openshift_master_console_port=443
@@ -750,6 +773,8 @@ osm_cluster_network_cidr=10.128.0.0/14
 openshift_master_cluster_method=native
 openshift_master_cluster_hostname=console.myorg.com
 openshift_master_cluster_public_hostname=console.myorg.com
+
+openshift_master_default_subdomain=apps.c1-ocp.myorg.com
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
 openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/', 'developer': '$apr1$AvisAPTG$xrVnJ/J0a83hAYlZcxHVf1'}

@@ -87,7 +87,7 @@ https://master.ose.example.com:8443/swaggerapi/oapi/v1/
 
 === Visualizing the API
 
-Swagger UI can also be used to visualize the API. Andy Block has a very useful http://andyserver.com/2015/09/openshift-api-swagger/[blog post] on that.
+Swagger UI can also be used to visualize the API. Andy Block has a very useful http://blog.andyserver.com/2015/09/openshift-api-swagger/[blog post] on that.
 
 === Testing in the Command Line
 
