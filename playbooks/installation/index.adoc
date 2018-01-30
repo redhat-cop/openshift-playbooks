@@ -855,7 +855,8 @@ ansible -i c1-ocp.myorg.com/hosts nodes:!etcd  -m shell -a 'mount -a'
 ----
 
 === System Resource Reservations
-OpenShift has tunable parameters to futher enhance and protect the cluster/nodes.  These parameters should be added to your ansible hosts file.  
+OpenShift has tunable parameters to futher enhance and protect the cluster/nodes.  These parameters should be added to your ansible hosts file.
+
 NOTE: OpenShift will use all the resources supplied to it from the node for the pods unless otherwise defined.  
 
 ----
