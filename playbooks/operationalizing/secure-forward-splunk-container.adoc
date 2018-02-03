@@ -38,10 +38,10 @@ The following prerequisites are assumed and must be satisfied prior to implement
 ** A preconfigured Splunk Docker image to use for testing can be found link:https://github.com/themoosman/docker-splunk/tree/master/enterprise[here]
 * An OpenShift Container Platform cluster with aggregated logging installed
 
-==== Note
-If using the preconfigured Docker image, this section can be skipped as these changes are already completed in the image.
 
 === Configure Splunk
+
+NOTE: If using the xref:splunk-docker-image[preconfigured Docker image,] this section can be skipped as these changes are already completed in the image.
 
 To accept messages sent from the fluent-plugin-splunk-ex plugin, a new TCP based data input must be configured within Splunk.
 
@@ -85,6 +85,18 @@ In this implementation, the "external" fluentd instance will be run in OpenShift
 ==== Source
 The source code for the implementation can be found link:https://github.com/themoosman/openshift-fluentd-forwarder[here].
 
+==== Clone the Git Repository
+
+Clone the Git repository to the local file system.
+
+[source]
+----
+cd ~/git
+git clone https://github.com/themoosman/openshift-fluentd-forwarder.git
+cd openshift-fluentd-forwarder
+----
+
+
 ==== Create Fluentd Build Configuration
 
 Create the fluentd-forwarder build configuration in the logging project.
@@ -93,14 +105,14 @@ Create the fluentd-forwarder build configuration in the logging project.
 ----
 oc project logging && \
 oc process -f fluentd-forwarder-build-config-template.yaml \
--p GIT_URI=https://github.com/themoosman/openshift-fluentd-forwarder.git | oc create -f
+-p GIT_URI=https://github.com/themoosman/openshift-fluentd-forwarder.git | oc create -f -
 ----
 
 Build the Docker image in OpenShift and monitor for any errors.
 
 [source]
 ----
-oc start-build fluentd-forwarder-build --follow=true
+oc start-build fluentd-forwarder --follow=true
 ----
 
 
@@ -124,6 +136,13 @@ oc create -f -
 <3> A shared value between the sender and the receiver.
 <4> Set fluentd to format all logs sent to Splunk in a JSON format.
 
+Rollout the latest fluentd-forwarder deployment configuration.
+
+[source]
+----
+oc rollout latest dc/fluentd-forwarder
+----
+
 Validate that the fluentd-forwarder deploys successfully.
 
 ==== Update logging-fluentd ConfigMap
@@ -141,22 +160,20 @@ Edit the following YAML:
 ----
 data:
   secure-forward.conf: |
-    <store>
-      @type secure_forward
+    @type secure_forward
 
-      self_hostname ${HOSTNAME}
-      shared_key ocpaggregatedloggingsharedkey <1>
+    self_hostname ${HOSTNAME}
+    shared_key ocpaggregatedloggingsharedkey <1>
 
-      secure yes
-      enable_strict_verification yes
+    secure yes
+    enable_strict_verification yes
 
-      ca_cert_path /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+    ca_cert_path /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
 
-      <server>
-         host fluentd-forwarder.logging.svc.cluster.local
-         port 24284
-      </server>
-    </store>
+    <server>
+       host fluentd-forwarder.logging.svc.cluster.local
+       port 24284
+    </server>
 ----
 <1> A shared value between the sender and the receiver.  This must match the value specified above.
 
@@ -178,6 +195,7 @@ The following steps can be used to verify the integration between OpenShift and 
 
 
 === Splunk Docker Image
+[[splunk-docker-image]]
 
 A preconfigured Docker image is available to aid in testing.  This image must be launched using Docker either on a test machine or within the cluster.
 
@@ -187,8 +205,9 @@ To build the Docker Image clone the link:https://github.com/themoosman/docker-sp
 
 [source]
 ----
+cd ~
+git clone https://github.com/themoosman/docker-splunk.git
 cd docker-splunk/enterprise
-
 docker build . ocp-test-splunk
 ----
 
