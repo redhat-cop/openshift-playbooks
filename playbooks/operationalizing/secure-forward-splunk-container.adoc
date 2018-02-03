@@ -22,7 +22,7 @@ As part of the aggregated logging framework within OpenShift, containerized inst
 
 To support forwarding messages to Splunk that are captured by the aggregated logging framework, Fluentd can be configured to make use of the secure forward output plugin (already included within the containerized Fluentd instance) to send an additional copy of the captured messages outside of the framework. A separate instance of Fluentd must also be deployed in order to receive messages sent by secure forward plugin. Once captured by the separate Fluentd instance, messages can then be sent to Splunk.
 
-image::images/logging-secure-forward-overview.png[title=Secure Forwarding to Splunk]
+image::images/logging-secure-forward-container-overview.png[title=Secure Forwarding to Splunk]
 
 The remainder of this document describes the process for implementing the integrated logging framework with Splunk.
 
@@ -208,6 +208,7 @@ To build the Docker Image clone the link:https://github.com/themoosman/docker-sp
 cd ~
 git clone https://github.com/themoosman/docker-splunk.git
 cd docker-splunk/enterprise
+
 docker build . ocp-test-splunk
 ----
 
