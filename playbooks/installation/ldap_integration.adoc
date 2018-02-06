@@ -115,7 +115,7 @@ NOTE: If anonymous bind access is enabled, the `bindDN` and `bindPassword` optio
 
 In the example above, the _url_ parameter specifies that the query connect securely to the LDAP server on 636 (389 if not connecting securely). The baseDN which indicates where all searches should start from is specified after the `/`. _uid_ references the LDAP attribute that should be used to match username provided by the user attempting to log in. 
 
-Another option is to add a filter to the query in which to further limit the users that are allowed to authenticate to OpenShift. To limit only user who are members of the _openshift_ group, the `(member=uid=admins,ou=Groups,dc=myorg,dc=com)` can be applied which results in a _url_ represented as `url: "ldaps://ldap.myorg.com/ou=Users,dc=myorg,dc=com?uid?(member=uid=admins,ou=Groups,dc=myorg,dc=com)`.
+Another option is to add a filter to the query in which to further limit the users that are allowed to authenticate to OpenShift. To limit only user who are members of the _openshift_ group, the `(member=uid=admins,ou=Groups,dc=myorg,dc=com)` can be applied which results in a _url_ represented as `url: "ldaps://ldap.myorg.com/ou=Users,dc=myorg,dc=com?uid??(member=uid=admins,ou=Groups,dc=myorg,dc=com)`.
 
 
 === OpenShift Ansible Configuration
