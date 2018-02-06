@@ -368,7 +368,36 @@ buildconfig "spring-rest" configured
 deploymentconfig "spring-rest" configured
 ----
 
-Cool, all of our resources were "configured". 
+Cool, all of our resources were "configured".
+
+Now that we have the start of a workflow for updating our application, let's make a change to the template. Currently, our template is hard-coded to run a single pod (via `replicas: 1` in the `DeploymentConfig`). In order to support production apps, we'll need to be able to customize the number of replicas based on environment. So let's make that a variable. We'll edit the following:
+
+[source,bash]
+----
+objects:
+...
+- apiVersion: v1
+  kind: DeploymentConfig
+...
+  spec:
+    replicas: ${REPLICAS} ### Edit this line
+...
+parameters:
+...
+### Add the following parameter
+- description: Number of replicas of the app to run
+  displayName: Number of Replicas
+  name: REPLICAS
+  required: true
+  value: "1"
+----
+
+If we re-run the process/apply, changing nothing, we'll affect no change. However, let's set the replicas to 3.
+
+[source,bash]
+----
+
+----
 
 == Building Custom Templates
 
