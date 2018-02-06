@@ -195,7 +195,6 @@ The following steps can be used to verify the integration between OpenShift and 
 
 
 === Splunk Docker Image
-[[splunk-docker-image]]
 
 A preconfigured Docker image is available to aid in testing.  This image must be launched using Docker either on a test machine or within the cluster.
 
