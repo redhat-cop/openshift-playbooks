@@ -23,7 +23,8 @@ We're going to start by doing an interactive, exploratory deep into templates, s
 
 In order to get kicked off in template exploration, let's start by spinning up a sample Java application. We'll do this using OpenShift's link:https://docs.openshift.com/container-platform/latest/cli_reference/index.html[Command Line Tool]. Specifically, the `oc new-app` command provides a simple interface for creating new applications using some combination of source code, templates, and container images.
 
-```
+[source,bash]
+----
 $ oc new-app --template=openjdk18-web-basic-s2i
 --> Deploying template "openshift/openjdk18-web-basic-s2i" to project eric-test
 
@@ -52,23 +53,25 @@ $ oc new-app --template=openjdk18-web-basic-s2i
 --> Success
     Build scheduled, use 'oc logs -f bc/openjdk-app' to track its progress.
     Run 'oc status' to view your app.
-```
+----
 
 Looking at what was done here, we used an `oc` command to instantiate a template by name. The template we used (`openjdk18-web-basic-s2i`) is a template that has been preloaded into OpenShift for convenience. We can also see that several objects were created as a result, including a `Service`, `Route`, `ImageStream`, `BuildConfig` and a `DeploymentConfig`. We can take a look at these templates using some oc commands.
 
 NOTE: Most resources in OpenShift are scoped to a namespace which in the OpenShift world is known as a _project_. The `openshift` _project_ is a special namespace that is globally readable by all users within a cluster and used to provide a base set of _template_ and _imagestream_ resources to help users get started using the platform. This is where commands like `oc new-app` will look by default for templates to instantiate.
 
-```
+[source,bash]
+----
 $ oc get templates -n openshift
 NAME                                            DESCRIPTION                                                                        PARAMETERS        OBJECTS
 ...
 openjdk18-web-basic-s2i                         Application template for Java applications built using S2I.                        8 (1 blank)       5
 ...
-```
+----
 
 If we want to get a few more details, we can use oc `describe` instead:
 
-```
+[source,bash]
+----
 $ oc describe template openjdk18-web-basic-s2i -n openshift
 Name:		openjdk18-web-basic-s2i
 Namespace:	openshift
@@ -127,7 +130,7 @@ Parameters:
 
     Name:		IMAGE_STREAM_NAMESPACE
     Display Name:	ImageStream Namespace
-    Description:	Namespace in which the ImageStreams for Red Hat Middleware images are installed. These ImageStreams are normally installed in the openshift namespace. You should only need to modify this if you've installed the ImageStreams in a different namespace/project.
+    Description:	Namespace in which the ImageStreams for Red Hat Middleware images are installed. These ImageStreams are normally installed in the openshift namespace. You should only need to modify this if you\'ve installed the ImageStreams in a different namespace/project.
     Required:		true
     Value:		openshift
 
@@ -142,17 +145,19 @@ Objects:
     ImageStream		${APPLICATION_NAME}
     BuildConfig		${APPLICATION_NAME}
     DeploymentConfig	${APPLICATION_NAME}
-```
+----
 
 Here, we can see that there are parameters available that we can pass to the template to customize the object we want to create. Let's try to use a few of these to make our sample application more relevant to us.
 
-```
-oc new-app --template=openjdk18-web-basic-s2i -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR=''
-```
+[source,bash]
+----
+$ oc new-app --template=openjdk18-web-basic-s2i -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR=''
+----
 
 If we look at what's created in our project, we can see that we now have two of everything. Since we passed a new value for `APPLICATION_NAME`, and the template sets all objects to use `${APPLICATION_NAME}` in the `name:` field, the `new-app` command resulted in all new objects created with new names.
 
-```
+[source,bash]
+----
 $ oc get all
 NAME             TYPE      FROM         LATEST
 bc/openjdk-app   Source    Git@master   1
@@ -187,11 +192,12 @@ po/openjdk-app-1-build   0/1       Completed   0          21d
 po/openjdk-app-1-gwtj9   1/1       Running     0          21d
 po/spring-rest-1-build   0/1       Completed   0          20d
 po/spring-rest-1-xtbx2   1/1       Running     0          20d
-```
+----
 
 Let's go ahead and clean up the old `openjdk-app` resources. Because the template we used to create the objects made good use of labels in its `objects` list, we can do this very easily.
 
-```
+[source,bash]
+----
 $ oc delete all -l application=openjdk-app
 buildconfig "openjdk-app" deleted
 imagestream "openjdk-app" deleted
@@ -199,9 +205,11 @@ deploymentconfig "openjdk-app" deleted
 route "openjdk-app" deleted
 service "openjdk-app" deleted
 pod "openjdk-app-1-gwtj9" deleted
-```
+----
 
 NOTE: Passing `all` as a resource to commands like `oc get|delete|describe` does not actually refer to _all_ resource types within OpenShift. Instead it is a shorthand for a defined set of common resource types within a project that are relevant to typical OpenShift users. Some of the resource types that are excluded from the `all` keyword are `Secrets`, `Roles`, and `RoleBindings`.
+
+==== What we've learned and where to go from here
 
 So far, we've learned that...
 
@@ -215,11 +223,152 @@ This is a great start, but it does leave some further questions that might be wo
 - What about templates that aren't pre-loaded into OpenShift?
 - How might I update resources that were created from a template?
 
-Let's move on to the next phase in our exploration
+Let's move on to the next phase in our exploration.
 
 === Template files, processing, applying
 
-=== What we've learned and where to go from here
+So far, we've learned a little bit about what a Template is and a simple way to instantiate them in OpenShift. Now we want to get a little more hands on. Let's start by exporting a copy of the template. The OpenShift CLI provides a very simple way to do that via the `oc export` command. This command will take any object name you pass to it, and print a sanitized copy of the YAML or JSON object (with thinks like `timestamp` and `uid` removed) to your console. For our purposes, we'll just write that output to a file.
+
+[source,bash]
+----
+$ oc export template openjdk18-web-basic-s2i -n openshift > openjdk-basic-template.yml
+----
+
+If we open the file with our favorite text editor, we can see the YAML definition of all of the objects that we saw get created earlier, but with shell script looking variables plugged in as values for various fields (e.g. `name: ${APPLICATION_NAME}`). It's beginning to make sense how the parameters we passed in get substituted. We can also see, from looking at the `objects` list, several patterns that are common to all of the objects.
+
+- The `.metadata.name` field of every object contains the `${APPLICATION_NAME}` parameter
+- Every object contains a `label` called `application: ${APPLICATION_NAME}`.
++
+NOTE: This explains why we were able to delete the first app we created with just `oc delete all -l application=openjdk-app`
+
+For now, we can close the file without making any changes. Let's go back and look at the app we created earlier.
+
+[source,bash]
+----
+$ oc get all
+NAME             TYPE      FROM         LATEST
+bc/spring-rest   Source    Git@master   1
+
+NAME                   TYPE      FROM          STATUS     STARTED       DURATION
+builds/spring-rest-1   Source    Git@978d4b0   Complete   4 weeks ago   1m7s
+
+NAME             DOCKER REPO                                              TAGS      UPDATED
+is/spring-rest   docker-registry.default.svc:5000/eric-test/spring-rest   latest    4 weeks ago
+
+NAME             REVISION   DESIRED   CURRENT   TRIGGERED BY
+dc/spring-rest   1          1         1         config,image(spring-rest:latest)
+
+NAME               DESIRED   CURRENT   READY     AGE
+rc/spring-rest-1   1         1         1         33d
+
+NAME                 HOST/PORT                                         PATH      SERVICES      PORT      TERMINATION   WILDCARD
+routes/spring-rest   spring-rest-eric-test.apps.d1.casl.rht-labs.com             spring-rest   <all>                   None
+
+NAME              CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+svc/spring-rest   172.30.61.234   <none>        8080/TCP   33d
+
+NAME                     READY     STATUS      RESTARTS   AGE
+po/spring-rest-1-build   0/1       Completed   0          33d
+po/spring-rest-1-xtbx2   1/1       Running     0          33d
+----
+
+So, what happens if we try to re-instantiate the template with the same parameters? This could conceivably be useful as a means to keep the application config up to date or change certain parameters. Let's give it a try, using the same method as before.
+
+[source,bash]
+----
+$ oc new-app --template=openjdk18-web-basic-s2i -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR=''
+...
+--> Creating resources ...
+    error: services "spring-rest" already exists
+    error: routes.route.openshift.io "spring-rest" already exists
+    error: imagestreams.image.openshift.io "spring-rest" already exists
+    error: buildconfigs.build.openshift.io "spring-rest" already exists
+    error: deploymentconfigs.apps.openshift.io "spring-rest" already exists
+--> Failed
+----
+
+FAILED!? Ok, so that doesn't look to be an option. It's clear that `oc new-app` must use `oc create` under the hood, as we would get a similar error if we tried to create a raw object that doesn't exist. If you think about it, though, `oc new-app` really isn't necessary anymore anyway, since we now know that the template contains all of the decisions that need to be made about the makeup of our application. Maybe there's a more direct way to work with templates. The help output of the `oc` command might be useful here.
+
+[source,bash]
+----
+$ oc -h | grep template
+  process         Process a template into list of resources
+----
+
+Bingo! Let's see what we can do with `oc process`.
+
+[source,bash]
+----
+$ oc help process
+Process template into a list of resources specified in filename or stdin
+
+...
+
+Usage:
+  oc process (TEMPLATE | -f FILENAME) [-p=KEY=VALUE] [options]
+----
+
+OK, so this looks like we can simply pass this thing a file and our same list of parameters form our `oc new-app` command. Let's give it a shot.
+
+----
+$ oc process -f openjdk-basic-template.yml  -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR='' -o yaml
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: The application's http port.
+    labels:
+      application: spring-rest
+      template: openjdk18-web-basic-s2i
+      xpaas: 1.4.0
+    name: spring-rest
+  spec:
+    ports:
+    - port: 8080
+      targetPort: 8080
+    selector:
+      deploymentConfig: spring-rest
+...
+----
+
+Great! This is looking very familiar. However, this just outputs the resources to the console. We want to actually have these resources created/updated. Looking at the example commands in the `oc process` help output, we see can see something very close to what we need:
+
+[source,bash]
+----
+$ oc help process
+Process template into a list of resources specified in filename or stdin
+
+...
+
+Examples:
+  # Convert template.json file into resource list and pass to create
+  oc process -f template.json | oc create -f -
+
+----
+
+We could try this, however, since we've already created these resources before we know this will just fail with a "Resource already exists" type message. We need something that will overlay our resources on top of the existing ones, making any changes or updates that exist in this version. For this, we can use `oc apply`.
+
+[source,bash]
+----
+$ oc help | grep apply
+  apply           Apply a configuration to a resource by filename or stdin
+----
+
+Let's put this all together, and see what happens.
+
+[source,bash]
+----
+$ oc process -f openjdk-basic-template.yml  -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR='' -o yaml | oc apply -f-
+service "spring-rest" configured
+route "spring-rest" configured
+imagestream "spring-rest" configured
+buildconfig "spring-rest" configured
+deploymentconfig "spring-rest" configured
+----
+
+Cool, all of our resources were "configured". 
 
 == Building Custom Templates
 
@@ -229,7 +378,7 @@ Custom templates allow a user to truly unlock the power of OpenShift in many way
 
 The basic top level structure of an OpenShift template is as follows:
 
-```
+----
 apiVersion: v1
 kind: Template
 labels:
@@ -238,7 +387,7 @@ metadata:
   name: <template name>
 objects:
 parameters:
-```
+----
 
 The important sections here are:
 
@@ -250,7 +399,7 @@ The important sections here are:
 
 Let's look at an example, using the OpenJDK template we were experimenting with above. We can use `oc export` to get a clean copy of the template code.
 
-```
+----
 $ oc export template/openjdk18-web-basic-s2i -n openshift
 apiVersion: v1
 kind: Template
@@ -304,7 +453,7 @@ parameters:
   required: true
   value: openjdk-app
 ...
-```
+----
 
 === Methods for Writing or Generating Templates
 
@@ -312,18 +461,18 @@ parameters:
 
 Exporting and modifying an existing template is many times the fastest path to success. Simply peruse through the set of templates provided out of the box by OpenShift, find the one closest to what you need, and export it.
 
-```
+----
 $ oc get templates -n openshift
 ...
 s2i-spring-boot-camel-config                    Spring Boot and Camel using ConfigMaps and Secrets. This quickstart demonstra...   13 (2 blank)      3
 ...
 
 $ oc export template/s2i-spring-boot-camel-config -n openshift > my-new-spring-template.yml
-```
+----
 
 Once exported the first thing to do is make sure to rename it. Just make sure and be thorough, a templates name is generally used multiple times in the template.
 
-```
+----
 $ grep 's2i-spring-boot-camel-config\|my-new-spring-template' ./my-new-spring-template.yml
   template: s2i-spring-boot-camel-config
   name: s2i-spring-boot-camel-config
@@ -335,7 +484,7 @@ $ grep 's2i-spring-boot-camel-config\|my-new-spring-template' ./my-new-spring-te
   template: my-new-spring-template
   name: my-new-spring-template
   value: my-new-spring-template
-```
+----
 
 From here, you're free to modify whatever needs modifying to meet your needs. When modifying an existing template, be aware that there is a lot of metadata in the form of labels and annotations that may or may not be relevant to your new template. The good news is that, if you are writing a template for automation purposes, and not for use in the Web Console, much of that stuff can be cleaned out, as it is mostly used to populate parts of the UI and little else. Just keep in mind that you may want to spend the time updating those values if you plan to create new Web Console quickstarts.
 
@@ -343,7 +492,7 @@ From here, you're free to modify whatever needs modifying to meet your needs. Wh
 
 A more barebones approach is to simply write the template from scratch. This is especially nice when you need a very minimal template, and you want to keep it clean of any leftover metadata from the original template. Just start with this skeleton and you'll be good to go.
 
-```
+----
 apiVersion: v1
 kind: Template
 labels:
@@ -352,7 +501,7 @@ metadata:
   name: <template name>
 objects:
 parameters:
-```
+----
 
 ==== Export existing objects as a Template
 
