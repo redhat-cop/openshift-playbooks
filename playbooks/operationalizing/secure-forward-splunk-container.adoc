@@ -41,7 +41,7 @@ The following prerequisites are assumed and must be satisfied prior to implement
 
 === Configure Splunk
 
-NOTE: If using the xref:splunk-docker-image[preconfigured Docker image,] this section can be skipped as these changes are already completed in the image.
+NOTE: If using the <<splunk-docker-image,preconfigured Docker image>>, this section can be skipped as these changes are already completed in the image.
 
 To accept messages sent from the fluent-plugin-splunk-ex plugin, a new TCP based data input must be configured within Splunk.
 
