@@ -360,7 +360,7 @@ Let's put this all together, and see what happens.
 
 [source,bash]
 ----
-$ oc process -f openjdk-basic-template.yml  -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR='' -o yaml | oc apply -f-
+$ oc process -f openjdk-basic-template.yml  -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR='' | oc apply -f-
 service "spring-rest" configured
 route "spring-rest" configured
 imagestream "spring-rest" configured
@@ -380,7 +380,7 @@ objects:
   kind: DeploymentConfig
 ...
   spec:
-    replicas: ${REPLICAS} ### Edit this line
+    replicas: ${{REPLICAS}} ### Edit this line
 ...
 parameters:
 ...
@@ -396,8 +396,69 @@ If we re-run the process/apply, changing nothing, we'll affect no change. Howeve
 
 [source,bash]
 ----
-
+$ oc process -f openjdk-basic-template.yml  -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR='' -p REPLICAS=3 | oc apply -f-
+service "spring-rest" configured
+route "spring-rest" configured
+imagestream "spring-rest" configured
+buildconfig "spring-rest" configured
+deploymentconfig "spring-rest" configured
 ----
+
+Let's verify we now have 3 pods running.
+
+[source,bash]
+----
+$ oc get pods
+NAME                  READY     STATUS      RESTARTS   AGE
+spring-rest-1-build   0/1       Completed   0          49d
+spring-rest-2-build   0/1       Completed   0          15d
+spring-rest-3-build   0/1       Completed   0          9m
+spring-rest-3-ccx99   1/1       Running     0          4m
+spring-rest-3-hmtfv   1/1       Running     0          7m
+spring-rest-3-t9rv7   1/1       Running     0          4m
+----
+
+At this point we have a pretty simple, repeatable process in place for maintaining an application. However, we're starting to build up a number of parameters. Perhaps there's a way to manage those parameters more practically.
+
+[source,bash]
+----
+$ oc process -h
+...
+Options:
+...
+      --param-file=[]: File containing template parameter values to set/override in the template.
+...
+----
+
+AHA! It looks like we can commit all of these parameters to a file. That would provide a much simpler way to manage our parameter sets, and even keep multiple parameter files to represent different applications. Let's create a parameter file for our spring-rest app, and re-apply the config.
+
+[source,bash]
+----
+$ cat spring-rest.params
+APPLICATION_NAME=spring-rest
+SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git
+SOURCE_REPOSITORY_REF=master
+CONTEXT_DIR=''
+REPLICAS=3
+
+$ oc process -f openjdk-basic-template.yml --param-file spring-rest.params | oc apply -f-
+service "spring-rest" configured
+route "spring-rest" configured
+imagestream "spring-rest" configured
+buildconfig "spring-rest" configured
+deploymentconfig "spring-rest" configured
+----
+
+==== What we've learned and where to go from here
+
+We've now learned that...
+
+* Templates can be exported and handled as files
+* We can repeatably use `oc process | oc apply` to deploy/update templates
+* We can pass parameters to templates from text files, which makes it easy to manage application configs
+
+At this point, we've explored templates enough to be able to dive into some more advanced topics. Through the rest of this guide, we'll dive into developing custom templates, and ways in which we can automate more complex workflows using the idea of processing and applying templates as a base.
+
 
 == Building Custom Templates
 
