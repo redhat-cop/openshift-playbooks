@@ -597,17 +597,79 @@ parameters:
 
 Maybe the most powerful mode of creating a new template is to use `oc export` to generate one from a set of already created objects. This allows you to first build and wire up and application manually using the client tools and/or the Web Console, and then capture your work in the form of a repeatable template.
 
-=== Best Practices for Template Writing
+=== Parameter Substitution
+
+Parameters are the means by which we can customize templates. They come in two flavors.
+
+==== String Parameters
+
+String parameters are the most common parameter type. They are represented by single curly braces (e.g. `${FOO}`).
+
+.Example of a String Parameter
+[source,yaml]
+----
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: The application's http port.
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    ports:
+    - port: 8080
+      targetPort: 8080
+    selector:
+      deploymentConfig: ${APPLICATION_NAME}
+----
+
+==== Non-String Parameters
+
+Templates also support non-string parameters. They are represented by double curly braces (e.g. `${\{FOO}}`). Non-string parameters provide a way to insert numeric or base64 values into templates.
+
+.Example of a Numeric Non-String Parameter
+[source,yaml]
+----
+spec:
+  ports:
+  - port: ${\{PORT_NUMBER}}
+    targetPort: ${\{PORT_NUMBER}}
+----
+
+.Example of a Base64 Non-String Parameter
+[source,yaml]
+----
+apiVersion: v1
+kind: Secret
+metadata:
+  name: test-secret
+  namespace: my-namespace
+data:
+  username: ${\{USERNAME}}
+  password: ${\{PASSWORD}}
+----
+
+=== Best Practices & Tips for Template Writing
 
 The following is a list of suggested best practices for template writing.
 
 - **Include a `template` label in all objects.**
 +
-Including a common label across all objects created from a template allows users and admins to track objects created from a particular template as a group.
+Including a common label across all objects created from a template allows users and admins to track objects created from a particular template as a group. This would be a static label containing the name of the template. Something like `template=my-app-template`.
 +
 - **Include an `app` label in all objects.**
 +
 In addition to a template label, which will have a static value, including an `app=${APPLICATION_NAME}` label provides a dynamic label that can be used to query a specific instance of a template.
++
+- **Use `oc process` to define labels on templates that don't include them**
++
+Some templates don't follow the label conventions above. For cases where you would like to add labels that are not included in the templates themselves (like when using out of the box templates), the `oc process` command provides a label flag.
++
+[source,bash]
+----
+oc process openshift//openjdk18-web-basic-s2i -l 'app=myapp,template=openjdk-template' | oc apply -f-
+----
 +
 - **Keep Templates confined to a scope**
 +
@@ -618,6 +680,10 @@ When building a new template, it's good to keep both the user and the use case i
 Similarly to the previous point. It's important to consider _when_ a template would be instantiated. A common example is a template defining `BuildConfigs` and `Deployments`/`Services`/etc. Typically, an app only builds in a single project (representing a _development_ environment), but may get deployed to multiple projects (_dev_, _uat_, _production_). For this reason, its helpful to have one template that defines all of your build components, and a separate template that defines the deployment related componentns. A good example of this can be seen in our link:https://github.com/redhat-cop/container-pipelines/tree/master/basic-spring-boot#openshift-templates[Container Pipelines Quickstarts].
 
 == Templates & Infrastructure as Code (IaC)
+
+Templates are the 
+
+=== Source Control for Templates
 
 === Use oc apply for repeatable process
 
