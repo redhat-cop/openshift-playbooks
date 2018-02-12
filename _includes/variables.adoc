@@ -1,0 +1,1 @@
+:docs_url: https://docs.openshift.com/container-platform/3.7/

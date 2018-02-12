@@ -7,6 +7,7 @@ v1.0, 2016-08-18
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 
@@ -59,7 +60,7 @@ Create the following partitions (disk partitions or LVMs) on the system disk ima
 
 ==== Docker Storage Config
 
-The OpenShift docs discuss link:https://docs.openshift.com/enterprise/latest/install_config/install/prerequisites.html#configuring-docker-storage[three different options for configuring docker storage]. We consider options A and B to be "production ready".
+The OpenShift docs discuss link:{docs_url}install_config/install/prerequisites.html#configuring-docker-storage[three different options for configuring docker storage]. We consider options A and B to be "production ready".
 
 For option A: Attach an additional volume or block device to each node for Docker storage (20-50 GB)
 

@@ -11,6 +11,7 @@ The steps taken to set up a persistent volume, and a corresponding volume claim,
 
 More information about the persistent storage architecture in OpenShift Enterprise v3 can be found https://docs.openshift.com/enterprise/3.0/architecture/additional_concepts/storage.html[here].
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 == Setting up a Persistent Volume

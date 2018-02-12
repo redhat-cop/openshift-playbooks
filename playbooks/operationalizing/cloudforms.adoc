@@ -7,14 +7,15 @@ v1.0, 2016-03-30
 :toc: macro
 :toc-title:
 
-Beginning with version 3.1, OpenShift officially supported integration with CloudForms 4 to provide a single pane of glass over the OpenShift environment.  
+Beginning with version 3.1, OpenShift officially supported integration with CloudForms 4 to provide a single pane of glass over the OpenShift environment.
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 
 == Overview
 
-Red Hat CloudForms provides a singular monitoring and reporting tool over an entire OpenShift cluster. For CloudForms to retrieve telemetry information from OpenShift, communication is performed both with the OpenShift API and by tapping into the cluster metrics components provided by the link:https://github.com/kubernetes/heapster[Heapster] and link:http://www.hawkular.org/[Hawkular] frameworks. As a prerequisite, the steps described in the link:https://docs.openshift.com/enterprise/latest/install_config/cluster_metrics.html[Enabling Cluster Metrics] documentation must be completed before integration can begin.This document will describe the process for preparing OpenShift for CloudForms and the steps necessary to integrate the two platforms.
+Red Hat CloudForms provides a singular monitoring and reporting tool over an entire OpenShift cluster. For CloudForms to retrieve telemetry information from OpenShift, communication is performed both with the OpenShift API and by tapping into the cluster metrics components provided by the link:https://github.com/kubernetes/heapster[Heapster] and link:http://www.hawkular.org/[Hawkular] frameworks. As a prerequisite, the steps described in the link:{docs_url}install_config/cluster_metrics.html[Enabling Cluster Metrics] documentation must be completed before integration can begin.This document will describe the process for preparing OpenShift for CloudForms and the steps necessary to integrate the two platforms.
 
 == Preparing OpenShift for CloudForms integration
 
@@ -22,11 +23,11 @@ This section describes the steps necessary to prepare OpenShift for CloudForms i
 
 === OpenShift Container Platform Managment Infrastrcture Service Account
 
-Core environment statistics, such as nodes, images and pods, from OpenShift are accessed by CloudForms by communicating with the OpenShift API. This communication is negotiated with the help of an OpenShift service account explicitly configured for use by CloudForms. In OpenShift version 3.1, a new built-in project called _management-infra_ is available to allow integration with third party tools, such as CloudForms. This project provides a management service account named _management-admin_ which can be used to facilitate communication with OpenShift. 
+Core environment statistics, such as nodes, images and pods, from OpenShift are accessed by CloudForms by communicating with the OpenShift API. This communication is negotiated with the help of an OpenShift service account explicitly configured for use by CloudForms. In OpenShift version 3.1, a new built-in project called _management-infra_ is available to allow integration with third party tools, such as CloudForms. This project provides a management service account named _management-admin_ which can be used to facilitate communication with OpenShift.
 
 The steps described below are also found in the link:https://access.redhat.com/documentation/en/red-hat-cloudforms/version-4.0/managing-providers/#containers_providers[Container Providers] section of the OpenShift documentation.
 
-NOTE: Newer versions of the https://github.com/openshift/openshift-ansible[openshift-ansible] playbooks configure the _management-infra_ project automatically if the `openshift_hosted_metrics_deploy` flag is set to `true` in your OpenShift Ansible inventory/hosts file. Otherwise, please consult the aforementioned documentation to setup the project. 
+NOTE: Newer versions of the https://github.com/openshift/openshift-ansible[openshift-ansible] playbooks configure the _management-infra_ project automatically if the `openshift_hosted_metrics_deploy` flag is set to `true` in your OpenShift Ansible inventory/hosts file. Otherwise, please consult the aforementioned documentation to setup the project.
 
 Execute the following commands in the OpenShift environment to retrieve the service account token which will be used to communicate with OpenShift from CloudForms.
 
@@ -46,7 +47,7 @@ management-admin-token-59thq <1>
 management-admin-token-8c2mk
 management-admin-dockercfg-de6dh
 
-# oc get -n management-infra secrets management-admin-token-59thq --template='{% raw %}{{.data.token}}{% endraw %}' | base64 -d 
+# oc get -n management-infra secrets management-admin-token-59thq --template='{% raw %}{{.data.token}}{% endraw %}' | base64 -d
 
 eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJtYW5hZ2VtZW50LWluZnJhIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6Im1hbmFnZW1lbnQtYWRtaW4tdG9rZW4tNTl0aHEiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoibWFuYWdlbWVudC1hZG1pbiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjZjNThlZDMyLWUyOTgtMTFlNS1hZmY0LWZhMTYzZTlkOTQ0NyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDptYW5hZ2VtZW50LWluZnJhOm1hbmFnZW1lbnQtYWRtaW4ifQ.F59Z38mcEktTRWjgz8yjQgbudgtEg5wBE-t7OpIAoO42ozpTOohSQSaTo5yO_9jIQQo8eb4MiJEWtEX5EbkqJ1anMRrp67qxBYVIfdNC2xmQ1wVHQYvvYe8JsLjrumKDDfOhk4CY1vJbAXeRkO3BBuUaJFODWjxBQWzyC55yB4YZpmXIY8WiVky9BbnwOSLzq0QCBggThrZpUWu60UrxpMliW_1hwJPIJ0mTXIwXRNWp7GjhAIECr8og2EXhAKwJ5YpM0kzilAt27zXYOH_5m5Oi_jgKt98LYFzN4sZlqA6ei_ePzLKxb5f48dx2UGHFzKD8XRSk_nVRUqGSqHuWqA <2>
 ----
@@ -63,12 +64,12 @@ In CloudForms Managment Engine 4.1 and above CloudForms can use the OpenShift pu
 
 IMPORTANT: In CloudForms 4.0, due to a limitation within the product, only a single hostname can be used to communicate with OpenShift.  As previously mentioned, CloudForms communicates with OpenShift via the API to retrieve basic environment information, but it also needs to communicate over port 5000 to retrieve cluster metrics from Hawkular. This requires a deployment of an additional router on the OpenShift master to access the SDN to communicate with Hawkular. An alternate solution is available where a Virtual IP Address (VIP) is used to provide a single destination for CloudForms, but to provide the appropriate logic necessary to route the traffic accordingly depending on the request. Please see the link:/playbooks/operationalizing/cloudforms_networking{outfilesuffix}[Network Integration for OpenShift v3 and Red Hat CloudForms] document for more information. *The Metrics Collections section can be skipped if the implementation covered in the aforementioned documentation is adhered to, or if CloudForms 4.1 or later is used.*
 
-To support the deployment of a router on the master, the master must be configured as schedulable. Execute the following command to make the master schedulable: 
+To support the deployment of a router on the master, the master must be configured as schedulable. Execute the following command to make the master schedulable:
 
 [source]
 ----
 oadm manage-node <master-hostname> --schedulable=true
----- 
+----
 
 Deploy the router by executing the following command and be sure to specify the _kubernetes.io/hostname_ selector to match the name of the master instance. This ensures the router will deployed on the master instead of any other schedulable instance. If multiple masters are used, apply a unique label to each master and use the key/value pair instead
 
@@ -84,7 +85,7 @@ Deploy the router by executing the following command and be sure to specify the 
 ----
 
 
-Finally, since CloudForms is configured with the hostname of the master for both API and metrics traffic, an application route must be configured with the hostname of the master in order for the integrated registry to route the request appropriately to Hawkular. 
+Finally, since CloudForms is configured with the hostname of the master for both API and metrics traffic, an application route must be configured with the hostname of the master in order for the integrated registry to route the request appropriately to Hawkular.
 
 Create a file called _metrics-route.yaml_ with the following text:
 
@@ -96,7 +97,7 @@ kind: Route
 metadata:
   name: metrics-route
 spec:
-  host: master.ose.example.com 
+  host: master.ose.example.com
   to:
     kind: Service
     name: hawkular-metrics
@@ -107,7 +108,7 @@ spec:
 Add the route to the openshift-infra project
 [source]
 ----
-oc create -f metrics-route.yaml -n openshift-infra 
+oc create -f metrics-route.yaml -n openshift-infra
 ----
 
 The required steps in OpenShift have been completed in order to support CloudForms integration.
@@ -138,7 +139,7 @@ At a minimum, this requires the following `appliance_console` menu items:
 
 Once the configurations have been applied, select option 15 to apply the changes and to restart the VM
 
-For installations that contain more than one appliance, repeat the above steps making sure to join an existing database cluster when completing step 8. 
+For installations that contain more than one appliance, repeat the above steps making sure to join an existing database cluster when completing step 8.
 
 Once the machine reboots, the web console should be accessible at the host public ip.
 
@@ -146,9 +147,9 @@ Once the machine reboots, the web console should be accessible at the host publi
 
 The default username/password combination is _admin/smartvm_
 
-After logging into the console, configure basic server settings by select the *configure* tab and then the *configuration* sub tab. 
+After logging into the console, configure basic server settings by select the *configure* tab and then the *configuration* sub tab.
 
-Set the *Company Name* to customize the name of the organization. Next, specify the *Appliance Name* as the value that should be visible on the appliance that is logged into. 
+Set the *Company Name* to customize the name of the organization. Next, specify the *Appliance Name* as the value that should be visible on the appliance that is logged into.
 
 Under the _Server Control_ section, apply the following roles based on the appliance type:
 
@@ -204,7 +205,7 @@ In the CloudForms web console, select the *Containers* tab and then select *Prov
 
 Select the *Configuration* button and then *Add a New Containers Provider*.
 
-Enter a name for the provider, select *OpenShift Enterprise* in the type, enter the address of the master and then the token retrieved earlier into the *Token* field. Click *Validate* to confirm connectivity. 
+Enter a name for the provider, select *OpenShift Enterprise* in the type, enter the address of the master and then the token retrieved earlier into the *Token* field. Click *Validate* to confirm connectivity.
 
 Click *Add* to add the container provider.
 
@@ -214,11 +215,11 @@ In the CloudForms web console, hover over *Compute* in the menu on the left, the
 
 Select the *Configuration* button and then *Add a New Containers Provider*.
 
-Enter a name for the provider and select *OpenShift Enterprise* in the type (ignore the zone, this will populate on its own). 
+Enter a name for the provider and select *OpenShift Enterprise* in the type (ignore the zone, this will populate on its own).
 
 Under *Endpoints*, in the *Default* tab, enter the hostname or address of the HAProxy server (or the master in a single master setup) into the *Hostname* field and enter the token retrieved earlier into the *Token* and *Confirm Token* fields. Click *Validate* to confirm connectivity.
 
-Under *Endpoints*, select the *Hawkular* tab and enter the hawkular-metrics hostname into the *Hostname* field. 
+Under *Endpoints*, select the *Hawkular* tab and enter the hawkular-metrics hostname into the *Hostname* field.
     *Note* Adding the hawkular-metrics hostname in this field eliminates the need for any special routing to connect CloudForms to Hawkular Metrics.
 
 Click *Add* to add the container provider.
@@ -229,7 +230,7 @@ In the CloudForms web console, hover over *Compute* in the menu on the left, the
 
 Select the *Configuration* button and then *Add a New Containers Provider*.
 
-Enter a name for the provider and select *OpenShift Enterprise* in the type (ignore the zone, this will populate on its own). 
+Enter a name for the provider and select *OpenShift Enterprise* in the type (ignore the zone, this will populate on its own).
 
 Under *Endpoints*, in the *Default* tab, enter the address of the OpenShift Master API  into the *Hostname* field and enter the token retrieved earlier into the *Token* and *Confirm Token* fields. Click *Validate* to confirm connectivity.
 
@@ -239,7 +240,7 @@ NOTE: Adding the hawkular-metrics hostname in this field eliminates the need for
 
 Click *Add* to add the container provider.
 
-In the upper-right hand corner, click on the dropdown next to your *username* and then click on the *Configuration* menu item.  
+In the upper-right hand corner, click on the dropdown next to your *username* and then click on the *Configuration* menu item.
 
 In the *Settings* tree, click on the *CFME Region*, then click on *Zones*, the OCP *Zone*, and finally pick the *Server*.
 
@@ -283,7 +284,7 @@ The following steps occurs during a SmartState container image analysis:
 2. Once the pod is instantiated, the Docker container image that is being inspected is pulled from the source docker registry.
 3. An analysis of the image is performed by the pod
 4. The results are made available via a WebDAV server in the pod
-5. CloudForms will communicate via the OpenShift API via the pod proxy to the WebDAV server to retrieve the results of the inspection 
+5. CloudForms will communicate via the OpenShift API via the pod proxy to the WebDAV server to retrieve the results of the inspection
 
 
 === OpenSCAP Default Condition
@@ -298,7 +299,7 @@ Controle => Conditions => Container Image Conditions
 
 .Condition Expression
 --
-FIND Container Image.Openscap Rule Results : Result = "fail" CHECK ANY Severity = "High" 
+FIND Container Image.Openscap Rule Results : Result = "fail" CHECK ANY Severity = "High"
 --
 
 == Chargeback for OpenShift Container Platform
@@ -319,7 +320,7 @@ Red Hat CloudForms provides report tool. With this feature and Chargeback, an ad
 === Create Custom Report
 In the CloudForms user interface:
 
-1) select *Cloud Intel* => *Report* =>  *Reports*.  
+1) select *Cloud Intel* => *Report* =>  *Reports*.
 
 2) Click the *Configuration* button and then  *Add a new Report*.
 
@@ -334,7 +335,7 @@ image::images/report-chargeback-create-1.png[title=Create CloudForms Report for 
 
 
 |Menu Name
-|Dev OSE Chargeback - Inventory Team 
+|Dev OSE Chargeback - Inventory Team
 |This name will be used for CF report menu
 
 
@@ -354,7 +355,7 @@ image::images/report-chargeback-create-1.png[title=Create CloudForms Report for 
 - Total Cost
 |===
 
-3) Click *Filter Tab* 
+3) Click *Filter Tab*
 
 image::images/report-chargeback-create-2.png[title=Create CloudForms Report for Chargeback 2]
 
@@ -378,7 +379,7 @@ image::images/report-chargeback-create-2.png[title=Create CloudForms Report for 
 |All Container Images
 |
 
-|Group by 
+|Group by
 |Project
 |
 
@@ -391,7 +392,7 @@ image::images/report-chargeback-create-2.png[title=Create CloudForms Report for 
 
 === Generating Report
 1) Go to *My Company(All EVM Groups) => Custom*
-Now, you can see a new custom report `Dev OSE Chargeback Inventory Team`. 
+Now, you can see a new custom report `Dev OSE Chargeback Inventory Team`.
 
 2) Click the custom report.
 
@@ -403,4 +404,3 @@ image::images/report-chargeback-queue.png[title=CloudForms Custom Report for Cha
 4) Click the complete saved report.
 
 image::images/report-chargeback-result.png[title=CloudForms Result Report for Chargeback]
-

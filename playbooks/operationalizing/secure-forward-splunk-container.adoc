@@ -6,8 +6,9 @@ v1.0, 2018-01-31
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
 :toc: macro
 :toc-title:
+include::../../_includes/variables.adoc[]
 
-Send logs captured by the OpenShift Container Platform link:https://docs.openshift.com/container-platform/latest/install_config/aggregate_logging.html[aggregated logging] solution to Splunk using a containerized implementation of link:http://docs.fluentd.org/v0.12/articles/out_secure_forward[Fluentd secure forward output plugin]
+Send logs captured by the OpenShift Container Platform link:{docs_url}install_config/aggregate_logging.html[aggregated logging] solution to Splunk using a containerized implementation of link:http://docs.fluentd.org/v0.12/articles/out_secure_forward[Fluentd secure forward output plugin]
 
 toc::[]
 
@@ -18,7 +19,7 @@ OpenShift includes an aggregated logging solution consisting of link:https://www
 
 == Architecture
 
-As part of the aggregated logging framework within OpenShift, containerized instances of Fluentd are deployed to OpenShift nodes as link:https://docs.openshift.com/container-platform/latest/dev_guide/daemonsets.html[DaemonSets]. As messages are collected, Fluentd communicates with ElasticSearch to persistently store messages for later retrieval. Cluster administrators and users can browse, search, and view stored messages using Kibana, a web based user interface.
+As part of the aggregated logging framework within OpenShift, containerized instances of Fluentd are deployed to OpenShift nodes as link:{docs_url}dev_guide/daemonsets.html[DaemonSets]. As messages are collected, Fluentd communicates with ElasticSearch to persistently store messages for later retrieval. Cluster administrators and users can browse, search, and view stored messages using Kibana, a web based user interface.
 
 To support forwarding messages to Splunk that are captured by the aggregated logging framework, Fluentd can be configured to make use of the secure forward output plugin (already included within the containerized Fluentd instance) to send an additional copy of the captured messages outside of the framework. A separate instance of Fluentd must also be deployed in order to receive messages sent by secure forward plugin.  In this implementation, the separate Fluentd instance is containerized and running within OpenShift.  Once captured by the separate containerized Fluentd instance, messages can then be sent to Splunk.
 

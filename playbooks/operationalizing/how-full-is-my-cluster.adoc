@@ -6,6 +6,7 @@ v1.0, 2017-08-28
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 
@@ -15,20 +16,20 @@ But before that we need to make sure we understand the question.
 
 == Quotas, Requests, Limits
 
-https://docs.openshift.com/container-platform/latest/dev_guide/compute_resources.html#dev-quotas[Quotas], https://docs.openshift.com/container-platform/latest/dev_guide/compute_resources.html#dev-compute-resources[requests and limits] all play a role in the way OpenShift allocates resources and it can be easy to get them confused.  They are actually taken in consideration by OpenShift at different time and for different purposes. The following table summarizes these concepts:
+{docs_url}dev_guide/compute_resources.html#dev-quotas[Quotas], {docs_url}dev_guide/compute_resources.html#dev-compute-resources[requests and limits] all play a role in the way OpenShift allocates resources and it can be easy to get them confused.  They are actually taken in consideration by OpenShift at different time and for different purposes. The following table summarizes these concepts:
 
 |===
 ||*When it’s evaluated*|*Purpose*
 
 |Quotas|Request time.|To limit how many resources a single tenant can request so that they cannot take over the cluster.
-|Requests|https://docs.openshift.com/container-platform/latest/admin_guide/scheduling/scheduler.html[Scheduling time].|Requests are used to choose which node is the best fit for the given workload (together with other criteria).
+|Requests|{docs_url}admin_guide/scheduling/scheduler.html[Scheduling time].|Requests are used to choose which node is the best fit for the given workload (together with other criteria).
 |Limits|Run time.|Limits are used to limit the maximum amount of resources that a container can use at runtime.
 |===
 
 === Quotas
 
 
-Quotas are attached to a project and have little to do with the real capacity of the cluster. But if a project reaches its quota, the cluster will not accept any additional requests from it, behaving as if it were full (notice that quotas can be attached to multiple projects with https://docs.openshift.com/container-platform/latest/admin_guide/multiproject_quota.html[multiproject quotas]).  
+Quotas are attached to a project and have little to do with the real capacity of the cluster. But if a project reaches its quota, the cluster will not accept any additional requests from it, behaving as if it were full (notice that quotas can be attached to multiple projects with {docs_url}admin_guide/multiproject_quota.html[multiproject quotas]).  
 
 *Best Practice*: create T-shirt sized projects. By that I mean cluster administrators will define, via templates, a few standard sizes for projects where the size is determined by the associated quotas.
 
@@ -80,7 +81,7 @@ spec:
 ----
 In the above example very small minimums are specified that will not affect the value of the requests for containers, but will make it mandatory to specify it.
 
-It is also worth noting that in version 3.5, a link:https://docs.openshift.com/container-platform/latest/dev_guide/compute_resources.html#opaque-integer-resources[generalized framework for tracking additional node resources] has been introduced. These resources are called opaque integer resources and the main use case is to be able to track link:https://blog.openshift.com/use-gpus-openshift-kubernetes/[GPUs’ resources].
+It is also worth noting that in version 3.5, a link:{docs_url}dev_guide/compute_resources.html#opaque-integer-resources[generalized framework for tracking additional node resources] has been introduced. These resources are called opaque integer resources and the main use case is to be able to track link:https://blog.openshift.com/use-gpus-openshift-kubernetes/[GPUs’ resources].
 
 Every time OpenShift places a pod, it is solving an instance of a multidimensional link:https://en.wikipedia.org/wiki/Knapsack_problem[knapsack problem]. The knapsack problem is a classical problem in algorithm theory, where you have to place N stones of different sizes in M backpacks of different capacity. The point is to find optimal allocation. In the case of OpenShift we have a multidimensional knapsack problem because there are more that one characteristic to consider: CPU, memory and as we have seen opaque integer resources. +
 The knapsack problem is a link:https://en.wikipedia.org/wiki/NP-completeness[np-complete] problem, which means that time needed to solve it scales exponentially with n (pods) and m (nodes). For this reason when n and m are big enough, a human cannot do a better job than a machine at solving this problem.
@@ -96,7 +97,7 @@ For memory, docker assumes that if you ask for a given amount of RAM, you should
 *Best Practice*: link:https://docs.openshift.com/container-platform/3.5/admin_guide/overcommit.html#disabling-swap-memory[disable swap for nodes] (note that beginning with OpenShift 3.6, the node service will not start if swap is enabled).
 
 Again if you don’t specify limits for your containers, then OpenShift assumes that they are unbounded and that the container can consume all the resources available on the node. +
-To get an idea of the actual resources available in a node you can run (this command requires https://docs.openshift.com/container-platform/latest/install_config/cluster_metrics.html[cluster metrics] to be installed) 
+To get an idea of the actual resources available in a node you can run (this command requires {docs_url}install_config/cluster_metrics.html[cluster metrics] to be installed) 
 ----
 oc adm top node --heapster-namespace=openshift-infra --heapster-scheme=https <node-name>
 ----
@@ -124,7 +125,7 @@ Kube-ops-view features a dashboard that allows to get information on the capacit
 
 
 The nice thing of kube-ops-view is that you don’t have to install anything on the nodes and you can run it all on your laptop. You can also install in your cluster. +
-Kube-ops-view requires https://docs.openshift.com/container-platform/latest/install_config/cluster_metrics.html[metrics] to be installed and running correctly.
+Kube-ops-view requires {docs_url}install_config/cluster_metrics.html[metrics] to be installed and running correctly.
 
 === Running kube-ops-view on you laptop
 

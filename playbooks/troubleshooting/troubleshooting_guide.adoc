@@ -7,6 +7,7 @@ v1.0, 2016-05-27
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 == Pod related issues

@@ -5,6 +5,7 @@ Eric Sauer <eric@redhat.com>
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 Paas & Container technologies are often very closely tied with DevOps. In fact, we often confuse the adoption of "next-gen" technology stacks like OpenShift with "DevOps adoption". While it's true that certain automation and cloud technologies fit very nicely into a DevOps frame of mind, it's important to understand that employing DevOps means much more than just having the right technology, or writing automation scripts. DevOps is at its core a philosophy and a mindset that revolves around taking _lean manufacturing_ principles and applying them to an IT organization. DevOps is first and foremost about providing value to your Business through technology, but technology alone can't get you there.

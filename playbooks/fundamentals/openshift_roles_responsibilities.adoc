@@ -5,6 +5,7 @@ Red Hat Consulting
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 == Organizational Maturity Models when Adopting a PaaS platform

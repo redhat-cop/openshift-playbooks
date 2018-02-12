@@ -9,6 +9,7 @@ v1.0, 2017-08-29
 
 OpenShift Monitoring is an ever evolving problem space, with many layers, approaches, and complexities. We attempt to unpack them here.
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 == Overview

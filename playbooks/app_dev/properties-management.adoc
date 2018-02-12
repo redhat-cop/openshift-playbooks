@@ -6,6 +6,7 @@ v1.0, 2017-08-28
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 == Overview

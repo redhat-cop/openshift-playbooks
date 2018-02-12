@@ -10,6 +10,7 @@ v1.0, 2016-03-16
 
 
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 This document provides the ways to change brand images on web console, login page and template. From time to time, using
@@ -165,7 +166,7 @@ NOTE: The indent space is remarkably important. Sometimes, master server can not
 ```
 
 === Web console logo
-After login, it is allowed to modify anything on console style using extended `css/javascrpt/images`. https://docs.openshift.com/container-platform/latest/install_config/web_console_customization.html[The official document] explains it in detail, but it could take a little bit of time to configure due to yaml syntax of the master-config.xml file. Hence, I recommend following this chapter exactly, then you can see brand new logo without trial and error.
+After login, it is allowed to modify anything on console style using extended `css/javascrpt/images`. {docs_url}install_config/web_console_customization.html[The official document] explains it in detail, but it could take a little bit of time to configure due to yaml syntax of the master-config.xml file. Hence, I recommend following this chapter exactly, then you can see brand new logo without trial and error.
 
 .Workflow
 . Create CSS/Image folder

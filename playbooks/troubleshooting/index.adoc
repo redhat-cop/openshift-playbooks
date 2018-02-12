@@ -1,14 +1,18 @@
 ---
 ---
-
 = OCP Troubleshooting
+:toc: macro
+:toc-title:
+include::../../_includes/variables.adoc[]
+
+toc::[]
 
 * link:troubleshooting_guide{outfilesuffix}[Troubleshooting Guide]
 
 == Official OCP Troubleshooting docs
 
-* link:https://docs.openshift.com/container-platform/latest/admin_guide/sdn_troubleshooting.html[Troubleshooting OpenShift SDN]
-* link:https://docs.openshift.com/container-platform/latest/admin_guide/diagnostics_tool.html[Diagnostic Tool]
+* link:{docs_url}admin_guide/sdn_troubleshooting.html[Troubleshooting OpenShift SDN]
+* link:{docs_url}admin_guide/diagnostics_tool.html[Diagnostic Tool]
 
 == Red Hat Customer Portal Solutions
 

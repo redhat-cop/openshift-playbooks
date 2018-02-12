@@ -9,6 +9,7 @@ v1.0, 2015-09-15
 
 To Integrate Third Party application with OpenShift requires that you configure the application/service to make calls against the https://docs.openshift.com/enterprise/3.0/rest_api/openshift_v1.html[OpenShift] and https://docs.openshift.com/enterprise/3.0/rest_api/kubernetes_v1.html[Kubernetes] REST APIs. The following document provides resources and tips on how to accomplish this.
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 == Authentication
@@ -66,7 +67,7 @@ Like the *Basic API Request* a client certificate request, contains the followin
 
 It should be noted, that the *Authentication Header* is missing from the list above and replaced by a "certificate" and "key".
 
-When building an API call in this form, its best to use an https://docs.openshift.com/container-platform/latest/admin_guide/allocating_node_resources.html#system-resources-reported-by-node[example] that shows / highlights actual data, like the stats endpoint for a node.
+When building an API call in this form, its best to use an {docs_url}admin_guide/allocating_node_resources.html#system-resources-reported-by-node[example] that shows / highlights actual data, like the stats endpoint for a node.
 
 * Note: You need to replace NODE_NAME with a valid node name from `oc get nodes`.
 
