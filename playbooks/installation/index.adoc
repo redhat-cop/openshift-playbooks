@@ -832,7 +832,7 @@ cat /etc/yum.repos.d/ ...
 ----
 ansible -i c1-ocp.myorg.com/hosts OSEv3 -a 'subscription-manager register --username bob@acme.com --password='mypassword'
 ansible -i c1-ocp.myorg.com/hosts OSEv3 -a 'subscription-manager attach --pool=8a85f98144844aff014488d058bf15be'
-ansible -i c1-ocp.myorg.com/hosts OSEv3 -a 'subscription-manager repos --disable="*" --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.6-rpms" --enable="rhel-7-fast-datapath-rpms'
+ansible -i c1-ocp.myorg.com/hosts OSEv3 -a 'subscription-manager repos --disable="*" --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.7-rpms" --enable="rhel-7-fast-datapath-rpms'
 ----
 
 NOTE: The `rhel-7-fast-datapath-rpms` channel is only required for OpenShift Container Platform version 3.5 and later. For versions 3.4 and earlier, this channel should be omitted.
