@@ -6,6 +6,7 @@ v1.0, 2017-03-29
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 == This document is designed to ensure your OpenShift cluster nodes are ready for the installation of OpenShift via the advanced ansible installer

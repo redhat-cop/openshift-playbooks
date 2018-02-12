@@ -7,6 +7,7 @@ v2.0, 2016-08-18
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 
@@ -19,7 +20,7 @@ This article proposes a reference architecture for a Highly Available installati
 
 image::/images/ocp_smart_start_diagram.png[Smart Start Architecture]
 
-The diagram above depicts the architecture of the environment we will build. It consists of 3 Masters and 6 Nodes. We further subdivide the nodes into two groups. Three of them get designated to run OpenShift's router, image registry and other infrastructure services. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:https://docs.openshift.com/container-platform/latest/admin_guide/scheduling/index.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the link:#ansible-inventory-review[sample inventory file] at the bottom of this doc to see how those labels are assigned.
+The diagram above depicts the architecture of the environment we will build. It consists of 3 Masters and 6 Nodes. We further subdivide the nodes into two groups. Three of them get designated to run OpenShift's router, image registry and other infrastructure services. We refer to these as _Infrastructure Nodes_. The other three will run the actual application workloads. We call these _Application Nodes_ or _Compute Nodes_. In order to designate which nodes will do which job, we assign link:{docs_url}architecture/core_concepts/pods_and_services.html#labels[labels] to them, which will be used by the OpenShift/Kubernetes link:{docs_url}admin_guide/scheduling/index.html[scheduler] to assign certain workload types to each (i.e. "infra" workloads vs "primary" workloads). See the link:#ansible-inventory-review[sample inventory file] at the bottom of this doc to see how those labels are assigned.
 
 === Preparing the Installer
 
@@ -78,7 +79,7 @@ openshift_release=v3.7 <3>
 
 The OpenShift cluster needs to have 2 different network CIDRs defined in order to be able to assign pod and service IPs to its own components as well as the workloads running on it.  These two values are the Pod Network CIDR and the Services Network CIDR
 
-NOTE: Both IP ranges discussed below are _virtual_ ranges, visible only inside of link:https://docs.openshift.com/container-platform/latest/architecture/networking/sdn.html[OpenShift's SDN]. This is important as these IPs will not be layer 3 routable and therefore do not require allocation externally within routing/switching infrastructures. The only requirement for selecting these ranges is that they do not conflict with at _real_ address spaces that this cluster, or applications running in the platform may need to communicated with (i.e. ranges in which back-end databases, external services, etc. might occupy).
+NOTE: Both IP ranges discussed below are _virtual_ ranges, visible only inside of link:{docs_url}architecture/networking/sdn.html[OpenShift's SDN]. This is important as these IPs will not be layer 3 routable and therefore do not require allocation externally within routing/switching infrastructures. The only requirement for selecting these ranges is that they do not conflict with at _real_ address spaces that this cluster, or applications running in the platform may need to communicated with (i.e. ranges in which back-end databases, external services, etc. might occupy).
 
 ==== Pod Network CIDR
 
@@ -126,7 +127,7 @@ osm_cluster_network_cidr=10.128.0.0/14 <4>
 <3> Service address space
 <4> Pod address space
 
-More information on Pods & Services can be found in the link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/pods_and_services.html[OpenShift Documentation]
+More information on Pods & Services can be found in the link:{docs_url}architecture/core_concepts/pods_and_services.html[OpenShift Documentation]
 
 === DNS
 
@@ -273,12 +274,12 @@ openshift_master_htpasswd_users={'admin': '$apr1$6CZ4noKr$IksMFMgsW5e5FL0ioBhkk/
 
 In order to take full advantage of all OpenShift Container Platform has to offer, we will want to have the ability to provide external storage volumes to our containers for various purposes. The discussion of _which storage is best_ is a very complex topic, and largely out of scope of this install guide. However, we need to get some basics down in order to be able to continue with our cluster install, so we will provide the most brief overview we can.
 
-For a full deep dive into this topic, see the Official link:https://docs.openshift.com/container-platform/latest/architecture/additional_concepts/storage.html[Persistent Storage Architecture Docs] and link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/index.html[Configuration Guide].
+For a full deep dive into this topic, see the Official link:{docs_url}architecture/additional_concepts/storage.html[Persistent Storage Architecture Docs] and link:{docs_url}install_config/persistent_storage/index.html[Configuration Guide].
 
 At a high level, we can break down OpenShift's persistent storage support into two categories:
 
-- Block Storage: Volumes or disks that can be mounted to only one container at a time (known as `ReadWrtieOnce` mode). Examples of Block Storage are link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_cinder.html[OpenStack Cinder], link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_ceph_rbd.html[Ceph RBD], link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_aws.html[Amazon Elastic Block Storage], link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_iscsi.html[iSCSI], link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_fibre_channel.html[Fibre Channel]. Most database technologies perfer block storage.
-- Shared File Systems: Volumes that can be mounted for reading an writing by many containers at once (known as `ReadWriteMany` mode)/ At this writing the only two available Shared File Systems supported are link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_nfs.html[NFS] and link:https://docs.openshift.com/container-platform/latest/install_config/persistent_storage/persistent_storage_glusterfs.html[GlusterFS]. Many legacy application runtimes prefer this type of storage for sharing data on disk.
+- Block Storage: Volumes or disks that can be mounted to only one container at a time (known as `ReadWrtieOnce` mode). Examples of Block Storage are link:{docs_url}install_config/persistent_storage/persistent_storage_cinder.html[OpenStack Cinder], link:{docs_url}install_config/persistent_storage/persistent_storage_ceph_rbd.html[Ceph RBD], link:{docs_url}install_config/persistent_storage/persistent_storage_aws.html[Amazon Elastic Block Storage], link:{docs_url}install_config/persistent_storage/persistent_storage_iscsi.html[iSCSI], link:{docs_url}install_config/persistent_storage/persistent_storage_fibre_channel.html[Fibre Channel]. Most database technologies perfer block storage.
+- Shared File Systems: Volumes that can be mounted for reading an writing by many containers at once (known as `ReadWriteMany` mode)/ At this writing the only two available Shared File Systems supported are link:{docs_url}install_config/persistent_storage/persistent_storage_nfs.html[NFS] and link:{docs_url}install_config/persistent_storage/persistent_storage_glusterfs.html[GlusterFS]. Many legacy application runtimes prefer this type of storage for sharing data on disk.
 
 Most multi-tenant OpenShift deployments will need to provide at least one Persistent Storage provider in each category in order to cover application use cases. In addition to application use cases, several of the core services that ship with OpenShift also require persistent volumes. We will discuss those use cases in more detail as they pertain to the cluster install.
 
@@ -331,7 +332,7 @@ In addition to RPM content, OpenShift requires the ability to pull container ima
 
 One of the primary functions of OpenShift is to build applications and to produce new images. As part of the image building process, access to resources to satisfy the build process must be in available and include the source code (from a git repository) along with any dependencies the build process may need.
 
-OpenShift includes a number of application link:https://docs.openshift.com/container-platform/latest/dev_guide/templates.html[templates] to allow developer to quickly take advantage of the build and deployment features provided by the platform. The examples make use of repositories located on GitHub. As mentioned previously, access to these repositories must be available in order for their usability. In some cases where OpenShift is fully running in a disconnected environment, it may be necessary to synchronize the contents from GitHub to a repository accessible by the OpenShift cluster. Additional steps would need to be taken to either modify the default templates provided by OpenShift or include proper documentation for developer who are looking to leverage the default templates.
+OpenShift includes a number of application link:{docs_url}dev_guide/templates.html[templates] to allow developer to quickly take advantage of the build and deployment features provided by the platform. The examples make use of repositories located on GitHub. As mentioned previously, access to these repositories must be available in order for their usability. In some cases where OpenShift is fully running in a disconnected environment, it may be necessary to synchronize the contents from GitHub to a repository accessible by the OpenShift cluster. Additional steps would need to be taken to either modify the default templates provided by OpenShift or include proper documentation for developer who are looking to leverage the default templates.
 
 This topic is not covered in this guide.
 
@@ -512,7 +513,7 @@ ansible -i c1-ocp.myorg.com/hosts OSEv3 -m ping
 
 === Create Standalone Registry
 
-During the install, OpenShift will need pull images from Red Hat in order to spin up services like the Integrated Registry and Router as well as some base images for Pods, S2I builders, etc. In most cases, access to the link:https://registry.access.redhat.com[Red Hat Public Registry] is blocked or restricted by web proxies. The link:https://docs.openshift.com/container-platform/latest/install_config/install/disconnected_install.html#disconnected-syncing-images[Official Documentation] on how to work with this suggests pulling images to some internet accessible machine, and creating a `.tar` file to manually distribute them to all hosts in the cluster. While this works just fine, a more long term solution is to establish a standalone registry and seed it with the images that OpenShift will require. We can then point OpenShift to that standalone registry instead of Red Hat's and allow it to pull those images as it normally would. This allows us to establish a much simpler and more automatable process for updating those images when need be.
+During the install, OpenShift will need pull images from Red Hat in order to spin up services like the Integrated Registry and Router as well as some base images for Pods, S2I builders, etc. In most cases, access to the link:https://registry.access.redhat.com[Red Hat Public Registry] is blocked or restricted by web proxies. The link:{docs_url}install_config/install/disconnected_install.html#disconnected-syncing-images[Official Documentation] on how to work with this suggests pulling images to some internet accessible machine, and creating a `.tar` file to manually distribute them to all hosts in the cluster. While this works just fine, a more long term solution is to establish a standalone registry and seed it with the images that OpenShift will require. We can then point OpenShift to that standalone registry instead of Red Hat's and allow it to pull those images as it normally would. This allows us to establish a much simpler and more automatable process for updating those images when need be.
 
 We outline two options here for standing up a bootstrap registry. The first is to stand up a very simple docker registry which will have wide-open permissions (no authentication). The second, using OpenShift's Atomic Enterprise Registry, will allow us to require authentication and also provide a simple web console to help manage the images in the registry.
 
@@ -666,11 +667,11 @@ TODO
 
 ==== Custom Yum Repos
 
-The procedure for creating custom yum repos is documented in the link:https://docs.openshift.com/container-platform/latest/install_config/install/disconnected_install.html#disconnected-syncing-repos[Official Documentation]
+The procedure for creating custom yum repos is documented in the link:{docs_url}install_config/install/disconnected_install.html#disconnected-syncing-repos[Official Documentation]
 
 ==== Subscribing Directly to Red Hat
 
-The process for subscribing directly to Red Hat is covered in the link:https://docs.openshift.com/container-platform/latest/install_config/install/host_preparation.html#host-registration[Official Documentation].
+The process for subscribing directly to Red Hat is covered in the link:{docs_url}install_config/install/host_preparation.html#host-registration[Official Documentation].
 
 === Configure Load Balancer
 
@@ -841,7 +842,7 @@ NOTE: The `rhel-7-fast-datapath-rpms` channel is only required for OpenShift Con
 
 During the link:#provision-servers[Provision Servers] step of this guide, we provisioned all of our nodes (including the masters) with docker volumes attached as `/dev/vdb`. We'll now install and configure docker to use that volume for all local docker storage.
 
-NOTE: There are other options for configuring docker storage. They are outlined in the link:https://docs.openshift.com/container-platform/latest/install_config/install/host_preparation.html#configuring-docker-storage[Official Docs].
+NOTE: There are other options for configuring docker storage. They are outlined in the link:{docs_url}install_config/install/host_preparation.html#configuring-docker-storage[Official Docs].
 
 We can do this simply with a single ansible command across all of our nodes.
 

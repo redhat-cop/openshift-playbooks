@@ -10,6 +10,7 @@ v1.0, 2016-11-07
 Using OpenShift's ingress capabilities to provide access to services running on the cluster
 
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 
@@ -150,7 +151,7 @@ A PostgreSQL client can now be configured to connect directly to any node using 
 
 === Configuring the Service to be Highly Available
 
-Instead of connecting directly to individual node's, a more robust strategy for providing access services configured with external ip addresses is to utilize one of OpenShift's link:https://docs.openshift.com/container-platform/latest/admin_guide/high_availability.html[high availability strategies] by deploying ipfailover router. This allows cluster administrators the flexibility of defining the ingress points within a cluster, and ensuring the service is readily available. 
+Instead of connecting directly to individual node's, a more robust strategy for providing access services configured with external ip addresses is to utilize one of OpenShift's link:{docs_url}admin_guide/high_availability.html[high availability strategies] by deploying ipfailover router. This allows cluster administrators the flexibility of defining the ingress points within a cluster, and ensuring the service is readily available. 
 
 NOTE: Nodes that will have ipfailover routers deployed to them must be in the same Layer 2 switching domain for ARP broadcasts to communicate with switches the appropriate port the destination should flow.
 
@@ -158,7 +159,7 @@ CAUTION: Only 254 addresses can be allocated in a single VLAN due to the restric
 
 Since routers require privileged access to the host they are deployed to facilitate port binding, a separate service account called _ipfailover_ will be used to run the pod containing the router. 
 
-Preconfigure the service account to be a member of the _privileged_ link:https://docs.openshift.com/container-platform/latest/admin_guide/manage_scc.html[security context constraint] by executing the following command:
+Preconfigure the service account to be a member of the _privileged_ link:{docs_url}admin_guide/manage_scc.html[security context constraint] by executing the following command:
 
 [source]
 ----

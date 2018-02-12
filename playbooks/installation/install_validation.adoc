@@ -5,6 +5,7 @@ Eric Sauer <eric@redhat.com>
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 After having gone through the process of building an OpenShift environment, it's important to go through a few validation steps to ensure that all components are in proper working order. This document walks you through those steps.

@@ -7,6 +7,7 @@ v1.0, 2017-06-10
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 NOTE: This guide discusses the synchronization of groups defined in an LDAP server with OpenShift and is distinct from using an LDAP server to authenticate users to OpenShift. Please refer to the link:/playbooks/installation/ldap_integration{outfilesuffix}[LDAP Integration guide] for using an LDAP server as an identity provider to govern user authentication to OpenShift.
@@ -42,7 +43,7 @@ ca: my-ldap-ca-bundle.crt <4>
 url: ldaps://ldap.example.com/ <5>
 ----
 <1> The distinguished name (DN) of the user used to traverse the LDAP tree and validate users
-<2> The Password of the user used to traverse the LDAP tree to validate users. This value may also be provided in an link:https://docs.openshift.com/container-platform/latest/install_config/master_node_configuration.html#master-node-configuration-passwords-and-other-data[environment variable, external file, or encrypted file].
+<2> The Password of the user used to traverse the LDAP tree to validate users. This value may also be provided in an link:{docs_url}install_config/master_node_configuration.html#master-node-configuration-passwords-and-other-data[environment variable, external file, or encrypted file].
 <3> Whether to communicates securely with the LDAP server (true by default)
 <4> If communicating securely and the certificate is not in the system trust store, the location of the CA bundle
 <5> The protocol, hostname/IP address, and port of the LDAP server formatted as `scheme://host:port`
@@ -338,4 +339,4 @@ oc adm groups prune --sync-config=<configuration_file_location> --confirm
 
 == References
 
-link:https://docs.openshift.com/container-platform/latest/install_config/syncing_groups_with_ldap.html[Syncing Groups With LDAP]
+link:{docs_url}install_config/syncing_groups_with_ldap.html[Syncing Groups With LDAP]

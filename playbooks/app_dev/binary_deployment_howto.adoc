@@ -6,13 +6,14 @@ v1.0, 2016-07-13
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 Here I am going to walk through the steps to do a simple binary deployment to Tomcat 8 in OpenShift Container Platform. What you need to follow along are:
 
 - A WAR file
 - An OpenShift Environment running 3.1.1 or later
-- The `oc` (OpenShift Client) utility. link:https://docs.openshift.com/container-platform/latest/cli_reference/get_started_cli.html#installing-the-cli[Install Instructions here].
+- The `oc` (OpenShift Client) utility. link:{docs_url}cli_reference/get_started_cli.html#installing-the-cli[Install Instructions here].
 
 == Local Setup
 
@@ -87,7 +88,7 @@ Now, I'm about ready to deploy my app. A Binary Deployment in OpenShift consists
 So for the build step, I require a few things:
 
 - My local WAR file
-- The name of the link:https://docs.openshift.com/container-platform/latest/architecture/core_concepts/builds_and_image_streams.html#image-streams[ImageStream] for the image I want to deploy to. In this case, tomact 8.
+- The name of the link:{docs_url}architecture/core_concepts/builds_and_image_streams.html#image-streams[ImageStream] for the image I want to deploy to. In this case, tomact 8.
 
 Since I already have my WAR file ready, I just need to find the right ImageStream to use. By default, OpenShift stores all of it's ImageStreams in a globally readable project called `openshift`, so I'll just do a search there for `tomcat8`.
 

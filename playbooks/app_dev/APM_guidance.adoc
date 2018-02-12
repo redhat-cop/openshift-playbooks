@@ -6,6 +6,7 @@ v1.0, 2017-12-03
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 == Introduction
@@ -64,7 +65,7 @@ In this architecture the container image of the application that needs to be mon
 
 image::images/APMGuidance-ContainerAPMArch1.png[]
 
-Notice that this approach requires specifically crafted images and decreases the ability to reuse externally prepared images such as the https://docs.openshift.com/container-platform/latest/creating_images/s2i.html[s2i images] from Red Hat.
+Notice that this approach requires specifically crafted images and decreases the ability to reuse externally prepared images such as the {docs_url}creating_images/s2i.html[s2i images] from Red Hat.
 
 ==== Prometheus instrumentation
 
@@ -77,7 +78,7 @@ So the setup for this configuration is very minimal. On the other hand, Promethe
 
 === Agent deployed as a daemon set
 
-In this approach the agents are deployed as https://docs.openshift.com/container-platform/latest/dev_guide/daemonsets.html[daemon sets]. The containers in this daemon set are privileged and can inspect the other containers running on the same node. Once a new container starts, the agent sends all available information of that container to the metrics collector.
+In this approach the agents are deployed as {docs_url}dev_guide/daemonsets.html[daemon sets]. The containers in this daemon set are privileged and can inspect the other containers running on the same node. Once a new container starts, the agent sends all available information of that container to the metrics collector.
 
 image::images/APMGuidance-ContainerAPMArch2.png[]
 

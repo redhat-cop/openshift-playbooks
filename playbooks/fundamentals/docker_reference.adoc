@@ -7,6 +7,7 @@ Eric Sauer <esauer@redhat.com>
 
 A reference guide for Docker knowledge.
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 == Generic Docker Knowledge
@@ -26,5 +27,5 @@ toc::[]
 
 == OpenShift Specific Guidance for Images
 
-* link:https://docs.openshift.com/container-platform/latest/creating_images/guidelines.html[Guidelines for Creating OpenShift Images]
-* link:https://docs.openshift.com/container-platform/latest/creating_images/custom.html[Building Custom S2I Builder Images]
+* link:{docs_url}creating_images/guidelines.html[Guidelines for Creating OpenShift Images]
+* link:{docs_url}creating_images/custom.html[Building Custom S2I Builder Images]

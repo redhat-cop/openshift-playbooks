@@ -1,6 +1,10 @@
 ---
 ---
 = Log Management in OpenShift Enterprise
+:toc: macro
+:toc-title:
+include::../../_includes/variables.adoc[]
+toc::[]
 
 == Application Logs
 
@@ -31,7 +35,7 @@ Need some examples of forwarding OpenShift logs using rsyslog.
 
 ==== Centralizing Logs with Fluentd
 
-The OpenShift 3.0 Documentation provides a way to link:https://docs.openshift.com/container-platform/latest/install_config/aggregate_logging.html[use Fluentd to capture and centralize container logs]. This implementation is fairly limiting though as it doesn't fully parse the log files and capture metadata like namespaces, pods names, etc.
+The OpenShift 3.0 Documentation provides a way to link:{docs_url}install_config/aggregate_logging.html[use Fluentd to capture and centralize container logs]. This implementation is fairly limiting though as it doesn't fully parse the log files and capture metadata like namespaces, pods names, etc.
 
 ==== Full Metadata Supported Log Aggregation with Fluentd
 
@@ -66,10 +70,10 @@ global
   daemon
   log     127.0.0.1 local1
   tune.ssl.default-dh-param 2048
-  
+
   # turn on stats unix socket
   stats socket /var/lib/haproxy/stats
-  
+
 defaults
   mode  tcp
   log   global
@@ -86,34 +90,34 @@ defaults
   timeout http-keep-alive 10s
   timeout check 10s
   maxconn 20000
-  
+
 listen stats :9000
   mode http
   stats enable
   stats uri /
-  
+
 frontend front_route
   bind *:8443
   mode tcp
-  
+
   tcp-request inspect-delay 5s
   tcp-request content accept if { req_ssl_hello_type 1 }
-  
+
   # Here we use SNI to route the internal and external API requests
   acl subdomain_is_private req_ssl_sni -i <PRIVATE_MASTER_DNS_HOSTNAME>
   acl subdomain_is_public req_ssl_sni -i <PUBLIC_MASTER_DNS_HOSTNAME>
-  
+
   # Route to specific backends for each type of traffic
   use_backend atomic-openshift-api-private if subdomain_is_private
   use_backend back_external if subdomain_is_public
 
-# Loop back to atomic-openshift-api-public   
+# Loop back to atomic-openshift-api-public
 backend back_external
   mode tcp
   server public 127.0.0.1:9003
 
 
-# Provides SSL termination using the master-server.pem found on the OSE master  
+# Provides SSL termination using the master-server.pem found on the OSE master
 frontend atomic-openshift-api-public
   bind *:9003 ssl cert /etc/pki/tls/certs/master-server.pem ca-file /etc/pki/tls/certs/ca.pem
   # OPTIONAL: add client cert as a header in case it is needed.
@@ -122,12 +126,12 @@ frontend atomic-openshift-api-public
   mode http
   log global
   option httplog
-  
+
   # This is key to attribute API events to user sessions/tokens
   capture request header Authorization len 15
-  
+
   capture cookie ssn len 25
-  
+
 # The file ocp_master_ca.pem should be the master ca.pem found in /etc/origin/master
 backend atomic-openshift-api-public
   balance source
@@ -135,7 +139,7 @@ backend atomic-openshift-api-public
   server master0 <MASTER1_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ocp_master_ca.pem
   server master1 <MASTER2_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ocp_master_.pem
   server master2 <MASTER3_IP>:8443 ssl check ca-file /etc/pki/tls/certs/ocp_master_.pem
-  
+
 backend atomic-openshift-api-private
   balance source
   mode tcp
@@ -156,7 +160,7 @@ You may create a seperate encryption certificate pair using:
   --key='/etc/openshift/master/haproxyca.key' \
   --name='openshift-haproxy-signer@1432232228' \
   --serial='/etc/openshift/master/haproxyca.serial.txt'
-  
+
 # oadm create-api-client-config \
   --certificate-authority='/etc/openshift/master/HAproxySigner.crt' \
   --client-dir='/etc/openshift/master/haproxy' \
@@ -166,7 +170,7 @@ You may create a seperate encryption certificate pair using:
   --user='system:haproxy'
 ----
 
-If not already set, add the http_listen context to that port. 
+If not already set, add the http_listen context to that port.
 
 ----
 # semanage port -a -t http_port -p tcp 9003

@@ -7,6 +7,7 @@ v1.0, 2015-10-05
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 This document provides strategies for promoting an application between various OpenShift environments. The level of segregation of how environments are divided are at the discretion of the user. It is out of the scope of this particular document on how the application is built and packed into the initial image

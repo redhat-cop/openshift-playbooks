@@ -7,11 +7,12 @@ v1.0, 2017-05-10
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 == Overview
 
-The OpenShift Container Platform provides a number of features to support Continuous Integration and Continuous Delivery. Aside from its native build and deployment capabilities, OpenShift contains tight integration with the link:https://jenkins.io/[Jenkins Continuous Integration server]. Not only can users deploy supported instances within the platform, but they can take advantage of such features such as first class support for the Jenkins "pipeline as code concept" as well as leveraging dynamically allocated slave instances for the execution of Jenkins jobs. A full list of features that are provided by the provided image can be found link:https://docs.openshift.com/container-platform/latest/using_images/other_images/jenkins.html[here]. While running the entire Jenkins ecosystem within OpenShift simplifies the configuration and management of a CI environment, many organizations have an existing Jenkins environment which they would like to make use of.
+The OpenShift Container Platform provides a number of features to support Continuous Integration and Continuous Delivery. Aside from its native build and deployment capabilities, OpenShift contains tight integration with the link:https://jenkins.io/[Jenkins Continuous Integration server]. Not only can users deploy supported instances within the platform, but they can take advantage of such features such as first class support for the Jenkins "pipeline as code concept" as well as leveraging dynamically allocated slave instances for the execution of Jenkins jobs. A full list of features that are provided by the provided image can be found link:{docs_url}using_images/other_images/jenkins.html[here]. While running the entire Jenkins ecosystem within OpenShift simplifies the configuration and management of a CI environment, many organizations have an existing Jenkins environment which they would like to make use of.
 
 This article describes the process for integrating an existing Jenkins instance located outside of the OpenShift cluster with OpenShift to be able to take advantage of many of the Jenkins related features provided by the platform.
 
@@ -238,7 +239,7 @@ As of OpenShift version 3.5, the following slave images are available:
 
 |=========================================================
 
-Additional information on the Jenkins slaves provided by OpenShift can be found link:https://docs.openshift.com/container-platform/latest/using_images/other_images/jenkins.html#using-the-jenkins-kubernetes-plug-in-to-run-jobs[here].
+Additional information on the Jenkins slaves provided by OpenShift can be found link:{docs_url}using_images/other_images/jenkins.html#using-the-jenkins-kubernetes-plug-in-to-run-jobs[here].
 
 To create a new pod template, within the _openshift_ cloud previously configured, select *Add Pod Template* and then *Kubernetes Pod Template*
 

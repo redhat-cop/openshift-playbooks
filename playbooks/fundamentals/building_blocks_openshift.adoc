@@ -7,6 +7,7 @@ Eric Sauer <esauer@redhat.com>
 
 A guide to the pieces that make up Kubernetes and OpenShift
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 == Concepts & Terminology

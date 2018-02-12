@@ -7,6 +7,7 @@ v2.0, 2016-08-18
 :toc: macro
 :toc-title:
 
+include::../../_includes/variables.adoc[]
 toc::[]
 
 _This is a followup to link:/playbooks/installation/[Installing a Highly Available OpenShift Cluster]. Many assumptions are made based on the information in that guide. If you have not yet been through this guide, we recommend doing so before continuing._
@@ -148,7 +149,7 @@ openshift_hosted_registry_routecertificates={"certfile": "/path/to/registry.apps
 
 ==== Other components
 
-For other components like Logging & Metrics, the approach for fronting services with custom certs can be found in link:https://docs.openshift.com/container-platform/latest/admin_solutions/certificate_management.html[Administrator Solutions for Certificate Management].
+For other components like Logging & Metrics, the approach for fronting services with custom certs can be found in link:{docs_url}admin_solutions/certificate_management.html[Administrator Solutions for Certificate Management].
 
 ==== Run Ansible
 
@@ -162,9 +163,9 @@ ansible-playbook -i c1-ocp.myorg.com/hosts /usr/share/ansible/openshift-ansible/
 
 Additional information and reading can be found in the following places.
 
-* link:https://docs.openshift.com/container-platform/latest/install_config/certificate_customization.html[Official Docs on Certificate Customization]
-* link:https://docs.openshift.com/container-platform/latest/install_config/redeploying_certificates.html[Official Docs on Redeploying Expired Certificates]
-* link:https://docs.openshift.com/container-platform/latest/admin_solutions/certificate_management.html[Official Docs on Certificate Management for Services]
+* link:{docs_url}install_config/certificate_customization.html[Official Docs on Certificate Customization]
+* link:{docs_url}install_config/redeploying_certificates.html[Official Docs on Redeploying Expired Certificates]
+* link:{docs_url}admin_solutions/certificate_management.html[Official Docs on Certificate Management for Services]
 
 == What's Next?
 

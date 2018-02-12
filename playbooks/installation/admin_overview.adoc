@@ -6,7 +6,7 @@ v1.0, 2016-05-17
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
 :toc: macro
 :toc-title:
-
+include::../../_includes/variables.adoc[]
 toc::[]
 
 == Overview
@@ -56,7 +56,7 @@ OpenVSwitch is required on every host in order to support the OpenShift SDN comm
 
 IMPORTANT: Note that the `openvswitch` service is _disabled_ in `systemd`. This is because it is a dependency of the OpenShift Node service, and should not be started/stopped independently of that service.
 
-NOTE: For an overview of the OpenShift SDN, see the link:https://docs.openshift.com/container-platform/latest/architecture/networking/sdn.html[OpenShift SDN Architectural Overview]. For help troubleshooting SDN issues, see link:https://docs.openshift.com/container-platform/latest/admin_guide/sdn_troubleshooting.html[Troubleshooting the OpenShift SDN]
+NOTE: For an overview of the OpenShift SDN, see the link:{docs_url}architecture/networking/sdn.html[OpenShift SDN Architectural Overview]. For help troubleshooting SDN issues, see link:{docs_url}admin_guide/sdn_troubleshooting.html[Troubleshooting the OpenShift SDN]
 
 ----
 # systemctl status openvswitch
@@ -99,7 +99,7 @@ In addition to the sofware that runs on all nodes, OpenShift masters include som
 
 Depending on the configuration of your cluster, these components may be deployed in different ways. Here we break those down.
 
-NOTE: The `oc` client tools are installed as a single binary on all masters. They can additionally be downloaded to administrators' and developers' local machines to be used remotely. Instructions for installing client tools can be found in link:https://docs.openshift.com/enterprise/latest/cli_reference/get_started_cli.html[Getting Started with the CLI].
+NOTE: The `oc` client tools are installed as a single binary on all masters. They can additionally be downloaded to administrators' and developers' local machines to be used remotely. Instructions for installing client tools can be found in link:{docs_url}cli_reference/get_started_cli.html[Getting Started with the CLI].
 
 ==== Single Master
 
