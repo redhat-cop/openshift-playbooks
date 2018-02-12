@@ -7,7 +7,9 @@ openshift_cluster_content:
     file: "{{ inventory_dir }}/../projects/projects-prod.yml"
     file_action: create
 - object: policy
-  content_dir: "{{ inventory_dir }}/../policy"
+  content:
+  - name: "Apply policy directory"
+    file: "{{ inventory_dir }}/../policy/"
 - object: deployments
   content:
   - name: "dev-deployment"
