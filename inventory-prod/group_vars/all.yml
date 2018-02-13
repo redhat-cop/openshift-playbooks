@@ -1,0 +1,18 @@
+---
+
+openshift_cluster_content:
+- object: projectrequest
+  content:
+  - name: "Projects"
+    file: "{{ inventory_dir }}/../projects/projects-prod.yml"
+    file_action: create
+- object: policy
+  content:
+  - name: "Apply policy directory"
+    file: "{{ inventory_dir }}/../policy/"
+    namespace: field-guides-prod
+- object: deployments
+  content:
+  - name: "dev-deployment"
+    template: "{{ inventory_dir }}/../deploy/template.yml"
+    params: "{{ inventory_dir }}/../deploy/prod/params"

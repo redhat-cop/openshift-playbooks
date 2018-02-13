@@ -1,0 +1,40 @@
+---
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  groupNames: null
+  kind: RoleBinding
+  metadata:
+    creationTimestamp: null
+    name: admin
+  roleRef:
+    name: admin
+  subjects:
+  - kind: User
+    name: esauer
+  - kind: User
+    name: ablock
+  - kind: User
+    name: rdebeasi
+  - kind: User
+    name: jburck
+  userNames:
+  - esauer
+  - ablock
+  - rdebeasi
+  - jburck
+- apiVersion: v1
+  groupNames: null
+  kind: RoleBinding
+  metadata:
+    creationTimestamp: null
+    name: edit
+  roleRef:
+    name: edit
+  subjects:
+  - kind: ServiceAccount
+    name: promoter
+    namespace: field-guides-prod
+  userNames:
+  - system:serviceaccount:field-guides-prod:promoter
