@@ -10,6 +10,7 @@ openshift_cluster_content:
   content:
   - name: "Apply policy directory"
     file: "{{ inventory_dir }}/../policy/"
+    namespace: field-guides-prod
 - object: deployments
   content:
   - name: "dev-deployment"

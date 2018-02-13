@@ -67,6 +67,7 @@ objects:
   kind: ImageStream
   metadata:
     name: s2i-gows
+    namespace: ${NAMESPACE}
   spec:
     dockerImageRepository: "docker.io/redhatcop/s2i-gows"
 parameters:
