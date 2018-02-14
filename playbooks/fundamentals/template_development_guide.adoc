@@ -13,7 +13,7 @@ toc::[]
 
 link:https://docs.openshift.com/container-platform/3.7/dev_guide/templates.html[OpenShift Templates] are best known as the way in which the OpenShift Web Console is populated with quickstart applications and other content. However, they are also a very powerful tool that, used thoughtfully, can be the building block of an _Infrastructure as Code_ solution for managing many aspects of cluster and application state.
 
-In this guide, we dive deep into the usage and makeup of OpenShift templates, covering first how they can be used, then how to write custom templates, and finally, how to put all of this knowledge together to create powerful automation workflows for managing workloads in OpenShift.
+In this guide, we dive deep into the usage and makeup of OpenShift templates, covering first how they can be used, then how to write them, and finally, how to put all of this knowledge together to create powerful automation workflows for managing workloads in OpenShift.
 
 == OpenShift Template Discovery
 
@@ -681,11 +681,44 @@ Similarly to the previous point. It's important to consider _when_ a template wo
 
 == Templates & Infrastructure as Code (IaC)
 
-Templates are the 
+Templates give us a simple, yet powerful vehicle upon which we can build sophisticated and consistent automation of nearly everything we do with OpenShift. In this section we propose some essential components of an automated workflow around OpenShift, and introduce an Ansible framework that can be used to implement them.
 
 === Source Control for Templates
 
+Firstly, your templates should be version controlled.
+
+Say for instance, that we have a production cluster onto which we need to onboard applications in a standardized way. We might develop a template for the _projects_ that we will create, including standard `ServiceAccounts` to use for automation and `RoleBindings` to grant the proper privileges to user groups. Additionally, we might want to _deploy_ some common infrastructure (such as Jenkins) to each project, for which we would create another template. For each project that will be instantiated, we will also create a parameters file that can be fed to the template to customize it for each project.
+
+A directory structure for the _infrastructure as code_ repo for this cluster might look like:
+
+[source,bash]
+----
+/repository_root/
+  REAMDE.md
+  ./files/
+    ./projects/
+      project-template.yml
+      project1.params
+      project2.params
+    ./policy/
+      ...YAML files such as ClusterRoles, RoleBindings, StoragClasses etc...
+    ./deploy/
+      jenkins-template.yml
+      ./project1/
+        dev.params
+        stage.params
+        prod.params
+      ./project2/
+        dev.params
+        stage.params
+        prod.params
+----
+
+The link:https://github.com/redhat-cop/cluster-lifecycle[cluster-lifecycle] repo represents a sensible structure for an _infrastructure as code_ repository for an OpenShift cluster.
+
 === Use oc apply for repeatable process
+
+Once we have our templates in version control
 
 This presentation from KubeCon 2017 provides more interesting deep dives into using oc apply.
 
