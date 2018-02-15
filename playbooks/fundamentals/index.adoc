@@ -9,3 +9,14 @@ The Fundamentals playbook is designed to provide you with resources to begin edu
 * link:./docker_reference{outfilesuffix}[Docker Reference Guide]
 * link:./building_blocks_openshift{outfilesuffix}[Building Blocks of OpenShift]
 * link:./devops_reading_list{outfilesuffix}[DevOps Reference Guide]
+
+* link:https://developers.redhat.com/cheat-sheets/red-hat-openshift-container-platform/[OpenShift Container Platform Cheat Sheet]
+* link:https://developers.redhat.com/promotions/docker-cheatsheet/[Containers Cheat Sheet]
+
+* link:https://www.openshift.com/promotions/ebook.html[Getting Started with OpenShift]
+* link:https://www.openshift.com/promotions/devops-with-openshift.html[DevOps with OpenShift]
+* link:https://www.openshift.com/promotions/for-developers.html[OpenShift for Developers]
+* link:https://www.openshift.com/promotions/docker-security.html[Docker Security: Using Containers Safely in Production]
+* link:https://www.openshift.com/promotions/kubernetes.html[Kubernetes: Scheduling the Future at Cloud Scale]
+
+* link:https://learn.openshift.com/[OpenShift Interactive Learning Portal]
