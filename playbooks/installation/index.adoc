@@ -98,7 +98,7 @@ Both the openshift_portal_net and the osm_cluster_network_cidr will default to t
 ==== Host Subnet Length
 *Ansible Host File Variable:* `osm_host_subnet_length=9`
 
-Each OpenShift node will require its own subnet which allows the pods to obtain an IP in that range.  This variable in the ansible hosts file sets that subnet.  The 9 in the example above represents a /23 subnet or 2 class C subnets or also described as 510 usable IP addresses.  What does this have to do with the /14 cluster network mentioned above.  It all boils down to a network math problem.  We have a total number of IP addresses to use that is established by the /14 refereced above.  So now to the math:  262,142 (total IP) / 510 (total IP per node) = ~514 total nodes in your cluster that will run a total of 510 pods.
+Each OpenShift node will require its own subnet which allows the pods to obtain an IP in that range.  This variable in the ansible hosts file sets that subnet.  The 9 in the example above represents a /23 subnet or 2 class C subnets or also described as 510 usable IP addresses.  What does this have to do with the /14 cluster network mentioned above.  It all boils down to a network math problem.  We have a total number of IP addresses to use that is established by the /14 refereced above.  So now to the math:  262,142 (total IP) / 510 (total IP per node) = ~514 total nodes in your cluster that will run a total of 510 pods on each node in your cluster.
 
 ==== Master Service Ports
 
