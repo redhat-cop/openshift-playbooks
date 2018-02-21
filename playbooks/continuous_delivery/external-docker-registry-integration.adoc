@@ -48,7 +48,7 @@ Restart the docker daemon for the new configurations to take effect
 systemctl restart docker
 ----
 
-== Accessing Secure Registrises
+== Accessing Secure Registries
 
 Secure external registries can be integrated into the OpenShift ecosystem. Through the use of secrets, users can provide the platform with the necessary credentials to access secured resources.
 
@@ -115,14 +115,35 @@ The following is a portion of a *BuildConfig* that pushes an image called *sampl
 },
 ----
 
-If the registry is protected by authentication, add a *secret* containing the credentials to the secure registry as described in an earlier section and add the secret to the *builder* service account as shown below:
+If the registry is protected by authentication, a secret must be added to the *builder* service account which is included in each OpenShift project and is used to execute builds on the platform. Once the *secret* containing the credentials to the secure registry has been created as described in an earlier section, add the newly created secret to the *builder* service account as shown below:
 
 [source]
 ----
 oc secrets add serviceaccount/builder secrets/external-registry
 ----
 
-Add the name of the secret to the BuildConfig
+Confirm the secret for the external registry has been added successfully to the *builder* service account:
+
+[source]
+----
+oc describe serviceaccount builder
+
+Name:		builder
+Labels:		<none>
+Annotations:	<none>
+
+Image pull secrets:	builder-dockercfg-sk6bc
+
+Mountable secrets: 	builder-token-3ppg8
+                   	builder-dockercfg-sk6bc
+                   	external-registry <1>
+
+Tokens:            	builder-token-3ppg8
+                   	builder-token-4pxkl
+----
+<1> Secret containing credentials for storing images in the protected external registry
+
+To push resulting images produced by the build process to an authenticated registry, a new section called *pushSecret* must be added to the BuildConfig containing the name of the secret:
 
 [source]
 ----
@@ -275,6 +296,27 @@ oc secrets add serviceaccount/default secrets/external-registry --for=pull
 ----
 
 The `--for=pull` option signifies that the secret will be added as a pull secret within the service account
+
+Confirm the secret for the external registry has been added successfully to the *default* service account:
+
+[source]
+----
+oc describe serviceaccount default
+
+Name:		default
+Labels:		<none>
+Annotations:	<none>
+
+Tokens:            	default-token-kssb4
+                   	default-token-xqxcf
+
+Image pull secrets:	default-dockercfg-4rq5x
+                   	external-registry <1>
+
+Mountable secrets: 	default-token-kssb4
+                   	default-dockercfg-4rq5x
+----
+<1> Secret containing credentials for pulling images from the protected external registry
 
 ==== Importing ImageStreams from an Authenticated Registry
 
