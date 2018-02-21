@@ -90,10 +90,13 @@ Many OpenShift components expose HTTP based endpoints for interrogating the heal
 
 == Ensuring a cluster has adequate capacity
 
-.Feedback or Contribution Needed
-****
-Need a cluster capacity monitoring guide.
-****
+The OpenShift Blog has published an excellent blog series that addresses the issue of cluster capacity management.
+
+link:https://blog.openshift.com/full-cluster-capacity-management-monitoring-openshift/[The first post in this series] addresses the inner workings of Quotas, Requests, and Limits, and how they work together to provide information on cluster capacity.
+
+link:https://blog.openshift.com/full-cluster-part-2-protecting-nodes/[The second post] dives into how OpenShift deals with resource overcomitment. It includes guidance on how to properly protect nodes from issues related to resources strain.
+
+link:https://blog.openshift.com/full-cluster-part-3-capacity-management/[The third post about cluster capacity] really gets into estimating workloads, measuring how accurate your resources estimates are, and finally how to properly size your cluster based on the first two.
 
 == What's Next?
 
