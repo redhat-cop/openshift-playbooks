@@ -85,7 +85,7 @@ The edit role, which gives users the ability to view and modify most resources w
 # oc export clusterrole edit > customrole.yaml
 ----
 
-Next, open the _clusterrole.yaml_ file produced by the prior command to configure the new clusterrole without terminal functionality.
+Next, open the _customrole.yaml_ file produced by the prior command to configure the new clusterrole without terminal functionality.
 
 Give the new ClusterRole a name, such as edit_without_rsh
 
@@ -132,7 +132,7 @@ Finally create the new ClusterRole within OpenShift
 
 [source]
 ----
-# oc create -f clusterrole.yaml
+# oc create -f customrole.yaml
 ----
 
 === Apply and Test the new ClusterRole
