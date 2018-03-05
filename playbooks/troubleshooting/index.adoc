@@ -8,6 +8,8 @@ include::../../_includes/variables.adoc[]
 
 toc::[]
 
+This OpenShift troubleshooting guide is designed to provide you with links to resources for resolutions and issue on Container & PaaS technologies.
+
 == OpenShift Troubleshooting Guidance
 
 * link:troubleshooting_guide{outfilesuffix}[Troubleshooting guidance] that comes straight from the field of customers, consultants, and users of OpenShift.
@@ -39,11 +41,13 @@ Official Red Hat verified solutions and knowledge base articles with many helpfu
 * link:https://access.redhat.com/solutions/2045283[OpenShift Container Platform: internal networking issue^] article discusses internal OpenShift network issues for when target pod is not running, OVS SDN errors, hostsubnets has outdated IP address, master(s) running other DNS service than OpenShift internal SkyDNS, and includes a `openshift-sdn` debug script.
 
 === How To's
+Official Red Hat verified solutions and knowledge base how-to articles on specific use cases and troubleshooting OpenShift. These how-to articles will require a redhat.com username and password. If you do not have a redhat.com user account, you may link:https://www.redhat.com/wapps/ugc/register.html[register for free^].
+
 * link:https://access.redhat.com/solutions/2068843[How to verify OpenShift Container Platform has been deployed successfully^]
 * link:https://access.redhat.com/solutions/2216951[Configure log levels for OpenShift Container Platform^]
 * link:https://access.redhat.com/solutions/2178611[How to force a pod to schedule to a specific node in OpenShift Container Platform^]
 
-=== OpenShift Cheat Sheet (PDF)
+== OpenShift Cheat Sheet (PDF)
 * link:https://access.redhat.com/sites/default/files/attachments/openshift_container_platform_support_cheatsheet_0.pdf[OpenShift Container Platform Support Cheat Sheet^]
 
 == OCP Release Notes Known Issues
@@ -58,6 +62,8 @@ Official Red Hat verified solutions and knowledge base articles with many helpfu
 * link:https://docs.openshift.com/enterprise/3.0/whats_new/ose_3_0_release_notes.html#known-issues[OCP 3.0 Known Issues^], new features, changes, and bug fixes that pertain to OpenShift Container Platform 3.0 are included in this topic.
 
 == OpenShift Container Platform FAQs
+If you have Red Hat subscriptions for OpenShift, the following frequently asked questions links may help you find the desired information.
+
 * link:https://access.redhat.com/solutions/1542293[What basic information should I provide on a support case?^]
 * link:https://access.redhat.com/sites/default/files/attachments/openshift_get_the_most_out_of_support.pdf[How to get the most out of your Red Hat OpenShift Container Platform Support?^]
 * link:https://access.redhat.com/articles/2176281[What versions of different OpenShift Container Platform components have been tested?^]
