@@ -9,3 +9,4 @@ The Fundamentals playbook is designed to provide you with resources to begin edu
 * link:./docker_reference{outfilesuffix}[Docker Reference Guide]
 * link:./building_blocks_openshift{outfilesuffix}[Building Blocks of OpenShift]
 * link:./devops_reading_list{outfilesuffix}[DevOps Reference Guide]
+* link:./dns_deep_dive{outfilesuffix}[DNS Deep Dive]
