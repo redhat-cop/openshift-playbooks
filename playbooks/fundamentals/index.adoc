@@ -17,6 +17,7 @@ This OpenShift and container fundamentals guide is designed to provide you with 
 === Cheat Sheets
 
 * link:https://developers.redhat.com/cheat-sheets/red-hat-openshift-container-platform/[OpenShift Container Platform Cheat Sheet^]
+* link:https://developers.redhat.com/promotions/kubernetes-cheatsheet/[Kubernetes Cheat Sheet^]
 * link:https://developers.redhat.com/promotions/docker-cheatsheet/[Containers Cheat Sheet^]
 
 
