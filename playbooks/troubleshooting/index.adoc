@@ -12,12 +12,19 @@ This OpenShift troubleshooting guide is designed to provide you with links to re
 
 == OpenShift Troubleshooting Guidance
 
+The following troubleshooting guides are directly from the field as well as the official OpenShift documentation.
+
 * link:troubleshooting_guide{outfilesuffix}[Troubleshooting guidance] that comes straight from the field of customers, consultants, and users of OpenShift.
 
 === Official OCP Troubleshooting docs
 
 * link:{docs_url}admin_guide/sdn_troubleshooting.html[OpenShift SDN troubleshooting^] guidance for debugging various components that reside on the SDN.
-
+* link:{docs_url}install_config/aggregate_logging.html#troubleshooting-kibana[OpenShift Kibana troubleshooting^] directions for solving common issues with OpenShift Kibana.
+* link:{docs_url}install_config/registry/deploy_registry_existing_clusters.html#registry-console-troubleshooting[OpenShift registry console troubleshooting^] guidance for debugging various issues with the OpenShift registry console.
+* link:{docs_url}admin_guide/ipsec.html#admin-guide-ipsec-troubleshooting[OpenShift IPSec troubleshooting^] recommendations for debugging issues with enabling IPSec for OpenShift.
+* link:{docs_url}admin_guide/ipsec.html#admin-guide-ipsec-troubleshooting[OpenShift CLI debugging and troubleshooting^] directions for debugging and troubleshooting issues with OpenShift CLI operations.
+* link:{docs_url}dev_guide/builds/build_troubleshooting.html[OpenShift build troubleshooting^] guidance for resolving issues with OpenShift builds.
+* link:{docs_url}dev_guide/secrets.html#secrets-troubleshooting[OpenShift secrets troubleshooting^] directions for resolving issues with OpenShift secrets.
 * link:{docs_url}admin_guide/diagnostics_tool.html[OpenShift diagnostic tool^] usage and information on running diagnostics against an OpenShift cluster.
 
 === Red Hat Customer Portal Solutions
@@ -48,9 +55,14 @@ Official Red Hat verified solutions and knowledge base how-to articles on specif
 * link:https://access.redhat.com/solutions/2178611[How to force a pod to schedule to a specific node in OpenShift Container Platform^]
 
 == OpenShift Cheat Sheet (PDF)
+
+Commands to manage an application’s lifecycle including resource management, cluster management, operational commands and more.
+
 * link:https://access.redhat.com/sites/default/files/attachments/openshift_container_platform_support_cheatsheet_0.pdf[OpenShift Container Platform Support Cheat Sheet^]
 
 == OCP Release Notes Known Issues
+
+The following release notes for each verion of OpenShift Container Platform summarizes all new features, major corrections from the previous version, and any known bugs upon general availability.
 
 * link:https://docs.openshift.com/container-platform/3.7/release_notes/ocp_3_7_release_notes.html#ocp-37-known-issues[OCP 3.7 Known Issues^], new features, changes, and bug fixes that pertain to OpenShift Container Platform 3.7 are included in this topic.
 * link:https://docs.openshift.com/container-platform/3.6/release_notes/ocp_3_6_release_notes.html#ocp-36-known-issues[OCP 3.6 Known Issues^], new features, changes, and bug fixes that pertain to OpenShift Container Platform 3.6 are included in this topic.
