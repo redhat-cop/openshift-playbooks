@@ -1,11 +1,38 @@
 ---
 ---
 = OpenShift & Container Fundamentals
+:linkattrs:
+:toc: macro
+:toc-title:
+include::../../_includes/variables.adoc[]
 
-The Fundamentals playbook is designed to provide you with resources to begin educating on Container & PaaS technologies.
+This OpenShift and container fundamentals guide is designed to provide you with resources to begin educating yourself on Container & PaaS technologies.
 
-== Resource List
+=== Resource List
 
-* link:./docker_reference{outfilesuffix}[Docker Reference Guide]
-* link:./building_blocks_openshift{outfilesuffix}[Building Blocks of OpenShift]
-* link:./devops_reading_list{outfilesuffix}[DevOps Reference Guide]
+* link:./docker_reference{outfilesuffix}[Containers Reference Guide] has information on docker concepts, building containers, and specific guidance for OpenShift.
+* link:./building_blocks_openshift{outfilesuffix}[Building Blocks of OpenShift] is a guide to learn terminology, concepts, and the various OpenShift components.
+* link:./devops_reading_list{outfilesuffix}[DevOps Reference Guide] is an introduction to DevOps and resources for any experience level.
+
+=== Cheat Sheets
+
+* link:https://developers.redhat.com/cheat-sheets/red-hat-openshift-container-platform/[OpenShift Container Platform Cheat Sheet^]
+* link:https://developers.redhat.com/promotions/kubernetes-cheatsheet/[Kubernetes Cheat Sheet^]
+* link:https://developers.redhat.com/promotions/docker-cheatsheet/[Containers Cheat Sheet^]
+
+
+=== Reading List
+
+* link:https://www.openshift.com/promotions/ebook.html[Getting Started with OpenShift^] to learn the steps necessary to build, deploy, and host a complete real-world application on OpenShift, without having to read long, detailed explanations of the technologies involved.
+* link:https://www.openshift.com/promotions/devops-with-openshift.html[DevOps with OpenShift^] to learn how a container-centric approach from OpenShift can help your team deliver quality software through a self-service view of IT infrastructure.
+* link:https://www.openshift.com/promotions/for-developers.html[OpenShift for Developers^] to learn how to use OpenShift and the Wildfly application server to build and then immediately deploy a Java application.
+* link:https://www.openshift.com/promotions/docker-security.html[Docker Security: Using Containers Safely in Production^] to use Docker safely, in both production and development, you need to be aware of the potential security issues and the major tools and techniques for securing container-based systems.
+* link:https://www.openshift.com/promotions/kubernetes.html[Kubernetes: Scheduling the Future at Cloud Scale^] get an introduction to core Kubernetes concepts and components.
+
+////
+commented out due to travis build failure:
+  *  External link https://learn.openshift.com/ failed: response code 0 means something's wrong.
+
+=== Learning
+// * link:https://learn.openshift.com/[OpenShift Interactive Learning Portal^] to experiment, learn OpenShift and see how we can help solve real-world problems.
+////

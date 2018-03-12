@@ -2,30 +2,41 @@
 ---
 = Docker Reference Guide
 Eric Sauer <esauer@redhat.com>
+:linkattrs:
 :toc: macro
 :toc-title:
 
-A reference guide for Docker knowledge.
+A reference guide for container knowledge.
 
 include::../../_includes/variables.adoc[]
 toc::[]
 
-== Generic Docker Knowledge
+== Generic Containers Knowledge
 
-=== Intro to Docker Concepts
+=== Intro to Container Concepts
 
- * link:https://access.redhat.com/documentation/en/red-hat-enterprise-linux-atomic-host/version-7/getting-started-with-containers/[Getting Started with Containers] (Red Hat)
+ * link:https://access.redhat.com/documentation/en/red-hat-enterprise-linux-atomic-host/version-7/getting-started-with-containers/[Getting Started with Containers^] (Red Hat)
+ * link:https://developers.redhat.com/blog/2018/02/22/container-terminology-practical-introduction/[Introduction to Linux container terminology^] (Red Hat Developer Blog)
+ * link:https://developers.redhat.com/blog/2014/05/15/practical-introduction-to-docker-containers/[A Practical Introduction to Containers^] (Red Hat Developer Blog)
+
 
 === Building Images
 
-* link:http://developerblog.redhat.com/2016/01/13/a-practical-introduction-to-docker-container-terminology/[A Practical Introduction to Docker Container Terminology] (Red Hat Blogs)
-* link:http://www.projectatomic.io/docs/docker-building-images/[Building Docker Images] (Project Atomic)
+* link:http://www.projectatomic.io/docs/docker-building-images/[Building Docker Images^] (Project Atomic)
+* link:http://www.projectatomic.io/docs/docker-image-author-guidance/[Project Atomic Guidance for Container Image Authors^] (Project Atomic)
 
 === Priveleged Containers
 
-* link:https://www.youtube.com/watch?v=dM2Fc53Dtd4[Super Priveleged Containers] (Red Hat Summit Video)
+* link:https://www.youtube.com/watch?v=dM2Fc53Dtd4[Super Priveleged Containers^] (Red Hat Summit Video) where Dan Walsh
+
+== Docker Specific Guidance for Images
+
+* link:https://docs.docker.com/engine/docker-overview/[Docker basics^] (Docker)
+* link:https://docs.docker.com/get-started/[Getting started with Docker^] (Docker)
+* link:https://docs.docker.com/engine/reference/builder/[Dockerfile reference^] (Docker)
+
 
 == OpenShift Specific Guidance for Images
 
-* link:{docs_url}creating_images/guidelines.html[Guidelines for Creating OpenShift Images]
-* link:{docs_url}creating_images/custom.html[Building Custom S2I Builder Images]
+* link:{docs_url}creating_images/guidelines.html[Guidelines for Creating OpenShift Images^] provides a number of best practices to consider as an image author to ensure a good experience for consumers of those images.
+* link:{docs_url}creating_images/custom.html[Building Custom S2I Builder Images^] allows you to define a specific builder image in order to control the entire build process.
