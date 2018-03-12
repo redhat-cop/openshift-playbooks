@@ -29,5 +29,10 @@ This OpenShift and container fundamentals guide is designed to provide you with 
 * link:https://www.openshift.com/promotions/docker-security.html[Docker Security: Using Containers Safely in Production^] to use Docker safely, in both production and development, you need to be aware of the potential security issues and the major tools and techniques for securing container-based systems.
 * link:https://www.openshift.com/promotions/kubernetes.html[Kubernetes: Scheduling the Future at Cloud Scale^] get an introduction to core Kubernetes concepts and components.
 
+////
+commented out due to travis build failure:
+  *  External link https://learn.openshift.com/ failed: response code 0 means something's wrong.
+
 === Learning
-* link:https://learn.openshift.com/[OpenShift Interactive Learning Portal^] to experiment, learn OpenShift and see how we can help solve real-world problems.
+// * link:https://learn.openshift.com/[OpenShift Interactive Learning Portal^] to experiment, learn OpenShift and see how we can help solve real-world problems.
+////
