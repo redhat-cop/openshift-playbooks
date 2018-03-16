@@ -780,10 +780,11 @@ Templates give us a simple, yet powerful vehicle upon which we can build sophist
 
 We already discovered the value of `oc process | oc apply` during our template exploration at the beginning of this document. In general, `oc apply` carries a lot of value over some of the other alternatives such as `oc create`, `oc replace`, or `oc new-app`. Here are some things you should know about apply.
 
-- _apply_ will only activates a trigger if a change is detected. This prevents `builds` and `deployments` from kicking off unnecessarily.
+- _apply_ only activates a trigger if a change is detected. This prevents `builds` and `deployments` from kicking off unnecessarily.
 - _apply_ will save a copy of the previous version of the object that was applied in the annotation `kubectl.kubernetes.io/last-applied-configuration`
+- _apply_ is getting heavy investment in the Kubernetes community
 
-This presentation from KubeCon 2017 provides more interesting deep dives into using oc apply.
+This presentation from KubeCon 2017 provides more interesting deep dives into using `oc apply`.
 
 video::CW3ZuQy_YZw[youtube]
 
@@ -791,7 +792,7 @@ video::CW3ZuQy_YZw[youtube]
 
 Your templates should be version controlled. This cannot be overstated.
 
-Say for instance, that we have a production cluster onto which we need to onboard applications in a standardized way. We might develop a template for the _projects_ that we will create, including standard `ServiceAccounts` to use for automation and `RoleBindings` to grant the proper privileges to user groups. Additionally, we might want to _deploy_ some common infrastructure (such as Jenkins) to each project, for which we would create another template. For each project that will be instantiated, we will also create a parameters file that can be fed to the template to customize it for each project.
+Say for instance, that we have a production cluster onto which we need to onboard applications in a standardized way. We might develop a template for the _projects_ that we will create, including standard `ServiceAccounts` to use for automation and `RoleBindings` to grant the proper privileges to user groups. Additionally, we might want to _deploy_ some common infrastructure (such as Jenkins) to each project, for which we would create another template. For each project that will be instantiated, we will also create a _parameters file_ that can be fed to the template to customize it for each project.
 
 A directory structure for the _infrastructure as code_ repo for this cluster might look like:
 
@@ -799,28 +800,75 @@ A directory structure for the _infrastructure as code_ repo for this cluster mig
 ----
 /repository_root/
   REAMDE.md # Don't skip Documentation!
-  ./iac/
+  ... other files & folders ...
+  ./.openshift/
     ./templates/
       project-template.yml
       jenkins-template.yml
     ./policy/
       ...static YAML objects such as ClusterRoles, RoleBindings, StorageClasses etc...
     ./params/
-      ./project1/
-        project1.params
-        dev.params
-        stage.params
-        prod.params
-      ./project2/
-        project2.params
-        dev.params
-        stage.params
-        prod.params
+      ./projects/
+        app1-dev.params
+        app1-stage.params
+        app1-prod.params
+        app2-dev.params
+        app2-stage.params
+        app2-prod.params
+      ./common-infra/
+        app1-dev.params
+        app1-stage.params
+        app1-prod.params
+        app2-dev.params
+        app2-stage.params
+        app2-prod.params
 ----
 
 The link:https://github.com/redhat-cop/cluster-lifecycle[cluster-lifecycle] repo represents a sensible structure for an _infrastructure as code_ repository for an OpenShift cluster.
 
+=== Automation using templates & the OpenShift Applier framework
 
-=== Automation using templates & Ansible
+In order to level up the idea that essentially anything you can do with `oc` can be done using a combination of `oc process | oc apply`, we developed the link:https://github.com/redhat-cop/openshift-applier[Openshift Applier] framework.
+
+At its core, OpenShift Applier is an link:https://ansible.com[ansible role] that creates an ansible inventory syntax for automating the rollout of a set of templates and parameter files. What this does is greatly reduces the level of effort to build and maintain quality automation of OpenShift resources.
+
+Let's take the example from the previous section.
+
+[source,bash]
+----
+/repository_root/
+  ./.openshift/
+    /inventory/
+      hosts
+      group_vars/
+        applier.yml
+----
+
+Your hosts file would simply contain:
+
+[source,ini]
+----
+[applier]
+localhost ansible_connection=local
+----
+
+
+
+[source,yaml]
+----
+openshift_cluster_content:
+- object: Cluster Policy
+  content:
+  - name: Apply cluster policy resources
+    file: "{{ inventory_dir }}"/../policy/
+- object: Configure Projects
+  content:
+  - name: Create Projects
+    template: "{{ inventory_dir }}"/../templates/project-template.yml
+    params: "{{ inventory_dir }}"/../params/projects/
+  - name: Add common infrastructure
+    template: "{{ inventory_dir }}/../templates/common-infra.yml"
+    params: "{{ inventory_dir }}/../params/common-infra/"
+----
 
 === Developing Template-based workflows
