@@ -8,20 +8,21 @@ Eric Sauer <esauer@redhat.com>
 This doc provides some guidance, tips, and best practices for using, developing and managing templates in OpenShift.
 
 toc::[]
+:linkattrs:
 
 == Overview
 
-link:https://docs.openshift.com/container-platform/3.7/dev_guide/templates.html[OpenShift Templates] are best known as the way in which the OpenShift Web Console is populated with quickstart applications and other content. However, they are also a very powerful tool that, used thoughtfully, can be the building block of an _Infrastructure as Code_ solution for managing many aspects of cluster and application state.
+link:https://docs.openshift.com/container-platform/3.7/dev_guide/templates.html[OpenShift Templates^] are best known as the way in which the OpenShift Web Console is populated with quickstart applications and other content. However, they are also a very powerful tool that, used thoughtfully, can be the building block of an _Infrastructure as Code_ solution for managing many aspects of cluster and application state.
 
 In this guide, we dive deep into the usage and makeup of OpenShift templates, covering first how they can be used, then how to write them, and finally, how to put all of this knowledge together to create powerful automation workflows for managing workloads in OpenShift.
 
 == OpenShift Template Discovery
 
-We're going to start by doing an interactive, exploratory deep into templates, starting with the basics and working our way deeper.
+We're going to start by doing an interactive exploration into OpenShift templates, starting with the basics and working our way deeper.
 
 === Kickin' it off with some oc new-app
 
-In order to get kicked off in template exploration, let's start by spinning up a sample Java application. We'll do this using OpenShift's link:https://docs.openshift.com/container-platform/latest/cli_reference/index.html[Command Line Tool]. Specifically, the `oc new-app` command provides a simple interface for creating new applications using some combination of source code, templates, and container images.
+In order to get kicked off in template exploration, let's start by spinning up a sample Java application. We'll do this using OpenShift's link:https://docs.openshift.com/container-platform/latest/cli_reference/index.html[Command Line Tool^]. Specifically, the `oc new-app` command provides a simple interface for creating new applications using some combination of source code, templates, and container images.
 
 [source,bash]
 ----
@@ -737,7 +738,7 @@ When building a new template, it's good to keep both the user and the use case i
 +
 - **Separate Build templates from Deploy templates.**
 +
-Similarly to the previous point. It's important to consider _when_ a template would be instantiated. A common example is a template defining `BuildConfigs` and `Deployments`/`Services`/etc. Typically, an app only builds in a single project (representing a _development_ environment), but may get deployed to multiple projects (_dev_, _uat_, _production_). For this reason, its helpful to have one template that defines all of your build components, and a separate template that defines the deployment related components. A good example of this can be seen in our link:https://github.com/redhat-cop/container-pipelines/tree/master/basic-spring-boot#openshift-templates[Container Pipelines Quickstarts].
+Similarly to the previous point. It's important to consider _when_ a template would be instantiated. A common example is a template defining `BuildConfigs` and `Deployments`/`Services`/etc. Typically, an app only builds in a single project (representing a _development_ environment), but may get deployed to multiple projects (_dev_, _uat_, _production_). For this reason, its helpful to have one template that defines all of your build components, and a separate template that defines the deployment related components. A good example of this can be seen in our link:https://github.com/redhat-cop/container-pipelines/tree/master/basic-spring-boot#openshift-templates[Container Pipelines Quickstarts^].
 - **Remove erroneous metadata and annotations when cloning a template**
 +
 When you copy an existing template in order to customize it, that template may have annotations or other metadata specific to that template. For example:
@@ -792,6 +793,8 @@ video::CW3ZuQy_YZw[youtube]
 
 Your templates should be version controlled. This cannot be overstated.
 
+==== Example Use Case
+
 Say for instance, that we have a production cluster onto which we need to onboard applications in a standardized way. We might develop a template for the _projects_ that we will create, including standard `ServiceAccounts` to use for automation and `RoleBindings` to grant the proper privileges to user groups. Additionally, we might want to _deploy_ some common infrastructure (such as Jenkins) to each project, for which we would create another template. For each project that will be instantiated, we will also create a _parameters file_ that can be fed to the template to customize it for each project.
 
 A directory structure for the _infrastructure as code_ repo for this cluster might look like:
@@ -804,7 +807,7 @@ A directory structure for the _infrastructure as code_ repo for this cluster mig
   ./.openshift/
     ./templates/
       project-template.yml
-      jenkins-template.yml
+      common-infra.yml
     ./policy/
       ...static YAML objects such as ClusterRoles, RoleBindings, StorageClasses etc...
     ./params/
@@ -824,15 +827,19 @@ A directory structure for the _infrastructure as code_ repo for this cluster mig
         app2-prod.params
 ----
 
-The link:https://github.com/redhat-cop/cluster-lifecycle[cluster-lifecycle] repo represents a sensible structure for an _infrastructure as code_ repository for an OpenShift cluster.
+The link:https://github.com/redhat-cop/cluster-lifecycle[cluster-lifecycle^] repo represents a sensible structure for an _infrastructure as code_ repository for an OpenShift cluster.
 
 === Automation using templates & the OpenShift Applier framework
 
-In order to level up the idea that essentially anything you can do with `oc` can be done using a combination of `oc process | oc apply`, we developed the link:https://github.com/redhat-cop/openshift-applier[Openshift Applier] framework.
+In order to level up the idea that essentially anything you can do with `oc` can be done using a combination of `oc process | oc apply`, we developed the link:https://github.com/redhat-cop/openshift-applier[Openshift Applier^] framework.
 
-At its core, OpenShift Applier is an link:https://ansible.com[ansible role] that creates an ansible inventory syntax for automating the rollout of a set of templates and parameter files. What this does is greatly reduces the level of effort to build and maintain quality automation of OpenShift resources.
+At its core, OpenShift Applier is an link:https://ansible.com[ansible role^] that creates an ansible inventory syntax for automating the rollout of a set of templates and parameter files. This greatly reduces the level of effort to build and maintain quality automation of OpenShift resources.
 
-Let's take the example from the previous section.
+==== Continuing Our Example Use Case
+
+Let's take the example directory from the previous section and add OpenShift Applier capabilities to it.
+
+We would start by adding an ansible inventory structure to our `.openshift` directory in the root of the project.
 
 [source,bash]
 ----
@@ -844,7 +851,7 @@ Let's take the example from the previous section.
         applier.yml
 ----
 
-Your hosts file would simply contain:
+In the hosts file, we would simply add a single host group containing `localhost`. This is where _applier_ will run `oc` commands from:
 
 [source,ini]
 ----
@@ -852,7 +859,7 @@ Your hosts file would simply contain:
 localhost ansible_connection=local
 ----
 
-
+The meat of your inventory goes in a vars file matching the target host group. In this case the file would be `groups_vars/applier.yml`. Within the vars file, we will build a _YAML dictionary_ that tells applier about our templates and parameter files, and how we would like them applied.
 
 [source,yaml]
 ----
@@ -860,15 +867,32 @@ openshift_cluster_content:
 - object: Cluster Policy
   content:
   - name: Apply cluster policy resources
-    file: "{{ inventory_dir }}"/../policy/
+    file: "{{ inventory_dir }}/../policy/"
 - object: Configure Projects
   content:
   - name: Create Projects
-    template: "{{ inventory_dir }}"/../templates/project-template.yml
-    params: "{{ inventory_dir }}"/../params/projects/
+    template: "{{ inventory_dir }}/../templates/project-template.yml"
+    params: "{{ inventory_dir }}/../params/projects/"
   - name: Add common infrastructure
     template: "{{ inventory_dir }}/../templates/common-infra.yml"
     params: "{{ inventory_dir }}/../params/common-infra/"
 ----
 
-=== Developing Template-based workflows
+NOTE: The `inventory_dir` var is a global ansible variable that proves the absolute path (e.g. `/home/eric/src/repository_root/.openshift/inventory`) to the directory passed as inventory. We use this variable a lot to make inventories and related files more portable.
+
+Once this is all set up, we can run through the automation repeatably by running the applier role. The link:https://github.com/redhat-cop/openshift-applier[Openshift Applier^] repo provies a simple (4 line) playbook to do this.
+
+[source,bash]
+----
+ansible-playbook -i repository_root/.openshift/inventory/ openshift-applier/playbooks/applier-simple.yml
+----
+
+== In Summation, Use More Templates!
+
+We hope this guide providsed a good base for organizations to go use templates more thoughtfully. They are a powerful tool in OpenShift and, when combined with a simple automation framework, can be used to automate your entire OpenShift _post-provision_ process.
+
+== Resources
+
+- link:https://docs.openshift.com/container-platform/3.7/dev_guide/templates.html[OpenShift Templates Official Documentation^]
+- link:https://github.com/redhat-cop/container-pipelines/tree/master/basic-spring-boot#openshift-templates[Container Pipelines Quickstarts on GitHub^]
+- link:https://github.com/redhat-cop/openshift-applier[Openshift Applier GitHub^]
