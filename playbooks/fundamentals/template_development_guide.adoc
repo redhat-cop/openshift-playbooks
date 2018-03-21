@@ -887,7 +887,7 @@ Once this is all set up, we can run through the automation repeatably by running
 ansible-playbook -i repository_root/.openshift/inventory/ openshift-applier/playbooks/applier-simple.yml
 ----
 
-== In Summation, Use More Templates!
+== Go Forth and Template!
 
 We hope this guide providsed a good base for organizations to go use templates more thoughtfully. They are a powerful tool in OpenShift and, when combined with a simple automation framework, can be used to automate your entire OpenShift _post-provision_ process.
 
