@@ -393,13 +393,14 @@ Now that we have the start of a workflow for updating our application, let's mak
 
 [source,bash]
 ----
+{% raw %}
 objects:
 ...
 - apiVersion: v1
   kind: DeploymentConfig
 ...
   spec:
-    replicas: ${\{REPLICAS}} ### Edit this line
+    replicas: ${{REPLICAS}} ### Edit this line
 ...
 parameters:
 ...
@@ -409,6 +410,7 @@ parameters:
   name: REPLICAS
   required: true
   value: "1"
+{% endraw %}
 ----
 
 If we re-run the process/apply, changing nothing, we'll affect no change. However, let's set the replicas to 3.
@@ -686,29 +688,34 @@ String parameters are the most common parameter type. They are represented by si
 ----
 
 ==== Non-String Parameters
-
-Templates also support non-string parameters. They are represented by double curly braces (e.g. `${\{FOO}}`). Non-string parameters provide a way to insert numeric or base64 values into templates.
+{% raw %}
+Templates also support non-string parameters. They are represented by double curly braces (e.g. `${{FOO}}`). Non-string parameters provide a way to insert numeric or base64 values into templates.
+{% endraw %}
 
 .Example of a Numeric Non-String Parameter
 [source,yaml]
 ----
+{% raw %}
 spec:
   ports:
-  - port: ${\{PORT_NUMBER}}
-    targetPort: ${\{PORT_NUMBER}}
+  - port: ${{PORT_NUMBER}}
+    targetPort: ${{PORT_NUMBER}}
+{% endraw %}
 ----
 
 .Example of a Base64 Non-String Parameter
 [source,yaml]
 ----
+{% raw %}
 apiVersion: v1
 kind: Secret
 metadata:
   name: test-secret
   namespace: my-namespace
 data:
-  username: ${\{USERNAME}}
-  password: ${\{PASSWORD}}
+  username: ${{USERNAME}}
+  password: ${{PASSWORD}}
+{% endraw %}
 ----
 
 === Best Practices & Tips for Template Writing
