@@ -1,0 +1,905 @@
+---
+---
+= OpenShift Templates Development Guide
+Eric Sauer <esauer@redhat.com>
+:toc: macro
+:toc-title:
+
+This doc provides some guidance, tips, and best practices for using, developing and managing templates in OpenShift.
+
+toc::[]
+:linkattrs:
+
+== Overview
+
+link:https://docs.openshift.com/container-platform/3.7/dev_guide/templates.html[OpenShift Templates^] are best known as the way in which the OpenShift Web Console is populated with quickstart applications and other content. However, they are also a very powerful tool that, used thoughtfully, can be the building block of an _Infrastructure as Code_ solution for managing many aspects of cluster and application state.
+
+In this guide, we dive deep into the usage and makeup of OpenShift templates, covering first how they can be used, then how to write them, and finally, how to put all of this knowledge together to create powerful automation workflows for managing workloads in OpenShift.
+
+== OpenShift Template Discovery
+
+We're going to start by doing an interactive exploration into OpenShift templates, starting with the basics and working our way deeper.
+
+=== Kickin' it off with some oc new-app
+
+In order to get kicked off in template exploration, let's start by spinning up a sample Java application. We'll do this using OpenShift's link:https://docs.openshift.com/container-platform/latest/cli_reference/index.html[Command Line Tool^]. Specifically, the `oc new-app` command provides a simple interface for creating new applications using some combination of source code, templates, and container images.
+
+[source,bash]
+----
+$ oc new-app --template=openjdk18-web-basic-s2i
+--> Deploying template "openshift/openjdk18-web-basic-s2i" to project eric-test
+
+     Red Hat OpenJDK 8
+     ---------
+     Application template for Java applications built using S2I.
+
+     A new java application has been created in your project.
+
+     * With parameters:
+        * Application Name=openjdk-app
+        * Custom http Route Hostname=
+        * Git Repository URL=https://github.com/jboss-openshift/openshift-quickstarts
+        * Git Reference=master
+        * Context Directory=undertow-servlet
+        * Github Webhook Secret=4sPr4Br3 # generated
+        * Generic Webhook Secret=V218WEHy # generated
+        * ImageStream Namespace=openshift
+
+--> Creating resources ...
+    service "openjdk-app" created
+    route "openjdk-app" created
+    imagestream "openjdk-app" created
+    buildconfig "openjdk-app" created
+    deploymentconfig "openjdk-app" created
+--> Success
+    Build scheduled, use 'oc logs -f bc/openjdk-app' to track its progress.
+    Run 'oc status' to view your app.
+----
+
+Looking at what was done here, we used an `oc` command to instantiate a template by name. The template we used (`openjdk18-web-basic-s2i`) is a template that has been preloaded into OpenShift for convenience. We can also see that several objects were created as a result, including a `Service`, `Route`, `ImageStream`, `BuildConfig` and a `DeploymentConfig`. We can take a look at these templates using some oc commands.
+
+NOTE: Most resources in OpenShift are scoped to a namespace which in the OpenShift world is known as a _project_. The `openshift` _project_ is a special namespace that is globally readable by all users within a cluster and used to provide a base set of _template_ and _imagestream_ resources to help users get started using the platform. This is where commands like `oc new-app` will look by default for templates to instantiate.
+
+[source,bash]
+----
+$ oc get templates -n openshift
+NAME                                            DESCRIPTION                                                                        PARAMETERS        OBJECTS
+...
+openjdk18-web-basic-s2i                         Application template for Java applications built using S2I.                        8 (1 blank)       5
+...
+----
+
+If we want to get a few more details, we can use oc `describe` instead:
+
+[source,bash]
+----
+$ oc describe template openjdk18-web-basic-s2i -n openshift
+Name:		openjdk18-web-basic-s2i
+Namespace:	openshift
+Created:	2 weeks ago
+Labels:		<none>
+Description:	Application template for Java applications built using S2I.
+Annotations:	iconClass=icon-jboss
+		openshift.io/display-name=Red Hat OpenJDK 8
+		tags=java,xpaas
+		version=1.1.0
+
+Parameters:
+    Name:		APPLICATION_NAME
+    Display Name:	Application Name
+    Description:	The name for the application.
+    Required:		true
+    Value:		openjdk-app
+
+    Name:		HOSTNAME_HTTP
+    Display Name:	Custom http Route Hostname
+    Description:	Custom hostname for http service route.  Leave blank for default hostname, e.g.: <application-name>-<project>.<default-domain-suffix>
+    Required:		false
+    Value:		<none>
+
+    Name:		SOURCE_REPOSITORY_URL
+    Display Name:	Git Repository URL
+    Description:	Git source URI for application
+    Required:		true
+    Value:		https://github.com/jboss-openshift/openshift-quickstarts
+
+    Name:		SOURCE_REPOSITORY_REF
+    Display Name:	Git Reference
+    Description:	Git branch/tag reference
+    Required:		false
+    Value:		master
+
+    Name:		CONTEXT_DIR
+    Display Name:	Context Directory
+    Description:	Path within Git project to build; empty for root project directory.
+    Required:		false
+    Value:		undertow-servlet
+
+    Name:		GITHUB_WEBHOOK_SECRET
+    Display Name:	Github Webhook Secret
+    Description:	GitHub trigger secret
+    Required:		true
+    Generated:		expression
+    From:		[a-zA-Z0-9]{8}
+
+    Name:		GENERIC_WEBHOOK_SECRET
+    Display Name:	Generic Webhook Secret
+    Description:	Generic build trigger secret
+    Required:		true
+    Generated:		expression
+    From:		[a-zA-Z0-9]{8}
+
+    Name:		IMAGE_STREAM_NAMESPACE
+    Display Name:	ImageStream Namespace
+    Description:	Namespace in which the ImageStreams for Red Hat Middleware images are installed. These ImageStreams are normally installed in the openshift namespace. You should only need to modify this if you\'ve installed the ImageStreams in a different namespace/project.
+    Required:		true
+    Value:		openshift
+
+
+Object Labels:	template=openjdk18-web-basic-s2i,xpaas=1.4.0
+
+Message:	A new java application has been created in your project.
+
+Objects:
+    Service		${APPLICATION_NAME}
+    Route		${APPLICATION_NAME}
+    ImageStream		${APPLICATION_NAME}
+    BuildConfig		${APPLICATION_NAME}
+    DeploymentConfig	${APPLICATION_NAME}
+----
+
+Here, we can see that there are parameters available that we can pass to the template to customize the object we want to create. Let's try to use a few of these to make our sample application more relevant to us.
+
+[source,bash]
+----
+$ oc new-app --template=openjdk18-web-basic-s2i -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR=''
+----
+
+If we look at what's created in our project, we can see that we now have two of everything. Since we passed a new value for `APPLICATION_NAME`, and the template sets all objects to use `${APPLICATION_NAME}` in the `name:` field, the `new-app` command resulted in all new objects created with new names.
+
+[source,bash]
+----
+$ oc get all
+NAME             TYPE      FROM         LATEST
+bc/openjdk-app   Source    Git@master   1
+bc/spring-rest   Source    Git@master   1
+
+NAME                   TYPE      FROM          STATUS     STARTED       DURATION
+builds/openjdk-app-1   Source    Git@08c923a   Complete   3 weeks ago   30s
+builds/spring-rest-1   Source    Git@978d4b0   Complete   3 weeks ago   1m7s
+
+NAME             DOCKER REPO                                              TAGS      UPDATED
+is/openjdk-app   docker-registry.default.svc:5000/eric-test/openjdk-app   latest    3 weeks ago
+is/spring-rest   docker-registry.default.svc:5000/eric-test/spring-rest   latest    3 weeks ago
+
+NAME             REVISION   DESIRED   CURRENT   TRIGGERED BY
+dc/openjdk-app   1          1         1         config,image(openjdk-app:latest)
+dc/spring-rest   1          1         1         config,image(spring-rest:latest)
+
+NAME               DESIRED   CURRENT   READY     AGE
+rc/openjdk-app-1   1         1         1         21d
+rc/spring-rest-1   1         1         1         20d
+
+NAME                 HOST/PORT                                         PATH      SERVICES      PORT      TERMINATION   WILDCARD
+routes/openjdk-app   openjdk-app-eric-test.apps.d1.casl.rht-labs.com             openjdk-app   <all>                   None
+routes/spring-rest   spring-rest-eric-test.apps.d1.casl.rht-labs.com             spring-rest   <all>                   None
+
+NAME              CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+svc/openjdk-app   172.30.125.201   <none>        8080/TCP   21d
+svc/spring-rest   172.30.61.234    <none>        8080/TCP   20d
+
+NAME                     READY     STATUS      RESTARTS   AGE
+po/openjdk-app-1-build   0/1       Completed   0          21d
+po/openjdk-app-1-gwtj9   1/1       Running     0          21d
+po/spring-rest-1-build   0/1       Completed   0          20d
+po/spring-rest-1-xtbx2   1/1       Running     0          20d
+----
+
+Let's go ahead and clean up the old `openjdk-app` resources. Because the template we used to create the objects made good use of labels in its `objects` list, we can do this very easily.
+
+[source,bash]
+----
+$ oc delete all -l application=openjdk-app
+buildconfig "openjdk-app" deleted
+imagestream "openjdk-app" deleted
+deploymentconfig "openjdk-app" deleted
+route "openjdk-app" deleted
+service "openjdk-app" deleted
+pod "openjdk-app-1-gwtj9" deleted
+----
+
+NOTE: Passing `all` as a resource to commands like `oc get|delete|describe` does not actually refer to _all_ resource types within OpenShift. Instead it is a shorthand for a defined set of common resource types within a project that are relevant to typical OpenShift users. Some of the resource types that are excluded from the `all` keyword are `Secrets`, `Roles`, and `RoleBindings`.
+
+==== What we've learned and where to go from here
+
+So far, we've learned that...
+
+- a _Template_ is a collection of resource definitions that can be parameterized
+- `oc new-app` is a very simple and easy way to instantiate a template
+- templates can be loaded into OpenShift and then referenced by name
+
+This is a great start, but it does leave some further questions that might be worth exploring:
+
+- How else could I work with templates?
+- What about templates that aren't pre-loaded into OpenShift?
+- How might I update resources that were created from a template?
+
+Let's move on to the next phase in our exploration.
+
+=== Template files, processing, applying
+
+So far, we've learned a little bit about what a Template is and a simple way to instantiate them in OpenShift. Now we want to get a little more hands on. Let's start by exporting a copy of the template. The OpenShift CLI provides a very simple way to do that via the `oc export` command. This command will take any object name you pass to it, and print a sanitized copy of the YAML or JSON object (i.e. with one time use fields like `creationTimestamp` and `uid` scrubbed) to your console. For our purposes, we'll just write that output to a file.
+
+[source,bash]
+----
+$ oc export template openjdk18-web-basic-s2i -n openshift > openjdk-basic-template.yml
+----
+
+If we open the file with our favorite text editor, we can see the YAML definition of all of the objects that we saw get created earlier, but with shell script looking variables plugged in as values for various fields (e.g. `name: ${APPLICATION_NAME}`). It's beginning to make sense how the parameters we passed in get substituted. We can also see, from looking at the `objects` list, several patterns that are common to all of the objects.
+
+- The `.metadata.name` field of every object contains the `${APPLICATION_NAME}` parameter
+- Every object contains a `label` of `application: ${APPLICATION_NAME}`.
++
+NOTE: This explains why we were able to delete the first app we created with just `oc delete all -l application=openjdk-app`
+
+For now, we can close the file without making any changes. Let's go back and look at the app we created earlier.
+
+[source,bash]
+----
+$ oc get all
+NAME             TYPE      FROM         LATEST
+bc/spring-rest   Source    Git@master   1
+
+NAME                   TYPE      FROM          STATUS     STARTED       DURATION
+builds/spring-rest-1   Source    Git@978d4b0   Complete   4 weeks ago   1m7s
+
+NAME             DOCKER REPO                                              TAGS      UPDATED
+is/spring-rest   docker-registry.default.svc:5000/eric-test/spring-rest   latest    4 weeks ago
+
+NAME             REVISION   DESIRED   CURRENT   TRIGGERED BY
+dc/spring-rest   1          1         1         config,image(spring-rest:latest)
+
+NAME               DESIRED   CURRENT   READY     AGE
+rc/spring-rest-1   1         1         1         33d
+
+NAME                 HOST/PORT                                         PATH      SERVICES      PORT      TERMINATION   WILDCARD
+routes/spring-rest   spring-rest-eric-test.apps.d1.casl.rht-labs.com             spring-rest   <all>                   None
+
+NAME              CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+svc/spring-rest   172.30.61.234   <none>        8080/TCP   33d
+
+NAME                     READY     STATUS      RESTARTS   AGE
+po/spring-rest-1-build   0/1       Completed   0          33d
+po/spring-rest-1-xtbx2   1/1       Running     0          33d
+----
+
+So, what happens if we try to re-instantiate the template with the same parameters? This could conceivably be useful as a means to keep the application config up to date or change certain parameters. Let's give it a try, using the same method as before.
+
+[source,bash]
+----
+$ oc new-app --template=openjdk18-web-basic-s2i -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR=''
+...
+--> Creating resources ...
+    error: services "spring-rest" already exists
+    error: routes.route.openshift.io "spring-rest" already exists
+    error: imagestreams.image.openshift.io "spring-rest" already exists
+    error: buildconfigs.build.openshift.io "spring-rest" already exists
+    error: deploymentconfigs.apps.openshift.io "spring-rest" already exists
+--> Failed
+----
+
+FAILED!? Ok, so that doesn't look to be an option. It's clear that `oc new-app` must use `oc create` under the hood, as we would get a similar error if we tried to create a raw object that doesn't exist. If you think about it, though, `oc new-app` really isn't necessary anymore anyway, since we now know that the template contains all of the decisions that need to be made about the makeup of our application. Maybe there's a more direct way to work with templates. The help output of the `oc` command might be useful here.
+
+[source,bash]
+----
+$ oc -h | grep template
+  process         Process a template into list of resources
+----
+
+Bingo! Let's see what we can do with `oc process`.
+
+[source,bash]
+----
+$ oc help process
+Process template into a list of resources specified in filename or stdin
+
+...
+
+Usage:
+  oc process (TEMPLATE | -f FILENAME) [-p=KEY=VALUE] [options]
+----
+
+OK, so this looks like we can simply pass this thing a file and our same list of parameters form our `oc new-app` command. Let's give it a shot.
+
+[source,bash]
+----
+$ oc process -f openjdk-basic-template.yml  -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR='' -o yaml
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: The application's http port.
+    labels:
+      application: spring-rest
+      template: openjdk18-web-basic-s2i
+      xpaas: 1.4.0
+    name: spring-rest
+  spec:
+    ports:
+    - port: 8080
+      targetPort: 8080
+    selector:
+      deploymentConfig: spring-rest
+...
+----
+
+Great! This is looking very familiar. However, this just outputs the resources to the console. We want to actually have these resources created/updated. Looking at the example commands in the `oc process` help output, we see can see something very close to what we need:
+
+[source,bash]
+----
+$ oc help process
+Process template into a list of resources specified in filename or stdin
+
+...
+
+Examples:
+  # Convert template.json file into resource list and pass to create
+  oc process -f template.json | oc create -f -
+
+----
+
+We could try this, however, since we've already created these resources before we know this will just fail with a "Resource already exists" type message. We need something that will overlay our resources on top of the existing ones, making any changes or updates that exist in this version. For this, we can use `oc apply`.
+
+[source,bash]
+----
+$ oc help | grep apply
+  apply           Apply a configuration to a resource by filename or stdin
+----
+
+Let's put this all together, and see what happens.
+
+[source,bash]
+----
+$ oc process -f openjdk-basic-template.yml  -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR='' | oc apply -f-
+service "spring-rest" configured
+route "spring-rest" configured
+imagestream "spring-rest" configured
+buildconfig "spring-rest" configured
+deploymentconfig "spring-rest" configured
+----
+
+Cool, all of our resources were "configured".
+
+Just for giggles, let's try deleting one of the objects and re-apply the template.
+
+[source,bash]
+----
+$ oc delete route spring-rest
+route "spring-rest" deleted
+
+$ oc process -f openjdk-basic-template.yml  -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR='' | oc apply -f-
+service "spring-rest" configured
+route "spring-rest" created
+imagestream "spring-rest" configured
+buildconfig "spring-rest" configured
+deploymentconfig "spring-rest" configured
+----
+
+Notice that the object we deleted shows as _created_ while all of the other objects show as _configured_.
+
+Now that we have the start of a workflow for updating our application, let's make a change to the template. Currently, our template is hard-coded to run a single pod (via `replicas: 1` in the `DeploymentConfig`). In order to support production apps, we'll need to be able to customize the number of replicas based on environment. So let's make that a variable. We'll edit the following:
+
+[source,bash]
+----
+{% raw %}
+objects:
+...
+- apiVersion: v1
+  kind: DeploymentConfig
+...
+  spec:
+    replicas: ${{REPLICAS}} ### Edit this line
+...
+parameters:
+...
+### Add the following parameter
+- description: Number of replicas of the app to run
+  displayName: Number of Replicas
+  name: REPLICAS
+  required: true
+  value: "1"
+{% endraw %}
+----
+
+If we re-run the process/apply, changing nothing, we'll affect no change. However, let's set the replicas to 3.
+
+[source,bash]
+----
+$ oc process -f openjdk-basic-template.yml  -p APPLICATION_NAME=spring-rest -p SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git -p CONTEXT_DIR='' -p REPLICAS=3 | oc apply -f-
+service "spring-rest" configured
+route "spring-rest" configured
+imagestream "spring-rest" configured
+buildconfig "spring-rest" configured
+deploymentconfig "spring-rest" configured
+----
+
+Let's verify we now have 3 pods running.
+
+[source,bash]
+----
+$ oc get pods | grep Running
+spring-rest-1-62g6c   1/1       Running     0          1m
+spring-rest-1-9bdk6   1/1       Running     0          1m
+spring-rest-1-wkt5w   1/1       Running     0          1m
+----
+
+At this point we have a pretty simple, repeatable process in place for maintaining an application. However, we're starting to build up a number of parameters. Perhaps there's a way to manage those parameters more practically.
+
+[source,bash]
+----
+$ oc process -h
+...
+Options:
+...
+      --param-file=[]: File containing template parameter values to set/override in the template.
+...
+----
+
+AHA! It looks like we can commit all of these parameters to a file. That would provide a much simpler way to manage our parameter sets, and even keep multiple parameter files to represent different applications. Let's create a parameter file for our spring-rest app, and re-apply the config.
+
+[source,bash]
+----
+$ cat spring-rest.params
+APPLICATION_NAME=spring-rest
+SOURCE_REPOSITORY_URL=https://github.com/redhat-cop/spring-rest.git
+SOURCE_REPOSITORY_REF=master
+CONTEXT_DIR=''
+REPLICAS=3
+
+$ oc process -f openjdk-basic-template.yml --param-file spring-rest.params | oc apply -f-
+service "spring-rest" configured
+route "spring-rest" configured
+imagestream "spring-rest" configured
+buildconfig "spring-rest" configured
+deploymentconfig "spring-rest" configured
+----
+
+==== What we've learned and where to go from here
+
+We've now learned that...
+
+* Templates can be exported and handled as files
+* We can repeatably use `oc process | oc apply` to deploy/update templates
+* We can pass parameters to templates from text files, which makes it easy to manage application configs
+
+At this point, we've explored templates enough to be able to dive into some more advanced topics. Through the rest of this guide, we'll dive into developing custom templates, and ways in which we can automate more complex workflows using the idea of processing and applying templates as a base.
+
+
+== Building Custom Templates
+
+Custom templates allow a user to truly unlock the power of OpenShift in many ways. This section will dive into various approaches to building custom templates. But first, let's dive into the basic structure and makeup of a template.
+
+=== Template Structure
+
+The basic top level structure of an OpenShift template is as follows:
+
+[source]
+----
+apiVersion: v1
+kind: Template
+labels:
+message: <Creation message>
+metadata:
+  name: <template name>
+objects:
+parameters:
+----
+
+The important sections here are:
+
+- `kind: Template` - defines the object as a template
+- `labels` - This is optional, but you'll notice that most pre-loaded OpenShift templates typically have at least the `template` label set with the name of the template.
+- `message` - An optional message to return to the user when the template is created using the Web Console
+- `metadata` - Standard metadata section for all Kubernetes objects, including object `name`.
+- `objects` - YAML list of Object definitions to be included in the template. (same format as `<kind: List>.items`)
+- `parameters` - Optional list of parameters with which to do substitution within the `objects` list.
+
+Let's look at an example, using the OpenJDK template we were experimenting with above. We can use `oc export` to get a clean copy of the template code.
+
+[source]
+----
+$ oc export template/openjdk18-web-basic-s2i -n openshift
+apiVersion: v1
+kind: Template
+labels:
+  template: openjdk18-web-basic-s2i
+  xpaas: 1.4.0
+message: A new java application has been created in your project.
+metadata:
+  annotations:
+    description: Application template for Java applications built using S2I.
+    iconClass: icon-jboss
+    openshift.io/display-name: Red Hat OpenJDK 8
+    tags: java,xpaas
+    version: 1.1.0
+  name: openjdk18-web-basic-s2i
+objects:
+- kind: Service
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+...
+- kind: Route
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+...
+- kind: ImageStream
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+...
+- kind: BuildConfig
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+...
+- kind: DeploymentConfig
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+...
+parameters:
+- description: The name for the application.
+  displayName: Application Name
+  name: APPLICATION_NAME
+  required: true
+  value: openjdk-app
+...
+----
+
+As you can see, all of the `objects` in the template basically start out with `name` and `label` fields consistent with the name of the workload.
+
+Also of note above is all of the fields in the `metadata.annotations` section of the template. These values have no impact on the functionality of the template, and for templates that will mainly be used in an `oc process | oc apply` workflow as we explored in the first section, they are not necessary. However, if you are writing templates for the purpose of loading them into OpenShift and using them via the Web Console, the annotations provide a lot of nice display and filtering information to the UI.
+
+=== Methods for Writing or Generating Templates
+
+The right approach to writing a template often depends on what templates are available to you currently, and what kind of template you need to create. Many times, if there is already a template relatively close to what you need. The best approach is just to link:#start-from-an-existing-template[start from that existing template]. If you have a very simple use case with just a few small objects, its probably best to take a clean approach and link:#build-from-scratch[build one from scratch]. Finally, if you have a running application you've built up and would like to be able to save and recreate, you'll probably want to consider link:#export-existing-objects-as-a-template[exporting it as a template].
+
+==== Start from an existing template
+
+Exporting and modifying an existing template is many times the fastest path to success. Simply peruse through the set of templates provided out of the box by OpenShift, find the one closest to what you need, and export it.
+
+[source]
+----
+$ oc get templates -n openshift
+...
+s2i-spring-boot-camel-config                    Spring Boot and Camel using ConfigMaps and Secrets. This quickstart demonstra...   13 (2 blank)      3
+...
+
+$ oc export template/s2i-spring-boot-camel-config -n openshift > my-new-spring-template.yml
+----
+
+Once exported the first thing to do is make sure to rename it. Just make sure and be thorough, a templates name is generally used multiple times in the template.
+
+[source]
+----
+$ grep 's2i-spring-boot-camel-config\|my-new-spring-template' ./my-new-spring-template.yml
+  template: s2i-spring-boot-camel-config
+  name: s2i-spring-boot-camel-config
+  value: s2i-spring-boot-camel-config
+
+$ sed -i 's/s2i-spring-boot-camel-config/my-new-spring-template/g' ./my-new-spring-template.yml
+
+$ grep 's2i-spring-boot-camel-config\|my-new-spring-template' ./my-new-spring-template.yml
+  template: my-new-spring-template
+  name: my-new-spring-template
+  value: my-new-spring-template
+----
+
+From here, you're free to modify whatever needs modifying to meet your needs. When modifying an existing template, be aware that there is a lot of metadata in the form of labels and annotations that may or may not be relevant to your new template. The good news is that, if you are writing a template for automation purposes, and not for use in the Web Console, much of that stuff can be cleaned out, as it is mostly used to populate parts of the UI and little else. Just keep in mind that you may want to spend the time updating those values if you plan to create new Web Console quickstarts.
+
+==== Build from Scratch
+
+A more barebones approach is to simply write the template from scratch. This is especially nice when you need a very minimal template, and you want to keep it clean of any leftover metadata from the original template. Just start with this skeleton and you'll be good to go.
+
+[source]
+----
+apiVersion: v1
+kind: Template
+labels:
+  template: my-first-template
+message: Your template was created!
+metadata:
+  name: my-first-template
+objects:
+parameters:
+----
+
+==== Export existing objects as a Template
+
+Maybe the most powerful mode of creating a new template is to use `oc export` to generate one from a set of already created objects. This allows you to first build and wire up and application manually using the client tools and/or the Web Console, and then capture your work in the form of a repeatable template.
+
+Taking the example `spring-rest` app from the beginning of this guide once again, let's say that we've been experimenting with various tweaks to our application. Since we weren't exactly sure what to do or how, we ended up making some manual changes either using `oc edit` or through the Web Console. We aren't completely sure what changes we made, or how to capture them in the `openjdk-basic-template.yml` file we already have. Exporting our application as a template is a great solution to this problem.
+
+Now, there is some nuance to this method, as not all objects are a good idea to export. `Pod` and `ReplicationController` definitions for example, are intended to be ephemeral, and get generated by the `DeploymentConfig`. Luckily, we can refer back to the set of objects that were originally created during our template exploration.
+
+[source]
+----
+service "spring-rest" configured
+route "spring-rest" configured
+imagestream "spring-rest" configured
+buildconfig "spring-rest" configured
+deploymentconfig "spring-rest" configured
+----
+
+So if we go off of this list, and remembering the `application: spring-rest` label that we placed on those original objects, we should be able to build up our export command.
+
+[source,bash]
+----
+$ oc export bc,is,dc,route,svc -l application=spring-rest --as-template='my-java-app-template'
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: my-java-app-template
+objects:
+...
+----
+
+This gives us a really solid start to building up an application template. However, this is just the template skeleton and a list of static objects. In order to really make this a reusable templates, we might want to add a few extras, such as:
+
+* Add `parameters` to the template.
+* Further object cleanup. Look for unnecessary fields such as `annotations` and empty `creationTimestamp`s that can be deleted.
+* Make sure we have sensible labeling.
+
+=== Parameter Substitution
+
+Parameters are the means by which we can customize templates. They come in two flavors.
+
+==== String Parameters
+
+String parameters are the most common parameter type. They are represented by single curly braces (e.g. `${FOO}`).
+
+.Example of a String Parameter
+[source,yaml]
+----
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: The application's http port.
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    ports:
+    - port: 8080
+      targetPort: 8080
+    selector:
+      deploymentConfig: ${APPLICATION_NAME}
+----
+
+==== Non-String Parameters
+{% raw %}
+Templates also support non-string parameters. They are represented by double curly braces (e.g. `${{FOO}}`). Non-string parameters provide a way to insert numeric or base64 values into templates.
+{% endraw %}
+
+.Example of a Numeric Non-String Parameter
+[source,yaml]
+----
+{% raw %}
+spec:
+  ports:
+  - port: ${{PORT_NUMBER}}
+    targetPort: ${{PORT_NUMBER}}
+{% endraw %}
+----
+
+.Example of a Base64 Non-String Parameter
+[source,yaml]
+----
+{% raw %}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: test-secret
+  namespace: my-namespace
+data:
+  username: ${{USERNAME}}
+  password: ${{PASSWORD}}
+{% endraw %}
+----
+
+=== Best Practices & Tips for Template Writing
+
+The following is a list of suggested best practices for template writing.
+
+- **Include a `template` label in all objects.**
++
+Including a common label across all objects created from a template allows users and admins to track objects created from a particular template as a group. This would be a static label containing the name of the template. Something like `template=my-app-template`.
++
+- **Include an `app` label in all objects.**
++
+In addition to a template label, which will have a static value, including an `app=${APPLICATION_NAME}` label provides a dynamic label that can be used to query a specific instance of a template.
++
+- **Use `oc process` to define labels on templates that don't include them**
++
+Some templates don't follow the label conventions above. For cases where you would like to add labels that are not included in the templates themselves (like when using out of the box templates), the `oc process` command provides a label flag.
++
+[source,bash]
+----
+oc process openshift//openjdk18-web-basic-s2i -l 'app=myapp,template=openjdk-template' | oc apply -f-
+----
++
+- **Keep Templates confined to a scope**
++
+When building a new template, it's good to keep both the user and the use case in mind. For example, if I created a template that defines an application, but also defined a `ClusterRole` and `ClusterRoleBinding`, then that template would require a `cluster-admin`, or someone with elevated privileges in order to instantiate it. This makes it less useful to regular developers. A better design would be to create one template for the local application components and a separate one for the cluster-level objects.
++
+- **Separate Build templates from Deploy templates.**
++
+Similarly to the previous point. It's important to consider _when_ a template would be instantiated. A common example is a template defining `BuildConfigs` and `Deployments`/`Services`/etc. Typically, an app only builds in a single project (representing a _development_ environment), but may get deployed to multiple projects (_dev_, _uat_, _production_). For this reason, its helpful to have one template that defines all of your build components, and a separate template that defines the deployment related components. A good example of this can be seen in our link:https://github.com/redhat-cop/container-pipelines/tree/master/basic-spring-boot#openshift-templates[Container Pipelines Quickstarts^].
+- **Remove erroneous metadata and annotations when cloning a template**
++
+When you copy an existing template in order to customize it, that template may have annotations or other metadata specific to that template. For example:
++
+[source]
+----
+apiVersion: v1
+kind: Template
+labels:
+  template: openjdk18-web-basic-s2i
+  xpaas: 1.4.7
+message: A new java application has been created in your project.
+metadata:
+  annotations:
+    description: An example Java application using OpenJDK 8. For more information
+      about using this template, see https://github.com/jboss-openshift/application-templates.
+    iconClass: icon-rh-openjdk
+    openshift.io/display-name: OpenJDK 8
+    openshift.io/provider-display-name: Red Hat, Inc.
+    tags: java
+    template.openshift.io/documentation-url: https://access.redhat.com/documentation/en/
+    template.openshift.io/long-description: This template defines resources needed
+      to develop Red Hat OpenJDK Java 8 based application.
+    template.openshift.io/support-url: https://access.redhat.com
+    version: 1.4.7
+  creationTimestamp: null
+  name: openjdk18-web-basic-s2i
+----
++
+Once copied into a different, special purpose template, this metadata no longer makes much sense. Its likely best to remove it, or update relevant fields if you are planning to load the template into the Web Console.
+- **Avoid editing existing templates in place; always make a copy**
++
+This advice is primarily for those wanting to update the out of the box templates that ship with OpenShift. The canned set of templates typically gets rolled out any time a cluster is upgraded, which will override any edits made to the templates. Its best to export a template and rename it to something that can be easily differentiated, like `myorg-openjdk-basic`.
+
+== Templates & Infrastructure as Code (IaC)
+
+Templates give us a simple, yet powerful vehicle upon which we can build sophisticated and consistent automation of nearly everything we do with OpenShift. In this section we propose some essential components of an automated workflow around OpenShift, and introduce an Ansible framework that can be used to implement them.
+
+=== Use oc apply for repeatable process
+
+We already discovered the value of `oc process | oc apply` during our template exploration at the beginning of this document. In general, `oc apply` carries a lot of value over some of the other alternatives such as `oc create`, `oc replace`, or `oc new-app`. Here are some things you should know about apply.
+
+- _apply_ only activates a trigger if a change is detected. This prevents `builds` and `deployments` from kicking off unnecessarily.
+- _apply_ will save a copy of the previous version of the object that was applied in the annotation `kubectl.kubernetes.io/last-applied-configuration`
+- _apply_ is getting heavy investment in the Kubernetes community
+
+This presentation from KubeCon 2017 provides more interesting deep dives into using `oc apply`.
+
+video::CW3ZuQy_YZw[youtube]
+
+=== Source Control for Templates
+
+Your templates should be version controlled. This cannot be overstated.
+
+==== Example Use Case
+
+Say for instance, that we have a production cluster onto which we need to onboard applications in a standardized way. We might develop a template for the _projects_ that we will create, including standard `ServiceAccounts` to use for automation and `RoleBindings` to grant the proper privileges to user groups. Additionally, we might want to _deploy_ some common infrastructure (such as Jenkins) to each project, for which we would create another template. For each project that will be instantiated, we will also create a _parameters file_ that can be fed to the template to customize it for each project.
+
+A directory structure for the _infrastructure as code_ repo for this cluster might look like:
+
+[source,bash]
+----
+/repository_root/
+  REAMDE.md # Don't skip Documentation!
+  ... other files & folders ...
+  ./.openshift/
+    ./templates/
+      project-template.yml
+      common-infra.yml
+    ./policy/
+      ...static YAML objects such as ClusterRoles, RoleBindings, StorageClasses etc...
+    ./params/
+      ./projects/
+        app1-dev.params
+        app1-stage.params
+        app1-prod.params
+        app2-dev.params
+        app2-stage.params
+        app2-prod.params
+      ./common-infra/
+        app1-dev.params
+        app1-stage.params
+        app1-prod.params
+        app2-dev.params
+        app2-stage.params
+        app2-prod.params
+----
+
+The link:https://github.com/redhat-cop/cluster-lifecycle[cluster-lifecycle^] repo represents a sensible structure for an _infrastructure as code_ repository for an OpenShift cluster.
+
+=== Automation using templates & the OpenShift Applier framework
+
+In order to level up the idea that essentially anything you can do with `oc` can be done using a combination of `oc process | oc apply`, we developed the link:https://github.com/redhat-cop/openshift-applier[Openshift Applier^] framework.
+
+At its core, OpenShift Applier is an link:https://ansible.com[ansible role^] that creates an ansible inventory syntax for automating the rollout of a set of templates and parameter files. This greatly reduces the level of effort to build and maintain quality automation of OpenShift resources.
+
+==== Continuing Our Example Use Case
+
+Let's take the example directory from the previous section and add OpenShift Applier capabilities to it.
+
+We would start by adding an ansible inventory structure to our `.openshift` directory in the root of the project.
+
+[source,bash]
+----
+/repository_root/
+  ./.openshift/
+    /inventory/
+      hosts
+      group_vars/
+        applier.yml
+----
+
+In the hosts file, we would simply add a single host group containing `localhost`. This is where _applier_ will run `oc` commands from:
+
+[source,ini]
+----
+[applier]
+localhost ansible_connection=local
+----
+
+The meat of your inventory goes in a vars file matching the target host group. In this case the file would be `groups_vars/applier.yml`. Within the vars file, we will build a _YAML dictionary_ that tells applier about our templates and parameter files, and how we would like them applied.
+
+[source,yaml]
+----
+openshift_cluster_content:
+- object: Cluster Policy
+  content:
+  - name: Apply cluster policy resources
+    file: "{{ inventory_dir }}/../policy/"
+- object: Configure Projects
+  content:
+  - name: Create Projects
+    template: "{{ inventory_dir }}/../templates/project-template.yml"
+    params: "{{ inventory_dir }}/../params/projects/"
+  - name: Add common infrastructure
+    template: "{{ inventory_dir }}/../templates/common-infra.yml"
+    params: "{{ inventory_dir }}/../params/common-infra/"
+----
+
+NOTE: The `inventory_dir` var is a global ansible variable that proves the absolute path (e.g. `/home/eric/src/repository_root/.openshift/inventory`) to the directory passed as inventory. We use this variable a lot to make inventories and related files more portable.
+
+Once this is all set up, we can run through the automation repeatably by running the applier role. The link:https://github.com/redhat-cop/openshift-applier[Openshift Applier^] repo provies a simple (4 line) playbook to do this.
+
+[source,bash]
+----
+ansible-playbook -i repository_root/.openshift/inventory/ openshift-applier/playbooks/applier-simple.yml
+----
+
+== Go Forth and Template!
+
+We hope this guide providsed a good base for organizations to go use templates more thoughtfully. They are a powerful tool in OpenShift and, when combined with a simple automation framework, can be used to automate your entire OpenShift _post-provision_ process.
+
+== Resources
+
+- link:https://docs.openshift.com/container-platform/3.7/dev_guide/templates.html[OpenShift Templates Official Documentation^]
+- link:https://github.com/redhat-cop/container-pipelines/tree/master/basic-spring-boot#openshift-templates[Container Pipelines Quickstarts on GitHub^]
+- link:https://github.com/redhat-cop/openshift-applier[Openshift Applier GitHub^]
