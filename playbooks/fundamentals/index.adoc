@@ -40,3 +40,4 @@ commented out due to travis build failure:
 == OpenShift Guides
 
 * link:./template_development_guide{outfilesuffix}[A Comprehensive Guide to OpenShift Templates]
+* link:https://blog.openshift.com/oc-command-newbies/[Getting Started with OpenShift cli^] to learn how to use oc command.
