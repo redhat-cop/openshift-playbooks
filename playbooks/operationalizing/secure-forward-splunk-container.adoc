@@ -161,6 +161,7 @@ Edit the following YAML:
 ----
 data:
   secure-forward.conf: |
+    <store>
     @type secure_forward
 
     self_hostname ${HOSTNAME}
@@ -175,6 +176,7 @@ data:
        host fluentd-forwarder.logging.svc.cluster.local
        port 24284
     </server>
+    </store>
 ----
 <1> A shared value between the sender and the receiver.  This must match the value specified above.
 
