@@ -39,5 +39,8 @@ commented out due to travis build failure:
 
 == OpenShift Guides
 
-* link:./template_development_guide{outfilesuffix}[A Comprehensive Guide to OpenShift Templates]
 * link:https://blog.openshift.com/oc-command-newbies/[Getting Started with OpenShift cli^] to learn how to use oc command.
+
+* link:./template_development_guide{outfilesuffix}[A Comprehensive Guide to OpenShift Templates]
+
+* link:https://www.redhat.com/en/blog/red-hat-openshift-container-platform-dns-deep-dive-dns-changes-red-hat-openshift-container-platform-36[DNS Deep Dive^] to learn how OpenShift DNS is working internally.
