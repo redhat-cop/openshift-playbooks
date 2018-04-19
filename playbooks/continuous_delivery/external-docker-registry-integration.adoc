@@ -74,6 +74,8 @@ oc secrets new-dockercfg external-registry \
     --docker-server=external-registry.example.com:5000
 ----
 
+NOTE: When logging into a remote OpenShift cluster, You must use your oc login token instead of your user's password. You can see more here. link:https://docs.openshift.com/container-platform/3.7/install_config/registry/accessing_registry.html#access[Accessing The Registry Directly]
+
 Alternatively, if the docker client was used to login to a remote registry and generate a configuration file containing the authentication details, this file can be stored as a secret within OpenShift. Two docker authentication formats are available: `config.json` and the legacy `.dockercfg`. Both are compatible for storage within OpenShift.
 
 To store a file in the `config.json` format as a secret within OpenShift, execute the following command
