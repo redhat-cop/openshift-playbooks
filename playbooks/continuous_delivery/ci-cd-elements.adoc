@@ -1,3 +1,5 @@
+---
+---
 = Elements of an OpenShift CI/CD  Pipeline
 Raffaele Spazzoli <rspazzol@redhat.com>
 v1.0, 2018-4-23
@@ -165,12 +167,12 @@ Deployment strategy characteristics
 |===
 |*Rollout strategy*|*Zero downtime*|*Real traffic testing*|*Targeted user*|*Infrastructure cost*|*complexity*
 
-|Recreate|||||
-|Rolling|||||
-|Blue/Green|||||
-|Canary|||||
-|A/B|||||
-|Shadow|||||
+|Recreate| no | no | no | low | low
+|Rolling| yes | no | no | low | low
+|Blue/Green| yes | no | no | high | medium
+|Canary| yes | no | yes | low | medium
+|A/B| yes | yes | yes | low | high
+|Shadow| yes | yes | no | high | high
 |===
 
 === Validation steps

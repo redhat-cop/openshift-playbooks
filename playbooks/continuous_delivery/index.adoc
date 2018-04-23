@@ -4,7 +4,7 @@
 
 == Foundational Concepts
 
-* link:./ci-cd-elements{outfilesuffix}[Elements of an OpenShift CI/CD Pipeline]
+* link:ci-cd-elements{outfilesuffix}[Elements of an OpenShift CI/CD Pipeline]
 
 == Application Builds
 
