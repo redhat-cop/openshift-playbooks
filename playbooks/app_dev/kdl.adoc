@@ -101,13 +101,13 @@ At the bottom of the pod we have the https://kubernetes.io/docs/concepts/storage
 
 image::./images/volume-example.png[]
 
-On the right side of the pod with have volumes that pertain to the configuration of the pod: https://kubernetes.io/docs/concepts/configuration/secret/[secrets] and https://kubernetes.io/docs/tasks/configure-pod-container/configmap/[configmaps]. As for the data volumes, the name of the volume should be indicated, usually it is important to distinguish between configmaps and secrets, so also the type of volume should be indicated and if necessary also the mount point can be shown. Here are some examples:
+On the right side of the pod with have volumes that pertain to the configuration of the pod: https://kubernetes.io/docs/concepts/configuration/secret/[secrets] and https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/[configmaps]. As for the data volumes, the name of the volume should be indicated, usually it is important to distinguish between configmaps and secrets, so also the type of volume should be indicated and if necessary also the mount point can be shown. Here are some examples:
 
 image::./images/secret-example.png[]
 
 === Networking
 
-There are two types of networking objects: https://kubernetes.io/docs/concepts/services-networking/service/[services] and https://kubernetes.io/docs/concepts/services-networking/ingress/[ingresses] (https://docs.openshift.com/container-platform/latest/architecture/core_concepts/routes.html[routes] in OpenShift).
+There are two types of networking objects: https://kubernetes.io/docs/concepts/services-networking/service/[services] and https://kubernetes.io/docs/concepts/services-networking/ingress/[ingresses] (https://docs.openshift.com/container-platform/3.9/architecture/networking/routes.html[routes] in OpenShift).
 
 ==== Services
 
