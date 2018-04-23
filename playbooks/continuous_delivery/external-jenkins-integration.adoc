@@ -2,7 +2,7 @@
 ---
 = External Jenkins Integration
 Red Hat Containers & PaaS CoP
-v1.0, 2017-05-10
+v1.1, 2017-04-21
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
 :toc: macro
 :toc-title:
@@ -108,7 +108,7 @@ In the form presented, enter the values as described in the table below:
 |=========================================================
 |Name |Value
 
-|Kind| *OpenShift Token*
+|Kind| *OpenShift Token for OpenShift Sync Plugin*
 
 |Scope| *Global*
 
@@ -120,19 +120,17 @@ In the form presented, enter the values as described in the table below:
 
 |=========================================================
 
-image::images/external-jenkins-credentials.png[title=Jenkins credentials]
-
-Since the Jenkins integration with OpenShift makes use of several independent plugins, each has their own type of credential in which they make use of the OAuth token. The _OpenShift Token_ kind is used by the OpenShift Sync plugin, but the _OpenShift OAuth Token_ kind is used by the Kubernetes Plugin. Create a second credential using the values in the tables below to account for the Kubernetes plugin using a similar process as described above.
+Since the Jenkins integration with OpenShift makes use of several independent plugins, each has their own type of credential in which they make use of the OAuth token. The _OpenShift Token for OpenShift Sync Plugin_ kind is used by the OpenShift Sync plugin, but the _OpenShift OAuth Token_ kind is used by the Kubernetes Plugin. Create a second credential using the values in the tables below to account for the Kubernetes plugin using a similar process as described above.
 
 [options="header"]
 |=========================================================
 |Name |Value
 
-|Kind| *OpenShift OAuth Token*
+|Kind| *Secret text*
 
 |Scope| *Global*
 
-|Token| _Value of the OAuth token obtained in the prior section_
+|Secret| _Value of the OAuth token obtained in the prior section_
 
 |ID| _Can enter any value or leave blank for Jenkins to autogenerate a UUID_
 
