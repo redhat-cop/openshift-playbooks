@@ -2,6 +2,10 @@
 ---
 = DevOps (Continuous Delivery) with Containers
 
+== Foundational Concepts
+
+* link:./ci-cd-elements{outfilesuffix}[Elements of an OpenShift CI/CD Pipeline]
+
 == Application Builds
 
 == Application Deployments
