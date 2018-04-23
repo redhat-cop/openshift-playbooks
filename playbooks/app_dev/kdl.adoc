@@ -12,12 +12,13 @@ toc::[]
 
 == Introduction
 
-This blog posts illustrates a graphical notation for Kubernetes API objects: Kubernetes Deployment Language (in short KDL). Kubernetes API objects can be used to describe how a solution will be deployed in Kubernetes.
+This document posts illustrates a graphical notation for Kubernetes API objects: Kubernetes Deployment Language (in short KDL). Kubernetes API objects can be used to describe how a solution will be deployed in Kubernetes.
 
-I think there is a need to describe and document how applications will be deployed in Kubernetes, especially when these applications are comprised of several components. 
-I wanted to create a simple graphical convention to describe these deployments, so that these diagram could be easily whiteboard and the capture in a document.
+There is a need to describe and document how applications will be deployed in Kubernetes, especially when these applications are comprised of several components. 
+To fill this gap, this document defines a simple graphical convention to describe these deployments, so that they can be diagramed, easily whiteboarded, and captured in a document.
 
-To better explain the objective we can draw a parallel to https://en.wikipedia.org/wiki/Unified_Modeling_Language[UML], which had several graphical languages to describe different aspects of an application architecture. A difference with UML is, though, that here in KDL, we don’t have the objective to do forward or reverse engineering (i.e. we don’t convert the diagrams in yaml files or vice versa). This way we have the opportunity to manage how much of information we want to display in the diagrams. As a general rule of thumb we will only display architecturally relevant information.
+
+To better explain the objective, we can draw a parallel to https://en.wikipedia.org/wiki/Unified_Modeling_Language[UML], which had several graphical languages to describe different aspects of an application architecture. In contrasting UML with KDL, the objective to do forward or reverse engineering doesn't exist (i.e. convert the diagrams in yaml files is not a goal). This way, we have the opportunity to manage how much of information we want to display in the diagrams. As a general rule of thumb, we will only display architecturally relevant information.
 
 https://github.com/raffaelespazzoli/kdl[Here] you can find a git repo with the latest version of KDL and you can also download a https://github.com/raffaelespazzoli/kdl/blob/master/media/kdl.vssx[visio stencil] for the proposed notation.
 
