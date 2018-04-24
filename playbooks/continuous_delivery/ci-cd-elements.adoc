@@ -25,9 +25,9 @@ image::images/ImmutableInfrastructure.png[]
 
 Pieces of the infrastructure are locked down in different phases and each infrastructure piece becomes immutable after being locked down.
 
-The* Code Build phase* locks the business logic. This is about creating a deployable artifact starting from our code. We have always done this step. +
-The* Image Build phase* locks the binary execution environment and creates a container image. After the container image is created, the business logic can be executed anywhere with no drift (for binaries and other runtime dependencies). +
-The* Topology Definition phase* locks the topology of the solution. Assuming the deployment involves a solution comprised of several components, this phase creates and locks the topology that describes which components must be deployed and their dependencies. The declarative API is leveraged to create a manifest of the compute, networking, and storage resources that are needed.
+The *Code Build phase* locks the business logic. This is about creating a deployable artifact starting from our code. We have always done this step. +
+The *Image Build phase* locks the binary execution environment and creates a container image. After the container image is created, the business logic can be executed anywhere with no drift (for binaries and other runtime dependencies). +
+The *Topology Definition phase* locks the topology of the solution. Assuming the deployment involves a solution comprised of several components, this phase creates and locks the topology that describes which components must be deployed and their dependencies. The declarative API is leveraged to create a manifest of the compute, networking, and storage resources that are needed.
 
 Notice that we have already locked down most of the infrastructure and we haven’t deployed anything yet.
 
@@ -110,18 +110,18 @@ There are three ways to build a docker image:
 |*Build type*|*Description*
 
 |External Docker build|Performs a standard Dockerfile build external to the OpenShift cluster. In this case, OpenShift is independent of the build.
-|https://docs.openshift.com/container-platform/3.7/dev_guide/builds/build_strategies.html#docker-strategy-options[Internal Docker build]|Performs a standard Dockerfile build executed as a pod inside of OpenShift.
-|https://docs.openshift.com/container-platform/3.7/architecture/core_concepts/builds_and_image_streams.html#source-build[S2I build]|Performs a source to image build that includes intermediate artifacts and docker image and that is executed as one process inside a pod.
+|link:{docs_url}dev_guide/builds/build_strategies.html#docker-strategy-options[Internal Docker build^]|Performs a standard Dockerfile build executed as a pod inside of OpenShift.
+|link:{docs_url}architecture/core_concepts/builds_and_image_streams.html#source-build[S2I build^]|Performs a source to image build that includes intermediate artifacts and docker image and that is executed as one process inside a pod.
 |===
 Each of these build types produces the desired output, but has different advantages and disadvantages. Because builds are spiky types of workload, Internal Docker Builds are well-suited for container platforms in which capacity is given back to the pool at the end of the build. Running builds inside of OpenShift can increase overall environment efficiency. However, running builds internally in OpenShift creates garbage that can cause cluster instability if not removed. 
 
-The main advantage of S2I builds is that they don’t require learning Dockerfile syntax. Building good docker images is an acquired skill and it may not be cost training all the developers in an organization. Another advantage is that the build steps in a S2I build are not run with root privileges. On the other hand, because S2I build is not part of the Kubernetes API, S2I builds are not portable across  Kubernetes-based platforms. In addition, although it is possible to https://docs.openshift.com/container-platform/3.7/creating_images/s2i.html[customize the S2I process], learning to customize S2I builds can be as time consuming and complex as learning how to properly build docker images.
+The main advantage of S2I builds is that they don’t require learning Dockerfile syntax. Building good docker images is an acquired skill and it may not be worth the cost training all the developers in an organization. Another advantage is that the build steps in a S2I build are not run with root privileges. On the other hand, because S2I builds are not part of the Kubernetes API, S2I builds are not portable across  Kubernetes-based platforms. In addition, although it is possible to https://docs.openshift.com/container-platform/3.7/creating_images/s2i.html[customize the S2I process], learning to customize S2I builds can be as time consuming and complex as learning how to properly build docker images.
 
-More information for these build types can be found in the field playbook located http://v1.uncontained.io/playbooks/app_dev/builds.html[here.]
+More information for these build types can be found in the field playbook located link:../app_dev/builds.html[here^].
 
 ==== Binary builds
 
-If  a build process already exists and the objective is to customize it to deploy to OpenShift, the https://docs.openshift.com/container-platform/3.7/dev_guide/builds/build_inputs.html#binary-source[binary build] is a good option. The binary build uses artifacts produced in a previous step as input to an OpenShift build (either docker or S2I).
+If  a build process already exists and the objective is to customize it to deploy to OpenShift, the link:{docs_url}dev_guide/builds/build_inputs.html#binary-source[binary build^] is a good option. The binary build uses artifacts produced in a previous step as input to an OpenShift build (either docker or S2I).
 
 
 image::images/BinaryBuild.png[]
@@ -129,20 +129,23 @@ image::images/BinaryBuild.png[]
 
 ==== Jenkins pipeline build strategy 
 
-A recent addition to the set of available OpenShift build types is the https://docs.openshift.com/container-platform/3.7/dev_guide/builds/build_strategies.html#pipeline-strategy-options[Jenkins pipeline build strategy]. A Jenkins pipeline build is a build strategy that includes a mechanism to trigger a Jenkins build from within OpenShift via an API call. The build logic resides in Jenkins. 
+A recent addition to the set of available OpenShift build types is the link:{docs_url}dev_guide/builds/build_strategies.html#pipeline-strategy-options[Jenkins pipeline build strategy]. A Jenkins pipeline build is a build strategy that includes a mechanism to trigger a Jenkins build from within OpenShift via an API call. The build logic resides in Jenkins. 
 
 === Promotion steps
 
 Promotion steps are used to deploy solutions (comprised of multiple components) to SDLC environments. In OpenShift, an environment is a project residing in a cluster. +
-Assuming there is an existing OpenShift template that represents the solution, deployment is performed with the following command:
+Assuming there is an existing OpenShift template that represents the solution, the deployment is performed with the following command:
 
-+oc process <template> ... | oc apply -f -+
+[source,bash]
+----
+oc process <template> ... | oc apply -f -
+----
 
-This command will actualize the template to the target environment using the environment dependent template parameters (not to be confused with the environment dependent properties) and applies it to OpenShift. 
+This command will instantiate the template to the target environment using the environment dependent template parameters (not to be confused with the environment dependent properties) and applies it to OpenShift. 
 
-The apply command determines if there are differences between the current state and the new, desired state, and if so, applies the differences as patches to the existing API objects. Because existing objects are not destroyed, the related applications do not incur outages.
+The `apply` command determines if there are differences between the current state and the new, desired state, and if so, applies the differences as patches to the existing API objects. Because existing objects are not destroyed, the related applications do not incur outages.
 
-If triggers are active at this point, a new deployment commences. In general,  automatic triggers for deployments should be carefully considered. In fact if we have a pipeline orchestrator ( such as Jenkins) the logic to trigger a rollout should reside in the orchestrator..
+If triggers are active at this point, a new deployment commences. In general,  automatic triggers for deployments should be carefully considered. In fact if we have a pipeline orchestrator ( such as Jenkins) the logic to trigger a rollout should reside in the orchestrator.
 
 ==== Rollout strategies
 
@@ -165,7 +168,7 @@ The following rollout strategies are possible:
 Deployment strategy characteristics
 
 |===
-|*Rollout strategy*|*Zero downtime*|*Real traffic testing*|*Targeted user*|*Infrastructure cost*|*complexity*
+|*Rollout strategy*|*Zero downtime*|*Real traffic testing*|*Targeted user*|*Infrastructure cost*|*Complexity*
 
 |Recreate| no | no | no | low | low
 |Rolling| yes | no | no | low | low
@@ -185,12 +188,12 @@ Examples of  environment independent and environment dependent validation steps 
 
 Environment independent validation steps:
 |===
-|*Validation step *|*Common tool/technology implementations*
+|*Validation step*|*Common tool/technology implementations*
 
 |Code static analysis|https://www.sonarqube.org/[SonarQube]
 |Code static security scanning|https://www.veracode.com/[Veracode]
 |Unit test|https://junit.org/junit5/[JUnit]
-|Image security scanning |https://www.redhat.com/en/technologies/management/cloudforms[Cloudforms] (with https://developers.redhat.com/blog/2016/05/02/introducing-atomic-scan-container-vulnerability-detection/[atomic scan]), https://www.twistlock.com/[Twistlock], https://www.blackducksoftware.com/[BlackDuck], https://www.aquasec.com/[Aquasec].
+|Image security scanning |https://www.redhat.com/en/technologies/management/cloudforms[CloudForms] (with https://developers.redhat.com/blog/2016/05/02/introducing-atomic-scan-container-vulnerability-detection/[atomic scan]), https://www.twistlock.com/[Twistlock], https://www.blackducksoftware.com/[BlackDuck], https://www.aquasec.com/[Aquasec].
 |===
 
 Image security scanning is a new step introduced by container technology. It ensures the quality of images in terms of security vulnerabilities (https://en.wikipedia.org/wiki/Common_Vulnerabilities_and_Exposures[CVEs]) +
@@ -209,7 +212,7 @@ Environment dependent validation steps:
 |===
 
 Behavioral Driven Development (BDD) testing is a valuable option and should be used for testing web and mobile applications. +
-BDD test cases are created using a pseudo natural language (https://cucumber.io/docs/reference[Gerkin]), allowing them to be quickly and easily created by non-technical users. The test cases are translated into machine instructions at test runtime (a popular one is https://cucumber.io/[Cucumber]).  +
+BDD test cases are created using a pseudo natural language (link:https://github.com/cucumber/cucumber/wiki/Gherkin[Gherkin^]), allowing them to be quickly and easily created by non-technical users. The test cases are translated into machine instructions at test runtime (a popular one is https://cucumber.io/[Cucumber]).  +
 The general architecture of BDD tests is illustrated in the following diagram:
 
 image::images/BDD.png[]
@@ -223,7 +226,7 @@ Compliance steps may be needed when pipelines must be compliant with an organiza
 Examples of compliance steps are provided in the following table:
 
 |===
-|*Step *|*Description*
+|*Step*|*Description*
 
 |Manual approval|Suspends pipeline execution until manual  approval to continue is provided .
 |Container image signing |Cryptographically signs images 
@@ -244,7 +247,7 @@ Although there are not many tools currently available for providing pipeline met
 
 A pipeline dashboard is illustrated in the following screen capture:
 
-
+image::images/hygiea-screenshot.jpg[]
 
 == Conclusions
 
