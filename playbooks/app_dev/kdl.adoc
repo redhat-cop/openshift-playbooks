@@ -5,6 +5,7 @@ Raffaele Spazzoli <rspazzol@redhat.com>
 v1.0, 2017-08-28
 :toc: macro
 :toc-title:
+:linkattrs:
 
 toc::[]
 
@@ -12,15 +13,15 @@ toc::[]
 
 == Introduction
 
-This document posts illustrates a graphical notation for Kubernetes API objects: Kubernetes Deployment Language (in short KDL). Kubernetes API objects can be used to describe how a solution will be deployed in Kubernetes.
+This guide illustrates a graphical notation for Kubernetes API objects: Kubernetes Deployment Language (in short KDL). Kubernetes API objects can be used to describe how a solution will be deployed in Kubernetes.
 
 There is a need to describe and document how applications will be deployed in Kubernetes, especially when these applications are comprised of several components. 
 To fill this gap, this document defines a simple graphical convention to describe these deployments, so that they can be diagramed, easily whiteboarded, and captured in a document.
 
 
-To better explain the objective, we can draw a parallel to https://en.wikipedia.org/wiki/Unified_Modeling_Language[UML], which had several graphical languages to describe different aspects of an application architecture. In contrasting UML with KDL, the objective to do forward or reverse engineering doesn't exist (i.e. convert the diagrams in yaml files is not a goal). This way, we have the opportunity to manage how much of information we want to display in the diagrams. As a general rule of thumb, we will only display architecturally relevant information.
+To better explain the objective, we can draw a parallel to https://en.wikipedia.org/wiki/Unified_Modeling_Language[UML^], which had several graphical languages to describe different aspects of an application architecture. In contrasting UML with KDL, the objective to do forward or reverse engineering doesn't exist (i.e. convert the diagrams in yaml files is not a goal). This way, we have the opportunity to manage how much of the information we want to display in the diagrams. As a general rule of thumb, we will only display architecturally relevant information.
 
-https://github.com/raffaelespazzoli/kdl[Here] you can find a git repo with the latest version of KDL and you can also download a https://github.com/raffaelespazzoli/kdl/blob/master/media/kdl.vssx[visio stencil] for the proposed notation.
+https://github.com/raffaelespazzoli/kdl[Here^] you can find a git repo with the latest version of KDL and you can also download a https://github.com/raffaelespazzoli/kdl/blob/master/media/kdl.vssx[visio stencil^] for the proposed notation.
 
 == Kubernetes API Objects
 
@@ -55,7 +56,7 @@ The compute objects are the most complex. In general they are represented by a r
 
 image::./images/compute-template.png[]
 
-The central section of the picture represents a https://kubernetes.io/docs/concepts/workloads/pods/pod/[pod]. In it we can find one or more containers. Both pod and containers should have a name.
+The central section of the picture represents a https://kubernetes.io/docs/concepts/workloads/pods/pod/[pod^]. In it we can find one or more containers. Both pod and containers should have a name.
 
 On the left side of the pod we have additional compute information. The top badge specify the type of controller for this pod. Here are the types of controllers and their abbreviations:
 
@@ -63,14 +64,14 @@ On the left side of the pod we have additional compute information. The top badg
 |===
 |*Type of controller*|*Abbreviation*
 
-|https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/[Replication Controller]|RC
-|https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/[Replica Set]|RS
-|https://kubernetes.io/docs/concepts/workloads/controllers/deployment/[Deployment]|D
-|https://docs.openshift.com/container-platform/latest/architecture/core_concepts/deployments.html#deployments-and-deployment-configurations[DeploymentConfig] (OpenShift only)|DC
-|https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/[DaemonSet]|DS
-|https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/[StatefulSet]|SS
-|https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/[Job]|J
-|https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/[Cron Job]|CJ
+|https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/[Replication Controller^]|RC
+|https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/[Replica Set^]|RS
+|https://kubernetes.io/docs/concepts/workloads/controllers/deployment/[Deployment^]|D
+|https://docs.openshift.com/container-platform/latest/architecture/core_concepts/deployments.html#deployments-and-deployment-configurations[DeploymentConfig^] (OpenShift only)|DC
+|https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/[DaemonSet^]|DS
+|https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/[StatefulSet^]|SS
+|https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/[Job^]|J
+|https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/[Cron Job^]|CJ
 |===
 
 On the bottom we have the cardinality of the instances of that pod. This field assumes different meaning and format depending on the type of controller, here is a reference table:
@@ -97,17 +98,17 @@ image::./images/port-example.png[]
 These badges are in yellow because the represent networking config. 
 You can connect each port with the container that is actually exposing that port if relevant. But in most cases this will not be necessary because most pods have just one container.
 
-At the bottom of the pod we have the https://kubernetes.io/docs/concepts/storage/volumes/[attached volumes]. The name of the volume should be displayed in the rectangle. In most cases these will be persistent volumes. If the volume type is not persistent volume it may be relevant to show it. Also, sometimes it may be important to also show the mount point. Here are examples of acceptable notation:
+At the bottom of the pod we have the https://kubernetes.io/docs/concepts/storage/volumes/[attached volumes^]. The name of the volume should be displayed in the rectangle. In most cases these will be persistent volumes. If the volume type is not persistent volume it may be relevant to show it. Also, sometimes it may be important to also show the mount point. Here are examples of acceptable notation:
 
 image::./images/volume-example.png[]
 
-On the right side of the pod with have volumes that pertain to the configuration of the pod: https://kubernetes.io/docs/concepts/configuration/secret/[secrets] and https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/[configmaps]. As for the data volumes, the name of the volume should be indicated, usually it is important to distinguish between configmaps and secrets, so also the type of volume should be indicated and if necessary also the mount point can be shown. Here are some examples:
+On the right side of the pod with have volumes that pertain to the configuration of the pod: https://kubernetes.io/docs/concepts/configuration/secret/[secrets^] and https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/[configmaps^]. As for the data volumes, the name of the volume should be indicated, usually it is important to distinguish between configmaps and secrets, so also the type of volume should be indicated and if necessary also the mount point can be shown. Here are some examples:
 
 image::./images/secret-example.png[]
 
 === Networking
 
-There are two types of networking objects: https://kubernetes.io/docs/concepts/services-networking/service/[services] and https://kubernetes.io/docs/concepts/services-networking/ingress/[ingresses] (https://docs.openshift.com/container-platform/3.9/architecture/networking/routes.html[routes] in OpenShift).
+There are two types of networking objects: https://kubernetes.io/docs/concepts/services-networking/service/[services^] and https://kubernetes.io/docs/concepts/services-networking/ingress/[ingresses^] (https://docs.openshift.com/container-platform/3.9/architecture/networking/routes.html[routes^] in OpenShift).
 
 ==== Services
 
@@ -121,12 +122,12 @@ On the left side there is a badge representing the type of service. Here are the
 |===
 |*Type*|*Abbreviation*
 
-|https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies[Cluster IP]|CIP
-|https://kubernetes.io/docs/concepts/services-networking/service/#headless-services[Cluster IP, ClusterIP: None]|HS a.k.a. Headless Service
-|https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport[Node Port]|NP
-|https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer[LoadBalancer]|LB
-|https://docs.openshift.com/container-platform/3.5/dev_guide/integrating_external_services.html#using-fqdn-2[External Name] (OpenShift only)|EN
-|https://kubernetes.io/docs/concepts/services-networking/service/#external-ips[External IP] |EIP
+|https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies[Cluster IP^]|CIP
+|https://kubernetes.io/docs/concepts/services-networking/service/#headless-services[Cluster IP, ClusterIP: None^]|HS a.k.a. Headless Service
+|https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport[Node Port^]|NP
+|https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer[LoadBalancer^]|LB
+|https://docs.openshift.com/container-platform/3.5/dev_guide/integrating_external_services.html#using-fqdn-2[External Name^] (OpenShift only)|EN
+|https://kubernetes.io/docs/concepts/services-networking/service/#external-ips[External IP^] |EIP
 |===
 
 At the top of the service there are the exposed ports. Same convention applies here as for the compute ports.
