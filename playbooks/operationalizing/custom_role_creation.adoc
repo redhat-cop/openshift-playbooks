@@ -2,7 +2,7 @@
 ---
 = Custom Role Creation
 Andrew Block <ablock@redhat.com>
-v1.0, 2017-03-324
+v1.1, 2018-04-25
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
 :toc: macro
 :toc-title:
@@ -127,6 +127,18 @@ rules:
 Remove the `- pods/exec` line and then save and then close the file.
 
 NOTE: Since the API invocation against this endpoint was a POST, it makes use of the _create_ verb. There are many use cases where there is a desire to limit a portion of the available verbs, such as create, while still providing access to read, such as get and list verbs.
+
+For OpenShift versions 3.9 and higher, ClusterRoles have the ability to be aggregated from other existing ClusterRoles to reduce redundancy within the Role Based Access Control system. The _edit_ ClusterRole derives its configuration from another ClusterRole as defined by the `aggregationRule` property. With this property in place, any modification to remove privileges would automatically be reset to the default cluster definition. To disable the aggregation of ClusterRoles for this custom ClusterRole, remove the following lines.
+
+[source]
+----
+aggregationRule:
+  clusterRoleSelectors:
+  - matchLabels:
+      rbac.authorization.k8s.io/aggregate-to-edit: "true"
+----
+
+More information on Aggregated ClusterRoles can be found in the following link:https://kubernetes.io/docs/admin/authorization/rbac/#aggregated-clusterroles[documentation].
 
 Finally create the new ClusterRole within OpenShift
 
