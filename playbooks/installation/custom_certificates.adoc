@@ -18,7 +18,7 @@ OpenShift creates a lot of certificates by default. Understanding where and how 
 
 In this guide we will discuss how and where TLS Certificates are used in OpenShift, how they are created, and how to go about designing a proper certificate management strategy for OpenShift. We will then show you how to configure OpenShift via Ansible to reflect this strategy.
 
-== How OpenShift Utilized Certificates for Internal Communication
+== How OpenShift Utilizes Certificates for Internal Communication
 
 OpenShift utilizes TLS Certificates in three primary ways.
 
