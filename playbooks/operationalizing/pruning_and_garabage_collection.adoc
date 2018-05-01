@@ -1,0 +1,32 @@
+# OCP object and image management
+---
+### Documenent maintenence
+---
+Maintainer: *Samuel Leonard <sleonard@redhat.com>* +
+Version: *v1.0* 
+
+### Docker Garbage Collection
+---
+Docker garbage collection refers to the removal of images which have been exited after a specified grace period and the removal of images which no longer belong to a running container. Garbage collection will manage the local image files on a specific host. Thusly, in order to be used meaningfully with OCP **all node hosts** must be running some sort of garbage collection. Below a link to a trusted docker-gc script may be found, as well as a playbook which will place garabage collection on an OCP cluster using the [nodes] hosts from an existing OCP ansible inventory file.
+
+* link:https://github.com/spotify/docker-gc[Docker-gc source and documentation]
+* link:https:/github.com/sal2fcVir/tree/master/cluster-management[Ansible playbook for an OCP cluster]
+
+**NOTE:** The playbook will set the following Garabage collection parameters by default:
+
+* Run Frequency: Hourly
+* Image Grace Period: 1 Hour
+* Excluded images: Red Hat infrastructure images
+
+These paramters may easily be modified within the playbook source for your specific needs. 
+
+### Image Pruning
+---
+Image Pruning within OCP is used in order to periodically remove older versions of OCP objets from a cluster. Because pruning is run within OCP it must only be run from one OCP host in order to be used effectively.
+
+Official documentation for object pruning in OCP may be found below: +
+
+* link:https://docs.openshift.com/container-platform/3.5/admin_guide/pruning_resources.html[OCP Pruning]
+
+**TODO:** Create an OCP pruning ansible playbook.
+ 
