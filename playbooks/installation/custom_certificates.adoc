@@ -71,7 +71,7 @@ The Advantage of this approach is that it can be more flexible, as it allows you
 
 The downside to this approach is that the internal infrastructure certificates remain self-signed, which may be percieved as bad practice by some Security or PKI teams. In reality the risk here is minimal, as the only clients that are trusting these certificates would be other components within the Cluster, and all external users and systems would be presented with custom trusted certificates.
 
-To see how to configure OpenShift to use this strategy, you can skip down to the link:#configuring-openshift-to-use-component-specific-custom-certificates-recommended[Configuring OpenShift to use Component-specific Custom Certificates] section.
+To see how to configure OpenShift to use this strategy, you can skip down to the link:#configuring-openshift-to-use-component-specific-custom-certificates[Configuring OpenShift to use Component-specific Custom Certificates] section.
 
 == Configuring OpenShift to use Component-specific Custom Certificates
 
