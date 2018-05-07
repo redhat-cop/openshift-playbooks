@@ -40,7 +40,7 @@ To comply with the principle of immutable infrastructure after deployment, the o
 * Security Patches
 * Configuration changes
 
-In traditional environments, the last three items are usually the responsibility of the operations team, and the developer team is not necessarily involved when they are performed. With immutable infrastructure and containers, deployment processes need to be radically rethought and need to involve the developer teams. These types of process change sometimes get push back.
+In traditional environments, the last three items are usually the responsibility of the operations team, and the developer team is not necessarily involved when they are performed. With immutable infrastructure and containers, deployment processes need to be radically rethought and need to involve the developer teams.
 
 The phases of the progressing locking process that we have described can implemented in a CI/CD pipeline. The following sections discuss the types of pipelines and the types of steps that are part of a pipeline.
 
@@ -113,9 +113,9 @@ There are three ways to build a docker image:
 |link:{docs_url}dev_guide/builds/build_strategies.html#docker-strategy-options[Internal Docker build^]|Performs a standard Dockerfile build executed as a pod inside of OpenShift.
 |link:{docs_url}architecture/core_concepts/builds_and_image_streams.html#source-build[S2I build^]|Performs a source to image build that includes intermediate artifacts and docker image and that is executed as one process inside a pod.
 |===
-Each of these build types produces the desired output, but has different advantages and disadvantages. Because builds are spiky types of workload, Internal Docker Builds are well-suited for container platforms in which capacity is given back to the pool at the end of the build. Running builds inside of OpenShift can increase overall environment efficiency. However, running builds internally in OpenShift creates garbage that can cause cluster instability if not removed. 
+Each of these build types produces the desired output, but has different advantages and disadvantages. Because builds are spiky types of workload, Internal Docker Builds are well-suited for container platforms in which capacity is given back to the pool at the end of the build. Running builds inside of OpenShift can increase overall environment efficiency. However, running builds internally in OpenShift creates garbage that needs to be removed (see this sections of the doc on https://docs.openshift.com/container-platform/3.9/admin_guide/garbage_collection.html[garbage collection]. 
 
-The main advantage of S2I builds is that they don’t require learning Dockerfile syntax. Building good docker images is an acquired skill and it may not be worth the cost training all the developers in an organization. Another advantage is that the build steps in a S2I build are not run with root privileges. On the other hand, because S2I builds are not part of the Kubernetes API, S2I builds are not portable across  Kubernetes-based platforms. In addition, although it is possible to https://docs.openshift.com/container-platform/3.7/creating_images/s2i.html[customize the S2I process], learning to customize S2I builds can be as time consuming and complex as learning how to properly build docker images.
+The main advantage of S2I builds is that they don’t require learning Dockerfile syntax. Building good docker images is an acquired skill and it may not be worth the cost of training all the developers in an organization. Another advantage is that the build steps in a S2I build are not run with root privileges. On the other hand, because S2I builds are not part of the Kubernetes API, S2I builds are not portable across  Kubernetes-based platforms. In addition, although it is possible to https://docs.openshift.com/container-platform/3.7/creating_images/s2i.html[customize the S2I process], learning to customize S2I builds can be as time consuming and complex as learning how to properly build docker images.
 
 More information for these build types can be found in the field playbook located link:../app_dev/builds.html[here^].
 
