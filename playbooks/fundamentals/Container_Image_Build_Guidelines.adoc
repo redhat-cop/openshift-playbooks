@@ -1,6 +1,6 @@
 ---
 ---
-= Container Image and Build Guidelines
+= OCI Container Image and Build Guidelines
 Matt Witzenman <mwitzenm@redhat.com>
 :linkattrs:
 :toc: macro
@@ -20,7 +20,7 @@ vim Dockerfile
 
 ----
 FROM rhel7.5
-	MAINTAINER Matt Witz <mattwitz@example.com>
+MAINTAINER Matt Witz <mattwitz@example.com>
 ----
 
 The *FROM* line is required to start from another image someone has created.
@@ -29,17 +29,16 @@ Now that we have these first two steps inside our file, we could run this contai
 
 ----
 FROM rhel7.5
-	MAINTAINER Matt Witzmailto:mattwitz@example.com[ <mattwitz@example.c]om>
+MAINTAINER Matt Witzmailto:mattwitz@example.com[ <mattwitz@example.c]om>
 LABEL version="1.0"
-	LABEL description="First image with Dockerfile."
+LABEL description="First image with Dockerfile."
 # Add Web server, update image, and clear cache
-	RUN yum -y install httpd && yum -y update; yum clean all
-	# Add some data to web server
-	RUN echo "This Web server is working." > /var/www/html/index.html
-	EXPOSE 80
-	ENTRYPOINT [ "/usr/sbin/httpd" ]
-	CMD [ "-D", "FOREGROUND" ]
-        USER 1001
+RUN yum -y install httpd && yum -y update; yum clean all
+# Add some data to web server
+RUN echo "This Web server is working." > /var/www/html/index.html
+EXPOSE 80
+ENTRYPOINT [ "/usr/sbin/httpd" ]
+CMD [ "-D", "FOREGROUND" ]
 
 ----
 
@@ -52,13 +51,12 @@ The *2nd RUN* line is adding some content to our web server.
 The *EXPOSE* line allows traffic to our web server on port 80 of the container.
 The *ENTRYPOINT* line is used to signify the command that will be run as if we were on the command line and this is the main execution process.
 The *CMD* line should be used to run the software contained by our image, along with any arguments. 
-The *USER* line should be used to run the httpd process as a non-root user.
 
 == Onto the advanced use case and best practices
 
 === Size does matter
 
-In our above example we started with a very basic RHEL 7 image, which should be obtained from a trusted source. Images vary in size and what we started with (at the time of writing this document) is large in comparison to an Atomic Host image found https://access.redhat.com/containers/?tab=overview#/registry.access.redhat.com/rhel7-atomic[here] ( ~ 29M using 87 RPMs ) vs the rhel7 base image found https://access.redhat.com/containers/?tab=overview#/registry.access.redhat.com/rhel[here] ( ~ 71M using 152 RPMs ).  One attribute to consider is the size of the image.  Our design and intent should be taken into account to see which style of image best fits our use case.  An additional consideration is Atomic images do not include SUID programs which give temporary permissions to a user to run a program/file with the permissions of the file owner rather that the user who runs it which is an additional consideration that falls under security. The package installer, which is dnf and not yum, is a package manager that does not have python as a requirement and thus is lighter weight and has a reduction in the rpm’s in the image itself which carries extra benefits as a reduced attack serfice as well.  
+In our above example we started with a very basic RHEL 7 image, which should be obtained from a trusted source. Understanding where your images come from is just as important as what is in them.  Building a process around what is allowed into your network should be built upon the *trust but verify* premise.  Now as to the images, they vary in size and what we started with (at the time of writing this document) is large in comparison to an Atomic Host image found https://access.redhat.com/containers/?tab=overview#/registry.access.redhat.com/rhel7-atomic[here] ( ~ 29M using 87 RPMs ) vs the rhel7 base image found https://access.redhat.com/containers/?tab=overview#/registry.access.redhat.com/rhel[here] ( ~ 71M using 152 RPMs ).  Both of these statics of size and how many rpms are actually inside the images can be found, in this case, at https://access.redhat.com within the main pages that describes the image.  One attribute to consider is the size of the image.  Our design and intent should be taken into account to see which style of image best fits our use case.  An additional consideration is Atomic images do not include SUID programs which give temporary permissions to a user to run a program/file with the permissions of the file owner rather that the user who runs it which is an additional consideration that falls under security. The package installer, which is dnf and not yum, is a package manager that does not have python as a requirement and thus is lighter weight and has a reduction in the rpm’s in the image itself which carries extra benefits as a reduced attack serfice as well.  
 
 === Base image
 
@@ -66,7 +64,7 @@ Once we have landed on our image style it’s time to consider additional items 
 
 === Security
 
-Our third consideration to our image standard is security.  Security has different areas of concern when implementing container images.  We mentioned the trusted source as one such aspect as well as patching for vulnerabilities, but we also have to consider who is ultimately going to run our container.  When installing packages to the base image we will need to be root to accomplish such tasks, but once those tasks that require root privilege are complete, we should change the running container user with a USER 1001 or similar line in our file before we run the container.  
+Our third consideration to our image standard is security.  Security has different areas of concern when implementing container images.  We mentioned the trusted source as one such aspect of security when we mentioned side above but I want to bring to your attention an example of why we must trust the source in which we get our images.  It is paramount to make sure that you have full traceability of how the image was created in the first place and what is in that image.  Having the backing of a company like Red Hat that ensures vulnerabilities are published, tracked, and fixed provides a full lifecyle that you can trust.  Images have the ability to be scanned in production as well as signed using a process like https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux_atomic_host/7/html/managing_containers/signing_container_images[this], which allows your teams to have confidence that you are not just allowing anything into production.  Security does not stop there, we also have to consider who is ultimately going to run our container.  When installing packages to the base image we will need to be root to accomplish such tasks, but once those tasks that require root privilege are complete, we should change the running container user with a USER 1001 or similar line in our file before we run the container.  One example where that is not possible is our httpd example where we do not use USER 1001 as the last line of the Dockerfile due to the nature of the httpd process requirements of ports and user restrictions of starting.   
 
 === Storage
 
@@ -78,7 +76,7 @@ As we have touched on speed, that brings us to the next consideration: don’t r
 
 === Reduced entries
 
-Each line in the Dockerfile adds a layer to the image.  As mentioned above in our RUN command for installing packages, we executed a line continuation with one of the following, a backslash ( / ) for multiline read ability or a semicolon ( ; ) or double ampersands ( && ) to ensure all those RUN segments commands are bundled into one layer.  These concatenated RUN commands should be used when the intent is bound around a common goal such as the installation of packages and the cleaning out of the resulting cache required for the package install.  As we see in the example: 
+Each line in the Dockerfile adds a layer to the image.  As mentioned above in our RUN command for installing packages, we executed a line continuation with one of the following, a backslash ( \ ) for multiline read ability or a semicolon ( ; ) or double ampersands ( && ) to ensure all those RUN segments commands are bundled into one layer.  These concatenated RUN commands should be used when the intent is bound around a common goal such as the installation of packages and the cleaning out of the resulting cache required for the package install.  As we see in the example: 
 
 ----
 RUN yum -y install httpd && yum -y update; yum clean all
@@ -107,20 +105,21 @@ In conclusion we have the following considerations for constructing our image.
 ----
 FROM rhel:7.4
 ENV JAVA_HOME=/usr/lib/jvm/jre-1.8.0-openjdk \
-	KAFKA_VERSION=1.0.0 \
-	SCALA_VERSION=2.11 \
-	KAFKA_HOME=/opt/kafka
+KAFKA_VERSION=1.0.0 \
+SCALA_VERSION=2.11 \
+KAFKA_HOME=/opt/kafka
 COPY fix-permissions /usr/local/bin
 RUN INSTALL_PKGS="gettext tar zip unzip hostname java-1.8.0-openjdk" && \
-	yum install -y $INSTALL_PKGS && \
-	rpm -V $INSTALL_PKGS && \
-	yum clean all  && \
-	mkdir -p $KAFKA_HOME && \
-	curl -fsSL https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz | tar xzf - --strip 1 -C $KAFKA_HOME/ && \
-	mkdir -p $KAFKA_HOME/logs && \
-	/usr/local/bin/fix-permissions $KAFKA_HOME
+  yum install -y $INSTALL_PKGS && \
+  rpm -V $INSTALL_PKGS && \
+  yum clean all  && \
+  mkdir -p $KAFKA_HOME && \
+  curl -fsSL https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz | tar xzf - --strip 1 -C $KAFKA_HOME/ && \
+  mkdir -p $KAFKA_HOME/logs && \
+  /usr/local/bin/fix-permissions $KAFKA_HOME
 WORKDIR "/opt/kafka"
 EXPOSE 9092
+USER 1001
 
 ----
 
