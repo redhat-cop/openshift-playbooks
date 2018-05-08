@@ -16,6 +16,7 @@ This document’s objective is to explain some foundational concepts related to 
 
 The general concept of immutable infrastructure is that there is only one way to introduce change into a system, and that way is to destroy and recreate that system. +
 The main benefit of this approach is that changes are introduced in a very controlled way, minimizing drifts and misconfiguration. In addition, having a single method for introducing change allows more focus on automation and optimization.
+https://en.wikipedia.org/wiki/Infrastructure_as_Code[Infrastructure as code] is a common apporach used to achieve immutable infrastructure (this topic is out of scope for this document).  
 
 Systems and infrastructure can be rapidly destroyed and recreated. Therefore, immutability should not be interpreted as rigidity, but rather as a very prescriptive rule about how change can be introduced. For the lifetime of a given instance of a system, it is actually immutable. 
 
