@@ -29,7 +29,7 @@ Now that we have these first two steps inside our file, we could run this contai
 
 ----
 FROM rhel7.5
-MAINTAINER Matt Witzmailto:mattwitz@example.com[ <mattwitz@example.c]om>
+MAINTAINER Matt Witzmailto:mattwitz@example.com <mattwitz@example.com>
 LABEL version="1.0"
 LABEL description="First image with Dockerfile."
 # Add Web server, update image, and clear cache
@@ -43,14 +43,16 @@ CMD [ "-D", "FOREGROUND" ]
 ----
 
 We have added some very important lines to the file that we will now explain.  
-The *LABEL* line allows for some metadata that helps examine our images at a later date with some meaningful information with a command called docker inspect.
+
+* The *LABEL* line allows for some metadata that helps examine our images at a later date with some meaningful information with a command called docker inspect.
+* The *RUN* line is our command execution within the image to add or remove or manipulate the images to our desired state.  We can have as many RUN statement lines but we suggest the minimum to get our container to run. 
+* The *1st RUN* line executes package installs from one line separated by semicolons due to how a docker image is layered.  We will explain that in detail later in our guide and why that is important to consider.
+* The *2nd RUN* line is adding some content to our web server.
+* The *EXPOSE* line allows traffic to our web server on port 80 of the container.
+* The *ENTRYPOINT* line is used to signify the command that will be run as if we were on the command line and this is the main execution process.
+* The *CMD* line should be used to run the software contained by our image, along with any arguments. 
+
 _Note: Adding comments is a breeze just by prefacing the line with a # so others can easily understand our intent._
-The *RUN* line is our command execution within the image to add or remove or manipulate the images to our desired state.  We can have as many RUN statement lines but we suggest the minimum to get our container to run. 
-The *1st RUN* line executes package installs from one line separated by semicolons due to how a docker image is layered.  We will explain that in detail later in our guide and why that is important to consider.
-The *2nd RUN* line is adding some content to our web server.
-The *EXPOSE* line allows traffic to our web server on port 80 of the container.
-The *ENTRYPOINT* line is used to signify the command that will be run as if we were on the command line and this is the main execution process.
-The *CMD* line should be used to run the software contained by our image, along with any arguments. 
 
 == Onto the advanced use case and best practices
 
