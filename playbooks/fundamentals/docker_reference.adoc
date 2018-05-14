@@ -25,6 +25,7 @@ toc::[]
 * link:http://www.projectatomic.io/docs/docker-building-images/[Building Docker Images^] (Project Atomic)
 * link:http://www.projectatomic.io/docs/docker-image-author-guidance/[Project Atomic Guidance for Container Image Authors^] (Project Atomic)
 
+
 === Priveleged Containers
 
 * link:https://www.youtube.com/watch?v=dM2Fc53Dtd4[Super Priveleged Containers^] (Red Hat Summit Video) where Dan Walsh
@@ -34,6 +35,7 @@ toc::[]
 * link:https://docs.docker.com/engine/docker-overview/[Docker basics^] (Docker)
 * link:https://docs.docker.com/get-started/[Getting started with Docker^] (Docker)
 * link:https://docs.docker.com/engine/reference/builder/[Dockerfile reference^] (Docker)
+* link:./Container_Image_Build_Guidelines{outfilesuffix}[Container Image and Build Guide] guide for building OCI container images for OpenShift based on lessons learned from enterprise container adoption delivery
 
 
 == OpenShift Specific Guidance for Images
