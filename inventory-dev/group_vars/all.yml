@@ -24,7 +24,7 @@ openshift_cluster_content:
   content:
   - name: "image build"
     namespace: "field-guides-dev"
-    template: "https://raw.githubusercontent.com/redhat-cop/containers-quickstarts/master/jenkins-slaves/templates/jenkins-slave-image-mgmt-template.json"
+    template: "https://raw.githubusercontent.com/redhat-cop/containers-quickstarts/master/jenkins-slaves/templates/jenkins-slave-image-mgmt-template.yml"
     params: "{{ inventory_dir }}/../deploy/dev/slave-params"
   - name: "site build"
     template: "{{ inventory_dir }}/../build/template.yml"
