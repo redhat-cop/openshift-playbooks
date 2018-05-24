@@ -10,15 +10,14 @@ v1.0, 2018-4-23
 include::../../_includes/variables.adoc[]
 toc::[]
 
-This document’s objective is to explain some foundational concepts related to building a CI/CD pipeline and how they relate to OpenShift. This is intended to be an introductory guide to what is in fact a rather vast topic. More in-depth and implementation-oriented guidelines are linked from this document when appropriate. 
+This document’s objective is to explain some foundational concepts related to building a CI/CD pipeline and how they relate to OpenShift. This is intended to be an introductory guide to what is in fact a rather vast topic. More in-depth and implementation-oriented guidelines are linked from this document when appropriate.
 
 == Immutable infrastructure
 
-The general concept of immutable infrastructure is that there is only one way to introduce change into a system, and that way is to destroy and recreate that system. +
-The main benefit of this approach is that changes are introduced in a very controlled way, minimizing drifts and misconfiguration. In addition, having a single method for introducing change allows more focus on automation and optimization.
-https://en.wikipedia.org/wiki/Infrastructure_as_Code[Infrastructure as code] is a common apporach used to achieve immutable infrastructure (this topic is out of scope for this document).  
+The general concept of immutable infrastructure is that there is only one way to introduce change into a system, and that way is to destroy and recreate that system. The main benefit of this approach is that changes are introduced in a very controlled way, minimizing drifts and misconfiguration. In addition, having a single method for introducing change allows more focus on automation and optimization.
+https://en.wikipedia.org/wiki/Infrastructure_as_Code[Infrastructure as code] is a common approach used to achieve immutable infrastructure (this topic is out of scope for this document).
 
-Systems and infrastructure can be rapidly destroyed and recreated. Therefore, immutability should not be interpreted as rigidity, but rather as a very prescriptive rule about how change can be introduced. For the lifetime of a given instance of a system, it is actually immutable. 
+Systems and infrastructure can be rapidly destroyed and recreated. Therefore, immutability should not be interpreted as rigidity, but rather as a very prescriptive rule about how change can be introduced. For the lifetime of a given instance of a system, it is actually immutable.
 
 The concept of immutable infrastructure can be applied to container-based solutions and deployment pipelines with the idea of progressively locking the infrastructure:
 
@@ -45,42 +44,23 @@ In traditional environments, the last three items are usually the responsibility
 
 The phases of the progressing locking process that we have described can implemented in a CI/CD pipeline. The following sections discuss the types of pipelines and the types of steps that are part of a pipeline.
 
-== Types of pipelines
+== Pipeline Stages and Pipeline Flow
 
-Release management processes typically feature automated deployment procedures. An authorized user selects a software version and an environment, and then initiates the release process. 
+A _link:https://jenkins.io/doc/book/pipeline/#stage[pipeline stage]_ is a logically grouped set of tasks intended to achieve a specific function within a pipeline (e.g. Build the App, Deploy the App, Test the App, Promote the App). The pipeline succeeds when all stages have completed without failure. Typically, stages run serially (one after the other) and in a consistent order, but some may run in parallel. We refer to the movement from one stage to the next as _triggering_.
 
-If the promotion workflow from the development environment to the production environment is a series of manually triggered deployments, this is referred to as a *point and click* pipeline.
+NOTE: We dive deeper into these functions in link:#types-of-pipeline-stages[Types of Pipeline Stages].
 
-image::images/PointAndClick.png[]
-
-The more modern *straight through* pipeline takes code from version control system (VCS) and promotes it through the various environments to production with minimal or no human intervention.
+The ultimate goal for a successful pipeline is that it is able to run all the way through automatically (_automatic triggering_), taking the workload all the way into a production state without any intervention my humans. This level of continuation allows for development teams to release small amounts of code quickly and with low risk.
 
 image::images/TruePipeline.png[]
 
-A straight through pipeline is generally preferred because it minimizes human error, but it requires a higher level of organization maturity.
+To achieve a pipeline with this level of capabilities requires a high level of investment on the part of the development and operations teams to build proper testing and validation into the automated pipeline. This ensures quality and compliance of the code before deploying it into production. For this reason, many pipelines initially include _manual triggers_ -- stops or pauses after certain stages, requiring manual intervention to run tests, review code, or receive sign-off before approving the pipeline to continue on to a higher stage.
 
-There is a continuum between strict point and click pipelines and straight through pipelines and each organization must determine the type of deployment pipeline that will fit their environment.
+image::images/PointAndClick.png[]
 
-== Ownership of the pipeline
+There is a continuum between strictly manually triggered pipelines and automatically triggered pipelines. Most organizations may begin with full manual triggering between stages, but should look to remove as many of those manual triggers as feasible in order to reduce bottlenecks in the system.
 
-It is important to identify who in the organization owns the release process, tools, and pipelines. For traditional https://en.wikipedia.org/wiki/ITIL[ITIL-based] organizations, there is typically a release management team that owns the release process. That team might also own the tools involved in supporting the pipelines, and, in some cases,  own the actual pipelines.
-
-Ownership should be clearly defined for all pipeline-related aspects:
-
-* Release policies and compliance rules
-* Templates and other general reusable pipeline artifacts
-* Tools needed to support the pipeline
-* Individual pipelines
-
-The current trend for agile organizations is to have developer teams own the pipelines for their specific applications. In this case, the development teams are responsible for creating and updating the pipelines, as well as ensuring pipeline compliance with enterprise-issued release management standards.
-
-Because pipeline processes can be described *as code*, developers must learn the pipeline https://en.wikipedia.org/wiki/Domain-specific_language[Domain Specific Language] (DSL), but otherwise have a short learning curve.
-
-More traditional organizations are instead not comfortable with this approach because they want to have a clear separation of duty between development activities and deployment tasks.
-
-Each organization is different and will have to determine their own ownership model for pipelines.
-
-== Types of pipeline steps
+== Types of Pipeline Stages
 
 Typically, there are four steps in a pipeline:
 
@@ -93,14 +73,14 @@ Typically, there are four steps in a pipeline:
 |Compliance |These type of steps are sometimes needed to make the pipeline compliant with enterprise release management standards.
 |===
 
-NOTE: Because the primary task of a pipeline is to promote software through various https://en.wikipedia.org/wiki/Systems_development_life_cycle[Software Development Lifecycle] (SDLC) environments to production, an https://en.wikipedia.org/wiki/Minimum_viable_product[MVP] (Minimum Viable Product) pipeline only requires Build and Promotion steps.
+NOTE: Because the primary task of a pipeline is to promote software through various https://en.wikipedia.org/wiki/Systems_development_life_cycle[Software Development Lifecycle] (SDLC) environments to production, an https://en.wikipedia.org/wiki/Minimum_viable_product[MVP] (Minimum Viable Product) pipeline may only require build and promotion steps, with validation and compliance checking being performed by humans.
 
 The recommended approach is to create an MVP pipeline, and only add validation and compliance steps after the MVP pipeline is verified.
 
 image::images/MVPPipeline.png[]
 
 
-=== Build steps
+=== Build Stage
 
 Build steps include everything needed to build a container image. Although version control is always in effect for container images, it might also be required for other deployment artifacts (for example, jar files) for compliance reasons. The pipeline owner must work with the release policies owner to ensure compliance requirements are met.
 
@@ -114,41 +94,45 @@ There are three ways to build a docker image:
 |link:{docs_url}dev_guide/builds/build_strategies.html#docker-strategy-options[Internal Docker build^]|Performs a standard Dockerfile build executed as a pod inside of OpenShift.
 |link:{docs_url}architecture/core_concepts/builds_and_image_streams.html#source-build[S2I build^]|Performs a source to image build that includes intermediate artifacts and docker image and that is executed as one process inside a pod.
 |===
-Each of these build types produces the desired output, but has different advantages and disadvantages. Because builds are spiky types of workload, Internal Docker Builds are well-suited for container platforms in which capacity is given back to the pool at the end of the build. Running builds inside of OpenShift can increase overall environment efficiency. However, running builds internally in OpenShift creates garbage that needs to be removed (see this sections of the doc on https://docs.openshift.com/container-platform/3.9/admin_guide/garbage_collection.html[garbage collection]. 
+Each of these build types produces the desired output, but has different advantages and disadvantages. Because builds are spiky types of workload, Internal Docker Builds are well-suited for container platforms in which capacity is given back to the pool at the end of the build. Running builds inside of OpenShift can increase overall environment efficiency. However, running builds internally in OpenShift creates garbage that needs to be removed (see this sections of the doc on https://docs.openshift.com/container-platform/3.9/admin_guide/garbage_collection.html[garbage collection].
 
-The main advantage of S2I builds is that they don’t require learning Dockerfile syntax. Building good docker images is an acquired skill and it may not be worth the cost of training all the developers in an organization. Another advantage is that the build steps in a S2I build are not run with root privileges. On the other hand, because S2I builds are not part of the Kubernetes API, S2I builds are not portable across  Kubernetes-based platforms. In addition, although it is possible to https://docs.openshift.com/container-platform/3.7/creating_images/s2i.html[customize the S2I process], learning to customize S2I builds can be as time consuming and complex as learning how to properly build docker images.
+The main advantage of S2I builds is that they don’t require learning Dockerfile syntax. Building good docker images is an acquired skill and it may not be worth the cost of training all the developers in an organization. Another advantage is that the build steps in a S2I build are not run with root privileges. Another advantage is that the build steps in S2I builds run as the user defined in the base image. This gives an organization the ability to control the permission scope of the build, while still allowing the developer full ability to self serve.
 
-More information for these build types can be found in the field playbook located link:../app_dev/builds.html[here^].
+On the other hand, because S2I builds are not part of the Kubernetes API, S2I builds are not portable across  Kubernetes-based platforms. In addition, although it is possible to https://docs.openshift.com/container-platform/3.7/creating_images/s2i.html[customize the S2I process], learning to customize S2I builds can be as time consuming and complex as learning how to properly build docker images.
 
-==== Binary builds
+More information for these build types can be found in our link:../app_dev/builds.html[OpenShift Builds deep dive^].
+
+==== Binary Builds
 
 If  a build process already exists and the objective is to customize it to deploy to OpenShift, the link:{docs_url}dev_guide/builds/build_inputs.html#binary-source[binary build^] is a good option. The binary build uses artifacts produced in a previous step as input to an OpenShift build (either docker or S2I).
 
+Check out our link:/playbooks/app_dev/binary_deployment_howto{outfilesuffix}[Binary Build tutorial] to see this in action.
 
 image::images/BinaryBuild.png[]
 
 
-==== Jenkins pipeline build strategy 
+==== Jenkins Pipeline Build Strategy
 
-A recent addition to the set of available OpenShift build types is the link:{docs_url}dev_guide/builds/build_strategies.html#pipeline-strategy-options[Jenkins pipeline build strategy]. A Jenkins pipeline build is a build strategy that includes a mechanism to trigger a Jenkins build from within OpenShift via an API call. The build logic resides in Jenkins. 
+A recent addition to the set of available OpenShift build types is the link:{docs_url}dev_guide/builds/build_strategies.html#pipeline-strategy-options[Jenkins pipeline build strategy]. A Jenkins pipeline build is a build strategy that includes a mechanism to trigger a Jenkins build from within OpenShift via an API call. The build logic resides in Jenkins.
 
-=== Promotion steps
+=== Promotion Stage
 
-Promotion steps are used to deploy solutions (comprised of multiple components) to SDLC environments. In OpenShift, an environment is a project residing in a cluster. +
-Assuming there is an existing OpenShift template that represents the solution, the deployment is performed with the following command:
+Promotion steps are used to deploy solutions (comprised of multiple components) to SDLC environments. In OpenShift, an environment is a project residing in a cluster. Assuming there is an existing OpenShift template that represents the solution, the deployment is performed with the following command:
 
 [source,bash]
 ----
 oc process <template> ... | oc apply -f -
 ----
 
-This command will instantiate the template to the target environment using the environment dependent template parameters (not to be confused with the environment dependent properties) and applies it to OpenShift. 
+This command will instantiate the template to the target environment using the environment dependent template parameters (not to be confused with the environment dependent properties) and applies it to OpenShift.
 
 The `apply` command determines if there are differences between the current state and the new, desired state, and if so, applies the differences as patches to the existing API objects. Because existing objects are not destroyed, the related applications do not incur outages.
 
 If triggers are active at this point, a new deployment commences. In general,  automatic triggers for deployments should be carefully considered. In fact if we have a pipeline orchestrator ( such as Jenkins) the logic to trigger a rollout should reside in the orchestrator.
 
-==== Rollout strategies
+Check out our link:/playbooks/fundamentals/template_development_guide{outfilesuffix}[guide on OpenShift Templates] for more details on these concepts.
+
+==== Rollout Strategies
 
 The following rollout strategies are possible:
 
@@ -179,11 +163,11 @@ Deployment strategy characteristics
 |Shadow| yes | yes | no | high | high
 |===
 
-=== Validation steps
+=== Validation Stage
 
 Validation steps tend to be organization specific and, in part, reflect the development methodology adopted by that organization.
 
-Validation steps can be classified as environment independent and environment dependent. To catch errors as quickly as possible, environment independent steps should be executed before the first deployment. Conversely, environment dependent steps can only be executed in an environment after the solution has been deployed. 
+Validation steps can be classified as environment independent and environment dependent. To catch errors as quickly as possible, environment independent steps should be executed before the first deployment. Conversely, environment dependent steps can only be executed in an environment after the solution has been deployed.
 
 Examples of  environment independent and environment dependent validation steps are provided in the following tables.
 
@@ -198,7 +182,7 @@ Environment independent validation steps:
 |===
 
 Image security scanning is a new step introduced by container technology. It ensures the quality of images in terms of security vulnerabilities (https://en.wikipedia.org/wiki/Common_Vulnerabilities_and_Exposures[CVEs]) +
-This process has two sides: on one side we need to scan the images to determine if there are known vulnerabilities in it, on the other side we need to prevent images that don’t pass the quality check from running as containers. This enforcement resides outside of the pipeline and can be configured in OpenShift via the https://docs.openshift.com/container-platform/3.7/admin_guide/image_policy.html[image admission control].  
+This process has two sides: on one side we need to scan the images to determine if there are known vulnerabilities in it, on the other side we need to prevent images that don’t pass the quality check from running as containers. This enforcement resides outside of the pipeline and can be configured in OpenShift via the https://docs.openshift.com/container-platform/3.7/admin_guide/image_policy.html[image admission control].
 
 An example image scanning pipeline step can be found https://github.com/redhat-cop/openshift-image-signing-scanning[here].
 
@@ -220,7 +204,7 @@ image::images/BDD.png[]
 
 The above architecture can be fully deployed and contained in OpenShift. Multiple combinations of browser/operating system and mobile device/operating system tests can be executed in parallel. The advent of Windows containers will provide additional opportunities for testing applications running on Internet Explorer and Edge.
 
-=== Compliance steps
+=== Compliance Stage
 
 Compliance steps may be needed when pipelines must be compliant with an organization's release process and change management.
 
@@ -230,7 +214,7 @@ Examples of compliance steps are provided in the following table:
 |*Step*|*Description*
 
 |Manual approval|Suspends pipeline execution until manual  approval to continue is provided .
-|Container image signing |Cryptographically signs images 
+|Container image signing |Cryptographically signs images
 |Deployment manifest upload|Uploads the manifest of what is deployed to a centralized change management tool.
 |===
 
@@ -238,11 +222,30 @@ Container image signing provides a method for making an assertion cryptographica
 
 Google is currently working on a more general purpose assertion framework for deployment pipelines (see https://cloudplatform.googleblog.com/2017/10/introducing-grafeas-open-source-api-.html[Grapheas and Kritis]).
 
-== Pipeline metrics and dashboards
+== Ownership of the Pipeline
+
+It is important to identify who in the organization owns the release process, tools, and pipelines. For traditional https://en.wikipedia.org/wiki/ITIL[ITIL-based] organizations, there is typically a release management team that owns the release process. That team might also own the tools involved in supporting the pipelines, and, in some cases,  own the actual pipelines.
+
+Ownership should be clearly defined for all pipeline-related aspects:
+
+* Release policies and compliance rules
+* Templates and other general reusable pipeline artifacts
+* Tools needed to support the pipeline
+* Individual pipelines
+
+The current trend for agile organizations is to have developer teams own the pipelines for their specific applications. In this case, the development teams are responsible for creating and updating the pipelines, as well as ensuring pipeline compliance with enterprise-issued release management standards.
+
+Because pipeline processes can be described *as code*, developers must learn the pipeline https://en.wikipedia.org/wiki/Domain-specific_language[Domain Specific Language] (DSL), but otherwise have a short learning curve.
+
+More traditional organizations may not be comfortable with this approach because they want to have a clear separation of duty between development activities and deployment tasks.
+
+Each organization is different and will have to determine their own ownership model for pipelines. For more on the organizational impact of adopting container technologies, see our guide,  link:../fundamentals/openshift_roles_responsibilities{outfilesuffix}[OpenShift and the Organization].
+
+== Metrics and Dashboards
 
 A wealth of metrics can be collected from CI/CD pipelines, and much of the value of a pipeline is lost if metrics are not collected and made available in dashboards. DevOps teams utilize metrics for fast feedback.
 
-Useful metrics might include: number of deployment errors  and total pipeline execution time. 
+Useful metrics might include: number of deployment errors  and total pipeline execution time.
 
 Although there are not many tools currently available for providing pipeline metrics, one example worth examining is https://github.com/capitalone/Hygieia[Hygieia] from https://developer.capitalone.com/open-source/[Capital One].
 
@@ -252,5 +255,12 @@ image::images/hygiea-screenshot.jpg[]
 
 == Conclusions
 
-This article has described various deployment pipeline concepts in the context of OpenShift Container Platform and OCI containers. Immutable infrastructure and container platform automation don’t change the strategy or goals of continuous delivery but they do affect the operation of the pipeline. Definitions of pipeline phases, types, and ownership can be adjusted to leverage OpenShift behavior. Build, promotion, validation, and compliance steps can all benefit from OpenShift features designed to support CICD. And pipeline metrics and dashboards can integrate with Kubernetes to provide useful feedback on deployment automation performance. We recommend using the OpenShift automation and integration possibilities described here to enhance your deployment pipelines to provide rapid, frictionless, higher quality software releases.   
+This guide has described various deployment pipeline concepts in the context of OpenShift Container Platform and OCI containers. Immutable infrastructure and container platform automation don’t change the strategy or goals of continuous delivery but they do affect the operation of the pipeline. Definitions of pipeline phases, types, and ownership can be adjusted to leverage OpenShift behavior. Build, promotion, validation, and compliance steps can all benefit from OpenShift features designed to support CICD. And pipeline metrics and dashboards can integrate with Kubernetes to provide useful feedback on deployment automation performance. We recommend using the OpenShift automation and integration possibilities described here to enhance your deployment pipelines to provide rapid, frictionless, higher quality software releases.
 
+== What's Next?
+
+Check out some of our other guides!
+
+* link:/playbooks/fundamentals/openshift_roles_responsibilities{outfilesuffix}[OpenShift and the Organization]
+* link:/playbooks/fundamentals/template_development_guide{outfilesuffix}[OpenShift Templates and Infrastructure as Code]
+* link:/playbooks/continuous_delivery/image_promotion{outfilesuffix}[Container Image Promotion Strategies]
