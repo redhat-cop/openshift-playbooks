@@ -222,8 +222,6 @@ image::/images/load_balancing_masters_prod.png[Production Ready Load Balancing f
 
 WARNING: The OpenShift Web Console heavily utilizes WebSockets for many of the rich interface features like tailing pod logs, watching a deployment, or getting a terminal of a pod. While most enterprise load balancers support Web Sockets, they often need to be explicitly enabled for a particular VIP/Profile/etc.
 
-WARNING: The OpenShift Web Console heavily utilizes WebSockets for many of the rich interface features like tailing pod logs, watching a deployment, or getting a terminal of a pod. While most enterprise load balancers support Web Sockets, they often need to be explicitly enabled for a particular VIP/Profile/etc.
-
 For the purposes of this example, we will use the hosts specified in the table below
 
 [options="header"]
