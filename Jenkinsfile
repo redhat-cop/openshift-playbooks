@@ -58,7 +58,7 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", 
     }
 
     stage('Build Image') {
-      sh "oc start-build site --from-dir=./_site/ --wait --follow"
+      sh "oc start-build ${APP_NAME} --from-dir=./_site/ --wait --follow"
     }
 
     stage("Verify Deployment to ${env.STAGE1}") {
