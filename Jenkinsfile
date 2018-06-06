@@ -13,7 +13,7 @@ node('master') {
   env.TOKEN = readFile('/var/run/secrets/kubernetes.io/serviceaccount/token').trim()
 
   println "${env.JOB_NAME}"
-  env.APP_NAME = "${env.JOB_NAME}".replaceAll(/-?pipeline-?/, '').replaceAll(/-?${env.NAMESPACE}-?/, '')
+  env.APP_NAME = "${env.JOB_NAME}".replaceAll(/-?pipeline-?/, '').replaceAll(/-?${env.NAMESPACE}-?/, '').replaceAll(/\//,'')
   println "${env.APP_NAME}"
   exit 0
   def projectBase = "${env.NAMESPACE}".replaceAll(/-dev/, '')
