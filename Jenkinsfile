@@ -12,7 +12,7 @@ node('master') {
   env.NAMESPACE = readFile('/var/run/secrets/kubernetes.io/serviceaccount/namespace').trim()
   env.TOKEN = readFile('/var/run/secrets/kubernetes.io/serviceaccount/token').trim()
 
-  env.APP_NAME = "${env.JOB_NAME}".replaceAll(/-?pipeline-?/, '').replaceAll(/-?${env.NAMESPACE}-?/, '')
+  env.APP_NAME = "${env.JOB_NAME}".replaceAll(/-?pipeline-?/, '').replaceAll(/-?${env.NAMESPACE}-?/, '').replaceAll(/\//,'')
   def projectBase = "${env.NAMESPACE}".replaceAll(/-dev/, '')
   env.STAGE1 = "${projectBase}-dev"
   env.STAGE2 = "${projectBase}-prod"
@@ -58,13 +58,21 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", 
     }
 
     stage('Build Image') {
-      sh "oc start-build site --from-dir=./_site/ --wait --follow"
+      sh "oc start-build ${APP_NAME} --from-dir=./_site/ --wait --follow"
     }
 
     stage("Verify Deployment to ${env.STAGE1}") {
 
-      openshiftVerifyDeployment(deploymentConfig: "${env.APP_NAME}", namespace: "${STAGE1}", verifyReplicaCount: true)
-
+      openshift.withCluster() {
+        openshift.withProject( "${env.STAGE1}" ){
+          def latestDeploymentVersion = openshift.selector('dc',"${APP_NAME}").object().status.latestVersion
+          def rc = openshift.selector('rc', "${APP_NAME}-${latestDeploymentVersion}")
+          rc.untilEach(1){
+            def rcMap = it.object()
+            return (rcMap.status.replicas.equals(rcMap.status.readyReplicas))
+          }
+        }
+      }
     }
   }
 }
