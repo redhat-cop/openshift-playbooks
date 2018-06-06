@@ -12,7 +12,10 @@ node('master') {
   env.NAMESPACE = readFile('/var/run/secrets/kubernetes.io/serviceaccount/namespace').trim()
   env.TOKEN = readFile('/var/run/secrets/kubernetes.io/serviceaccount/token').trim()
 
+  println "${env.JOB_NAME}"
   env.APP_NAME = "${env.JOB_NAME}".replaceAll(/-?pipeline-?/, '').replaceAll(/-?${env.NAMESPACE}-?/, '')
+  println "${env.APP_NAME}"
+  exit 0
   def projectBase = "${env.NAMESPACE}".replaceAll(/-dev/, '')
   env.STAGE1 = "${projectBase}-dev"
   env.STAGE2 = "${projectBase}-prod"
