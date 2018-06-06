@@ -63,8 +63,16 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", 
 
     stage("Verify Deployment to ${env.STAGE1}") {
 
-      openshiftVerifyDeployment(deploymentConfig: "${env.APP_NAME}", namespace: "${STAGE1}", verifyReplicaCount: true)
-
+      openshift.withCluster() {
+        openshift.withProject( "${env.STAGE1}" ){
+          def latestDeploymentVersion = openshift.selector('dc',"${APP_NAME}").object().status.latestVersion
+          def rc = openshift.selector('rc', "${APP_NAME}-${latestDeploymentVersion}")
+          rc.untilEach(1){
+            def rcMap = it.object()
+            return (rcMap.status.replicas.equals(rcMap.status.readyReplicas))
+          }
+        }
+      }
     }
   }
 }
