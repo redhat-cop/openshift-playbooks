@@ -78,15 +78,13 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", 
 }
 
 podTemplate(label: 'promotion-slave', cloud: 'openshift', serviceAccount: "jenkins", containers: [
-  containerTemplate(name: 'jenkins-slave-image-mgmt', image: "${env.SKOPEO_SLAVE_IMAGE}", ttyEnabled: true, command: 'cat'),
-  containerTemplate(name: 'jnlp', image: 'jenkinsci/jnlp-slave:2.62-alpine', args: '${computer.jnlpmac} ${computer.name}')
+  containerTemplate(name: 'jnlp', image: "${env.SKOPEO_SLAVE_IMAGE}", args: '${computer.jnlpmac} ${computer.name}')
 ]) {
 
   node('promotion-slave') {
 
     stage("Promote To ${env.STAGE2}") {
 
-      container('jenkins-slave-image-mgmt') {
         sh """
 
         imageRegistry=\$(oc get is ${env.APP_NAME} --template='{{ .status.dockerImageRepository }}' -n ${env.STAGE1} | cut -d/ -f1)
@@ -96,7 +94,6 @@ podTemplate(label: 'promotion-slave', cloud: 'openshift', serviceAccount: "jenki
         echo "Promoting \${imageRegistry}/${env.STAGE1}/${env.APP_NAME} -> \${PROD_REGISTRY}/${env.STAGE2}/${env.APP_NAME}"
         skopeo --tls-verify=false copy --remove-signatures --src-creds openshift:${env.TOKEN} --dest-creds openshift:${env.PROD_TOKEN} docker://\${imageRegistry}/${env.STAGE1}/${env.APP_NAME} docker://${PROD_REGISTRY}/${env.STAGE2}/${env.APP_NAME}
         """
-      }
     }
   }
 }
