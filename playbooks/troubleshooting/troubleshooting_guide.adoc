@@ -572,7 +572,7 @@ Then restart the *atomic-openshift-master-api* service on each master
 === UI Redirecting to the URL of the masters instead of the LB
 
 The main cause for this seems to be the installer failing to honor the 
-**openshift_master_cluster_public_hostnam** option for the OSEv3:vars section.
+**openshift_master_cluster_public_hostname** option for the OSEv3:vars section.
 This results in the **master-config.yaml** file having the **publicURL** 
 being set to the master's FQDN. ex. publicURL: master00.example.com.
 When the LB selects a master to pass the request to, OSE uses this value
