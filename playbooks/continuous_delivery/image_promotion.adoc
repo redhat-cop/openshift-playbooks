@@ -31,7 +31,7 @@ The majority of the work involves an integration environment and then ability to
 
 image::images/OSE_CI_Environments_single.jpg[float="right"]
 
-This strategy utilizes two projects a single environment of OpenShift and an integration s configured with Docker client to retrieve an image from an integrated docker registry, tag and push back the tagged image to the same registry.
+This strategy utilizes two projects a single environment of OpenShift and an intermediate environment configured with Docker client to retrieve an image from an integrated docker registry, tag and push back the tagged image to the same registry.
 
 === Components
 
@@ -44,7 +44,7 @@ The use of a single OpenShift environment simplifies the configuration of both a
 
 The integrated docker registry within OpenShift has the ability to notify OpenShift when images change. Projects can react to these changes by either triggering new build or deployment in the form of triggers. In this case, we are interested in triggering a new deployment when an image is pushed to the production environment. Ensure the deploymentConfg for the project representing the production environment (and also the development environment if a a new deployment is desired when the image changes) has an ImageChange trigger defined.
 
-=== Promotion Process:
+=== Promotion Process
 
 The process of promoting an application involves the following steps:
 
@@ -119,3 +119,19 @@ docker push <promoted_docker_registry>/<ose_project>/<ose_app>
 docker rmi <origin_docker_registry>/<ose_project>/<ose_app>
 docker rmi <promoted_docker_registry>/<ose_project>/<ose_app>
 ----
+
+
+=== Promotion Process with `skopeo`
+
+link:https://github.com/projectatomic/skopeo[Skopeo] is an open source command line tool maintained by the link:https://www.projectatomic.io/[Project Atomic group]. It works with images in remote repositories without the need to pull the images to the host, which means that the tool doesn't need elevated access within the intermediate host from which the tool is run. With `skopeo` the promotion process is much more streamlined:
+
+[source]
+----
+# Copy the image from one repository to another (or the same) with the new tag
+skopeo copy \
+    docker://<any_container_registry>/<image_path>:<optional_tag> \
+    docker://<any_container_registry>/<image_path>:<new_tag>
+----
+
+Skopeo also has the advantage of being able to work with many image and repository types, including OCI containers and connecting directly to a docker daemon.
+
