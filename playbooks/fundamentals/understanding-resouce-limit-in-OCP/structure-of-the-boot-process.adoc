@@ -1,5 +1,16 @@
-Structure of the boot process
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
+---
+= Structure of the boot process
+
+Jooho Lee <jlee@redhat.com>
+v1.0, 2018-06-22
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+
+include::../../_includes/variables.adoc[]
+toc::[]
 
 The direction that the systemd process takes at boot time depends on the default.target file. A long listing of the default.target file shows you which target starts when the system boots:
 
