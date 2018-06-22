@@ -1,0 +1,77 @@
+---
+---
+= Scenario 4 : Set up slices like Kubernetes do.
+Jooho Lee <jlee@redhat.com>
+v1.0, 2018-06-22
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+
+include::../../_includes/variables.adoc[]
+toc::[]
+
+This scenario generate slices like Kubernetes do. Basically, Kubernetes uses 3 QoS(Burstable/Guaranteed/BestEffort) and it uses the chains of slices. 
+
+This example gives insight how the Kubernetes use cgroups and slices for QoS/LimitRange.
+
+
+
+*Step 1 - Create kubepods.slice/kubepods-besteffort.slice under /sys/fs/cgroup/cpu*
+```
+$ mkdir -p  /sys/fs/cgroup/cpu/kubepods.slice/kubepods-besteffort.slice
+```
+
+*Step 2 - Run sample docekr container & create scope folder under kubepods-besteffort.slice*
+
+```
+$ docker run -it centos -name besteffort-container /bin/bash
+
+ctrl+p,q
+
+$ mkdir /sys/fs/cgroup/cpu/kubepods.slice/kubepods-besteffort.slice/docker-$(docker inspect besteffort-container -f '{{.Id}}').scope
+```
+
+*Step 3 - Check cgroups tree*
+```
+
+$ systemd-cgls
+...
+├─system.slice
+├─docker-5f41e014cc93de37e00af64a0468cf5340ca5932896d7b0a8e9b2cda0e145e02.scope
+│  └─19208 /bin/bash
+```
+
+*Step 4 - Attach PID to the slice*
+
+```
+$ echo $(docker inspect besteffort-container -f '{{.State.Pid}}') |tee -a /sys/fs/cgroup/cpu/kubepods.slice/kubepods-besteffort.slice/docker-$(docker inspect besteffort-container -f '{{.Id}}').scope/tasks
+```
+
+
+*Steps 5 - Check cgroups tree*
+```
+$ systemd-cgls
+Working Directory /sys/fs/cgroup/cpu:
+├─  1 /usr/lib/systemd/systemd --system --deserialize 22
+├─666 /sbin/agetty --noclear tty1 linux
+├─kubepods.slice
+| └─kubepods-besteffort.slice
+|    └-─docker-5f41e014cc93de37e00af64a0468cf5340ca5932896d7b0a8e9b2cda0e145e02.scope
+|          └─19208 /bin/bash
+```
+
+
+*Step 6 - Compare it with real kubernetes cgroup tree*
+```
+$ systemd-cgls
+├─1 /usr/lib/systemd/systemd --system --deserialize 21
+├─kubepods.slice
+│ └─kubepods-burstable.slice
+│   ├─kubepods-burstable-poda0bd293f_68e0_11e8_920e_001a4aeb8b46.slice
+│   │ ├─docker-9cc0b17697931f75d5f764ad80281f5651e8424bfd9910749fd7a8443b308c2d.scope
+│   │ │ └─26455 /opt/rh/rh-mysql57/root/usr/libexec/mysqld --defaults-file=/etc/my.cnf
+│   │ └─docker-fa327fb7f28d907ec2361d1b5adbc962d0eaa409e257e07c28da5b1cccb49436.scope
+│   │   └─26078 /usr/bin/pod
+```
+

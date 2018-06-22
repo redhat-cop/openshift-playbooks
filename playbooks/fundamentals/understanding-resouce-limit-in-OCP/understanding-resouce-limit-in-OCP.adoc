@@ -1,0 +1,158 @@
+---
+---
+= Understanding of the Resouce Limit in OpenShift Container Platform
+Jooho Lee <jlee@redhat.com>
+v1.0, 2018-06-22
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+
+include::../../_includes/variables.adoc[]
+toc::[]
+
+
+== Basic knowledge of RHEL 7 
+
+In order to understand Quota and limitRange in OpenShift, we need to take a look at RHEL stuff first. In this chapter, I will explain basic information regarding cgroups, systemd and so on.
+
+
+== Cgroups
+
+Cgroups is a feature in a Linux kernel that become very famous because of docker/kubernetes  these days. It allows us limiting the resource usage of processes. In RHEL 7, we can use cgroups by default and systemd help to mount important resources controllers in the /sys/fs/cgroups directory.
+
+excerpt from link:https://access.redhat.com/articles/754933[this article]
+```
+ Services are identified by Cgroups, which allow every component of a service to be managed. For example, the older System V init scripts would start a service by launching a process which itself might start other child processes. When the service was killed, it was hoped that the parent process would do the right thing and kill its children. By using Cgroups, all components of a service have a tag that can be used to make sure that all of those components are properly started or stopped.
+```
+
+== link:https://access.redhat.com/articles/754933[Systemd]
+
+The systemd system and service manager is responsible for controlling how services are started, stopped and otherwise managed on Red Hat Enterprise Linux 7 systems. 
+
+=== Terms:
+
+- **Slice**:  A slice unit is a concept for hierarchically managing resources of a group of processes. Divide up computer resources (such as CPU and memory) and apply them to selected units.
+- **Scope**: A process that is created by another process not Systemd.  Unlike service units, scope units manage externally created processes, and  do not fork off processes on its own.
+- **Service**: A unit configuration file whose name ends in ".service" encodes information about a process controlled and supervised by systemd.
+
+*Slice/Scope/Service/Process Relationship:*
+
+- Slice organise Scopes and Services hireckies.
+- Processes are attached to Services and Scopes. Not Slices
+
+
+== Example from link:https://developers.redhat.com/blog/2015/09/21/controlling-resources-with-cgroups-for-performance-testing[Frederic article]:
+
+*Scope:*
+```
+$ systemd-run --unit=fredunit --scope --slice=fredslice sh
+$ systemctl status fredunit.scope
+
+● fredunit.scope - /usr/bin/sh
+   Loaded: loaded (/run/systemd/system/fredunit.scope; static; vendor preset: disabled)
+  Drop-In: /run/systemd/system/fredunit.scope.d
+           └─50-Description.conf, 50-Slice.conf
+   Active: active (running) since Mon 2018-06-11 16:32:27 EDT; 4s ago
+   Memory: 808.0K
+   CGroup: /fredslice.slice/fredunit.scope
+           ├─11683 /usr/bin/sh
+           └─11781 systemctl status fredunit.scope
+
+Jun 11 16:32:27 insights-analysis.qa.gsslab.rdu2.redhat.com systemd[1]: Started /usr/bin/sh.
+Jun 11 16:32:27 insights-analysis.qa.gsslab.rdu2.redhat.com systemd[1]: Starting /usr/bin/sh.
+```
+
+*Service:*
+link:https://www.redhat.com/en/blog/converting-traditional-sysv-init-scripts-red-hat-enterprise-linux-7-systemd-unit-files[Good article] to understand RHEL 7 systemd unit file
+
+```
+$ systemd-run --unit=fredunit --slice=fredslice -r sh
+$ systemctl status fredunit.service
+● fredunit.service - /usr/bin/sh
+   Loaded: loaded (/run/systemd/system/fredunit.service; static; vendor preset: disabled)
+  Drop-In: /run/systemd/system/fredunit.service.d
+           └─50-Description.conf, 50-ExecStart.conf, 50-RemainAfterExit.conf, 50-Slice.conf
+   Active: active (exited) since Mon 2018-06-11 16:28:11 EDT; 27s ago
+  Process: 6504 ExecStart=/usr/bin/sh (code=exited, status=0/SUCCESS)
+ Main PID: 6504 (code=exited, status=0/SUCCESS)
+
+Jun 11 16:28:11 insights-analysis.qa.gsslab.rdu2.redhat.com systemd[1]: Started /usr/bin/sh.
+Jun 11 16:28:11 insights-analysis.qa.gsslab.rdu2.redhat.com systemd[1]: Starting /usr/bin/sh...
+```
+
+**Slice:**
+```
+$ systemctl status fredslice.slice
+● fredslice.slice
+   Loaded: loaded
+   Active: active since Mon 2018-06-11 10:19:44 EDT; 6h ago
+   Memory: 1.1M
+   CGroup: /fredslice.slice
+           └─fredunit.scope
+             ├─11683 /usr/bin/sh
+             └─13703 systemctl status fredslice.slice
+
+Jun 11 10:19:44 insights-analysis.qa.gsslab.rdu2.redhat.com systemd[1]: Created slice fredslice.slice.
+Jun 11 10:19:44 insights-analysis.qa.gsslab.rdu2.redhat.com systemd[1]: Starting fredslice.slice.
+```
+
+link:./structure-of-the-boot-process.adoc[__Tip. Structure to the boot process__]
+
+
+== Resource management
+
+- The fact that each systemd unit is always associated with its own cgroup lets you control the amount of resources each service can use. For example, you can set a percent of CPU usage by service which can put a cap on the total amount of CPU that service can use -- in other words, spinning off more processes won't allow more resources to be consumed by the service. Prior to systemd, nice levels were often used to prevent processes from hogging precious CPU time. With systemd's use of cgroups, precise limits can be set on CPU and memory usage, as well as other resources.
+
+
+- A feature called slices lets you slice up many different types of system resources and assign them to users, services, virtual machines, and other units. Accounting is also done on these resources, which can allow you to charge customers for their resource usage.
+
+
+*Systemd Commands*
+
+-  To see what services and other units (service, mount, path, socket, and so on) are associated with a 
+   particular target, type the following:
+ 
+   systemctl list-dependencies multi-user.target
+
+- To see dependencies of a service, use the list-dependencies option
+
+  systemctl list-dependencies atomic-openshift-node.service 
+
+- Use the following command to list specific types of units
+
+  systemctl list-units --type service 
+  systemctl list-units --type mount    
+
+- To list all units installed on the system, along with their current states
+ 
+  systemctl list-unit-files
+
+- To view processes associated with a particular service (cgroup) - Once systemd-cgtop is running, you can press keys to sort by memory (m), CPU (c), task (t), path (p), or I/O load (i). 
+
+  systemd-cgtop
+
+- To output a recursive list of cgroup content
+
+  systemd-cgls
+
+
+== Cgroups Limit
+
+As I mentioned above, cgroup can divide resources for each process. This show how we set limit for cpu/memory and how to monitor assigned by cgroups.
+
+*2 ways to set limit in cgroups.*
+
+- link:./scenario_1.adoc[Scenario 1 : Use cpuset hierachy creating folder /sys/fs/cgroup (scope mode)]
+- link:./scenario_2.adoc[Scenario 2 : Use conf file to set cpu/memory amount for limit  (service mode)]
+
+*Give load to test limit*
+
+- link:./scenario_3.adoc[Scenario 3 : Limit Test]
+
+*Mimic the slices that kubernetes generate*
+
+Basically, Kubernetes uses 3 QoS(Burstable/Guaranteed/BestEffort) and Kubernetes creates slices based on the QoS. The way to generate slices is creating folders under /sys/fs/cgroup. It looks the chains of slices.
+
+- link:./scenario_4.adoc[Scenario 4 : Set up slices like Kubernetes do]
+
