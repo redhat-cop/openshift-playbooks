@@ -150,5 +150,5 @@ $ systemd-cgtop
 /system.slice/NetworkManager.service          2      -        -        -        - 
 ```
 
-Move to link:/playbooks/fundamentals/understanding-resouce-limit-in-OCP/scenario_3{outfilesuffix}[Scenario 3 : Limit Test]
+Move to link:./scenario_3{outfilesuffix}[Scenario 3 : Limit Test]
 

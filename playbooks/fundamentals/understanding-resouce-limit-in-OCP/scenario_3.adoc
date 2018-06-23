@@ -177,6 +177,6 @@ Path                               Tasks   %CPU   Memory  Input/s Output/s
 ```
 
 
-Move to link:/playbooks/fundamentals/understanding-resouce-limit-in-OCP/scenario_4{outfilesuffix}[Scenario 4 : Set up slices like Kubernetes do]
+Move to link:./scenario_4{outfilesuffix}[Scenario 4 : Set up slices like Kubernetes do]
 
 
