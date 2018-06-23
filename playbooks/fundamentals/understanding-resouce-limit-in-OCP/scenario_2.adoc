@@ -12,7 +12,7 @@ include::../../_includes/variables.adoc[]
 toc::[]
 
 This scenario use service instread of scope. Moreover, it uses systemctl to set cpu/memory.
-This example is based on https://www.redhat.com/en/blog/world-domination-cgroups-part-2-turning-knobs?source=author&term=23171[Marc article]
+This example is based on link:https://www.redhat.com/en/blog/world-domination-cgroups-part-2-turning-knobs?source=author&term=23171[Marc article]
 
 *Step 1 - Create a new process*
 ```

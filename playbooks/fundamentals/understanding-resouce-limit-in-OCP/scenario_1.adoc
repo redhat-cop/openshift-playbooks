@@ -13,7 +13,7 @@ toc::[]
 
 
 This scenario show how to create slice and scope to demonstrate cgroups attach cpuset for a process.
-This example is based on https://developers.redhat.com/blog/2015/09/21/controlling-resources-with-cgroups-for-performance-testing/[Fred article]
+This example is based on link:https://developers.redhat.com/blog/2015/09/21/controlling-resources-with-cgroups-for-performance-testing/[Fred article]
 
 *Step 1 - Create a new process*
 
