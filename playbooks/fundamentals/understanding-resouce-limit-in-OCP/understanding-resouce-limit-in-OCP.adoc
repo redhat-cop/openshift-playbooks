@@ -97,7 +97,7 @@ Jun 11 10:19:44 insights-analysis.qa.gsslab.rdu2.redhat.com systemd[1]: Created 
 Jun 11 10:19:44 insights-analysis.qa.gsslab.rdu2.redhat.com systemd[1]: Starting fredslice.slice.
 ```
 
-link:./structure-of-the-boot-process.adoc[__Tip. Structure to the boot process__]
+link:/playbooks/fundamentals/understanding-resouce-limit-in-OCP/structure-of-the-boot-process{outfilesuffix}[__Tip. Structure to the boot process__]
 
 
 == Resource management
@@ -143,16 +143,16 @@ As I mentioned above, cgroup can divide resources for each process. This show ho
 
 *2 ways to set limit in cgroups.*
 
-- link:./scenario_1.adoc[Scenario 1 : Use cpuset hierachy creating folder /sys/fs/cgroup (scope mode)]
-- link:./scenario_2.adoc[Scenario 2 : Use conf file to set cpu/memory amount for limit  (service mode)]
+- link:/playbooks/fundamentals/understanding-resouce-limit-in-OCP/scenario_1{outfilesuffix}[Scenario 1 : Use cpuset hierachy creating folder /sys/fs/cgroup (scope mode)]
+- link:/playbooks/fundamentals/understanding-resouce-limit-in-OCP/scenario_2{outfilesuffix}[Scenario 2 : Use conf file to set cpu/memory amount for limit  (service mode)]
 
 *Give load to test limit*
 
-- link:./scenario_3.adoc[Scenario 3 : Limit Test]
+- link:/playbooks/fundamentals/understanding-resouce-limit-in-OCP/scenario_3{outfilesuffix}[Scenario 3 : Limit Test]
 
 *Mimic the slices that kubernetes generate*
 
 Basically, Kubernetes uses 3 QoS(Burstable/Guaranteed/BestEffort) and Kubernetes creates slices based on the QoS. The way to generate slices is creating folders under /sys/fs/cgroup. It looks the chains of slices.
 
-- link:./scenario_4.adoc[Scenario 4 : Set up slices like Kubernetes do]
+- link:/playbooks/fundamentals/understanding-resouce-limit-in-OCP/scenario_4{outfilesuffix}[Scenario 4 : Set up slices like Kubernetes do]
 

@@ -76,5 +76,5 @@ $  more /proc/28689/cgroup
 2:perf_event:/
 1:name=systemd:/fredslice.slice/fredunit.scope\
 ```
-Move on link:./scenario_2.adoc[Scenario 2 : Use conf file to set cpu/memory amount for limit  (service mode)]
+Move on link:/playbooks/fundamentals/understanding-resouce-limit-in-OCP/scenario_2{outfilesuffix}[Scenario 2 : Use conf file to set cpu/memory amount for limit  (service mode)]
 
