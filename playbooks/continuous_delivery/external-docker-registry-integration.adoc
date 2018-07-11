@@ -121,7 +121,7 @@ If the registry is protected by authentication, a secret must be added to the *b
 
 [source]
 ----
-oc secrets add serviceaccount/builder secrets/external-registry
+oc secrets link builder external-registry
 ----
 
 Confirm the secret for the external registry has been added successfully to the *builder* service account:
@@ -179,7 +179,7 @@ If the registry is protected by authentication, add a *secret* containing the cr
 
 [source]
 ----
-oc secrets add serviceaccount/builder secrets/external-registry
+oc secrets link builder external-registry
 ----
 
 Finally, add the name of the pull secret to the BuildConfig as shown below:
@@ -294,7 +294,7 @@ Once the details of the *.dockercfg* have been added to a secret as described in
 
 [source]
 ----
-oc secrets add serviceaccount/default secrets/external-registry --for=pull
+oc secrets link default external-registry --for=pull
 ----
 
 The `--for=pull` option signifies that the secret will be added as a pull secret within the service account
