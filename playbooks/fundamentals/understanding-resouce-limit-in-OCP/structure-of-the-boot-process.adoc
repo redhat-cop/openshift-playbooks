@@ -1,0 +1,81 @@
+---
+---
+= Structure of the boot process
+
+Jooho Lee <jlee@redhat.com>
+v1.0, 2018-06-22
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+
+include::../../_includes/variables.adoc[]
+toc::[]
+
+The direction that the systemd process takes at boot time depends on the default.target file. A long listing of the default.target file shows you which target starts when the system boots:
+
+**Boot Process Flow:**
+
+default.target → multi-user.target → basic.target →  sysinit.target 
+
+/usr/lib/systemd/system/multi-user.target starts the services you would expect in a RHEL multi-user mode
+
+```
+$ ls -l  /etc/systemd/system/default.target
+…  /etc/systemd/system/default.target -> /lib/systemd/system/multi-user.target
+
+
+$ cat /lib/systemd/system/multi-user.target
+..
+[Unit]
+Description=Multi-User System
+Documentation=man:systemd.special(7)
+Requires=basic.target
+Conflicts=rescue.service rescue.target
+After=basic.target rescue.service rescue.target
+AllowIsolate=yes
+```
+
+This points systemd to the /usr/lib/systemd/system/sysinit.target, which must start before the basic.target can continue. The basic.target target file starts the firewalld and microcode services from the /etc/systemd/system/basic.target.wants directory and services for SELinux, kernel messages, and loading modules from the /usr/lib/systemd/system/basic.target.wants directory.
+
+```
+$ cat /lib/systemd/system/basic.target
+..
+[Unit]
+Requires=sysinit.target
+..
+Wants=sockets.target timers.target paths.target slices.target
+```
+sysinit does not have Require so it is the end target
+```
+$ cat /lib/systemd/system/sysinit.target
+..
+[Unit]
+Conflicts=emergency.service emergency.target
+Wants=local-fs.target swap.target
+….
+```
+
+__Load Dependencies__
+
+From following example, sockets.target is one of dependencies for sysinit.target.(Wants stand for dependencies.)
+```
+$ cat /lib/systemd/system/basic.target
+..
+[Unit]
+Requires=sysinit.target
+..
+Wants=sockets.target timers.target paths.target slices.target
+
+$ cat /usr/lib/systemd/system/sockets.target
+[Unit]
+Description=Sockets
+Documentation=man:systemd.special(7)
+```
+
+socket.target is end target so it does not have any more dependencies so it will load following units.
+```
+$ ls /usr/lib/systemd/system/sockets.target.wants/
+dbus.socket  systemd-initctl.socket  systemd-journald.socket  systemd-shutdownd.socket  systemd-udevd-control.socket  systemd-udevd-kernel.socket
+```
+

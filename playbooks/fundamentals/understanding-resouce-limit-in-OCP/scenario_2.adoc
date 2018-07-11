@@ -1,0 +1,154 @@
+---
+---
+= Scenario 2 : Use conf file to set cpu/memory amount for limit  (service mode)
+Jooho Lee <jlee@redhat.com>
+v1.0, 2018-06-22
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+
+include::../../_includes/variables.adoc[]
+toc::[]
+
+This scenario use service instread of scope. Moreover, it uses systemctl to set cpu/memory.
+This example is based on link:https://www.redhat.com/en/blog/world-domination-cgroups-part-2-turning-knobs?source=author&term=23171[Marc article]
+
+*Step 1 - Create a new process*
+```
+$ cat <<EOF> jlee-test.service
+[Service]
+ExecStart=/usr/bin/sha1sum /dev/zero
+ExecStop=/bin/kill -WINCH ${WMINPID}
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+$ systemctl start jlee-test
+$ systemctl status jlee-test
+jlee-test.service
+   Loaded: loaded (/etc/systemd/system/jlee-test.service; disabled; vendor preset: disabled)
+   Active: active (running) since Mon 2018-06-11 21:42:55 EDT; 5s ago
+ Main PID: 29078 (sha1sum)
+   CGroup: /system.slice/jlee-test.service
+           └─29078 /usr/bin/sha1sum /dev/zero
+```
+
+*Step 2 - Check process information*
+```
+$ more /proc/29078/cgroup
+11:memory:/system.slice
+10:cpuset:/
+9:hugetlb:/
+8:blkio:/system.slice
+7:net_prio,net_cls:/
+6:devices:/system.slice
+5:pids:/
+4:cpuacct,cpu:/system.slice
+3:freezer:/
+2:perf_event:/
+1:name=systemd:/system.slice/jlee-test.service
+```
+
+*Step 3 - Set property MemoryLimit*
+```
+$ systemctl set-property --runtime jlee-test.service MemoryLimit=1G
+```
+
+*Step 4 - Set property CPUShare*
+```
+$ systemctl set-property --runtime jlee-test.service CPUShares=500
+```
+
+*Step 5 - Check process information*
+```
+$ systemctl status jlee-test
+● jlee-test.service
+   Loaded: loaded (/etc/systemd/system/jlee-test.service; disabled; vendor preset: disabled)
+  Drop-In: /run/systemd/system/jlee-test.service.d
+           └─50-CPUShares.conf, 50-MemoryLimit.conf
+   Active: active (running) since Mon 2018-06-11 21:42:55 EDT; 1min 59s ago
+ Main PID: 29078 (sha1sum)
+   Memory: 0B (limit: 1.0G)
+   CGroup: /system.slice/jlee-test.service
+           └─29078 /usr/bin/sha1sum /dev/zero
+
+$ cat /run/systemd/system/jlee-test.service.d/50-MemoryLimit.conf 
+[Service]
+MemoryLimit=1073741824
+
+$ cat /run/systemd/system/jlee-test.service.d/50-CPUShares.conf 
+[Service]
+CPUShares=500
+```
+
+*Step 6 - Attach the process to slice*
+```
+$ cd /sys/fs/cgroup/cpuset/fred
+
+$ echo 29078|tee -a tasks
+```
+
+*Step 7 - Check process information*
+```
+$ more /proc/29078/cgroup
+11:memory:/system.slice/jlee-test.service
+10:cpuset:/fred
+9:hugetlb:/
+8:blkio:/system.slice
+7:net_prio,net_cls:/
+6:devices:/system.slice
+5:pids:/
+4:cpuacct,cpu:/system.slice/jlee-test.service
+3:freezer:/
+2:perf_event:/
+1:name=systemd:/system.slice/jlee-test.service
+```
+
+*Step 8 - Monitor cgroups*
+```
+$ systemd-cgtop
+
+Path                                           Tasks   %CPU   Memory  Input/s Output/s                                                                                   
+/                                               120  101.4   299.0M        -        -
+/system.slice                                     1  100.3   984.0K        -        -
+/system.slice/ovirt-guest-agent.service           1    0.6   520.0K        -        -
+/system.slice/NetworkManager.service              2    0.0        -        -        -
+/system.slice/tuned.service                       1    0.0        -        -        -
+*/system.slice/jlee-test.service*                   1      -        -        -        -
+```
+
+
+*Step 9 - Enable to monitor cpu/memory*
+```
+$ vi /etc/systemd/system/jlee-test.service
+
+[Service]
+ExecStart=/usr/bin/sha1sum /dev/zero
+ExecStop=/bin/kill -WINCH
+MemoryAccounting=true   <== Add
+CPUAccounting= true     <== Add
+
+[Install]
+WantedBy=multi-user.target
+
+$ systemctl daemon-reload
+```
+
+*Step 10 - Check cgroups resources*
+```
+$ systemd-cgtop
+ Path                                      Tasks   %CPU   Memory  Input/s Output/s
+                                                                                  
+/                                           118  101.5   299.0M        -        - 
+/system.slice                                 -   99.9   968.0K        -        - 
+*/system.slice/jlee-test.service*             1   *99.6*      -        -        -  
+/system.slice/ovirt-guest-agent.service       1    0.3   372.0K        -        - 
+/system.slice/tuned.service                   1    0.0        -        -        - 
+/system.slice/NetworkManager.service          2      -        -        -        - 
+```
+
+Move to link:./scenario_3{outfilesuffix}[Scenario 3 : Limit Test]
+

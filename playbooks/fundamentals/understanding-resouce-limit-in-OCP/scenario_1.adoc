@@ -1,0 +1,80 @@
+---
+---
+= Scenario 1 : Use cpuset hierachy creating folder /sys/fs/cgroup (scope mode)
+Jooho Lee <jlee@redhat.com>
+v1.0, 2018-06-22
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+
+include::../../_includes/variables.adoc[]
+toc::[]
+
+
+This scenario show how to create slice and scope to demonstrate cgroups attach cpuset for a process.
+This example is based on link:https://developers.redhat.com/blog/2015/09/21/controlling-resources-with-cgroups-for-performance-testing/[Fred article]
+
+*Step 1 - Create a new process*
+
+```
+$ systemd-run --unit=fredunit --scope --slice=fredslice sh
+$ systemctl status fredunit.scope
+
+ CGroup: /fredslice.slice/fredunit.scope
+           ├─28689 /usr/bin/sh
+           └─28695 systemctl status fredunit.scope
+```
+
+
+*Step 2 - Check process information*
+```
+$ more /proc/28689/cgroup
+sh-4.2# more /proc/28689/cgroup
+11:memory:/
+10:cpuset:/
+9:hugetlb:/
+8:blkio:/
+7:net_prio,net_cls:/
+6:devices:/
+5:pids:/
+4:cpuacct,cpu:/
+3:freezer:/
+2:perf_event:/
+1:name=systemd:/fredslice.slice/fredunit.scope
+```
+
+*Step 3 - Create a new folder /sys/fs/cgroup/cpuset/fred*
+```
+$ mkdir -p /sys/fs/cgroup/cpuset/fred
+```
+
+*Step 4 -Set cpus & memory*
+```
+$ cd /sys/fs/cgroup/cpuset/fred/
+$ echo 0 |  tee -a cpuset.cpus
+$ echo 0 | sudo tee -a cpuset.mems
+```
+
+*Step 5 - Attach the process to this cpuset*
+```
+$ echo 28689 | sudo tee -a tasks
+```
+
+*Step 6 - Check process information*
+```
+$  more /proc/28689/cgroup
+11:memory:/
+10:cpuset:/fred
+9:hugetlb:/
+8:blkio:/
+7:net_prio,net_cls:/
+6:devices:/
+5:pids:/
+4:cpuacct,cpu:/
+3:freezer:/
+2:perf_event:/
+1:name=systemd:/fredslice.slice/fredunit.scope\
+```
+Move on link:./scenario_2{outfilesuffix}[Scenario 2 : Use conf file to set cpu/memory amount for limit  (service mode)]
+

@@ -1,0 +1,182 @@
+---
+---
+= Scenario 3 : Limit Test
+Jooho Lee <jlee@redhat.com>
+v1.0, 2018-06-22
+:scripts_repo: https://github.com/rhtconsulting/rhc-ose
+:toc: macro
+:toc-title:
+
+
+include::../../_includes/variables.adoc[]
+toc::[]
+
+This scenario demonstrate the limit of cgroup. 
+
+
+*Test Environment:*
+
+ - Root user use sshd 
+ 
+```
+$ systemd-cgls
+├─1 /usr/lib/systemd/systemd --switched-root --system --deserialize 21
+├─user.slice
+│ └─user-0.slice
+│   └─session-1.scope
+│     ├─ 9344 sshd: root@pts/0    
+│     ├─ 9347 -bash
+│     ├─16443 systemd-cgls
+│     └─16444 less
+
+
+$ top
+top - 09:17:31 up 11:19,  2 users,  load average: 0.30, 0.80, 0.97
+Tasks: 118 total,   2 running, 116 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.2 us,  0.2 sy,  0.0 ni, 99.3 id,  0.0 wa,  0.0 hi,  0.0 si,  0.2 st
+KiB Mem :  8008808 total,  7388708 free,   171204 used,   448896 buff/cache
+KiB Swap:  2097148 total,  2097148 free,        0 used.  7556128 avail Mem
+
+PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+718 ovirtag+  20   0  544500  25508   8376 S   2.0  0.3   3:15.89 python
+16502 root      20   0  157716   2236   1532 R   0.7  0.0   0:00.06 top          
+```
+
+*Step 1*
+ 
+ - Create user1/user2/service1
+ - Set cpu/memory limit
+
+```
+## Create user1, user2
+$ useradd user1 
+$ passwd user1 
+$ useradd user2
+$ passwd user2
+
+## Setup cpu/memory limit 
+$ sudo systemctl set-property user-1001.slice MemoryLimit=500M
+$ sudo systemctl set-property user-1001.slice  CPUShares=2048
+$ sudo systemctl set-property user-1002.slice MemoryLimit=500M
+$ sudo systemctl set-property user-1002.slice CPUShares=256
+
+## To be shown in systemd-cgtop
+$ echo "MemoryAccounting=true
+CPUAccounting= true
+" >> /etc/systemd/system/user-1001.slice.d/50-MemoryLimit.conf 
+
+$ echo "MemoryAccounting=true
+CPUAccounting=true
+" >> /etc/systemd/system/user-1002.slice.d/50-MemoryLimit.conf 
+
+
+$ cat <<EOF> /etc/systemd/system/service1.service
+[Service]
+ExecStart=/usr/bin/sha1sum /dev/zero
+ExecStop=/bin/kill -WINCH ${WMINPID}
+MemoryAccounting=true
+CPUAccounting= true
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+$ systemctl start service1.service
+$ sudo systemctl set-property service1.service MemoryLimit=500M
+$ sudo systemctl set-property service1.service CPUShares=2048
+
+
+## Result
+systemd-cgls
+├─1 /usr/lib/systemd/systemd --switched-root --system --deserialize 21
+├─user.slice
+│ ├─user-1001.slice     ⇐ user1
+│ │ └─session-19.scope
+│ │   ├─2173 sshd: user1 [priv
+│ │   ├─2178 sshd: user1@pts/5
+│ │   ├─2179 -bash
+│ │   
+│ ├─user-1002.slice      ⇐ user2
+│ │ └─session-18.scope
+│ │   ├─2136 sshd: user2 [priv
+│ │   ├─2140 sshd: user2@pts/6
+│ │   ├─2141 -bash
+│ │   
+│ └─user-0.slice
+│   ├─session-15.scope
+│   │ └─1986 /usr/sbin/anacron -s
+
+└─system.slice
+  ├─service1.service
+  │ └─1737 /usr/bin/sha1sum /dev/zero
+
+```
+
+*Step 2 - Give CPU Load*
+
+__Expected value :__
+
+- user1:  ~45%
+- user2: ~5%
+- service1: ~ 50%
+
+```
+## Create 3 tabs on terminal
+
+# Terminal 1
+$ ssh user1@$(hostname)
+$ /usr/bin/sha1sum /dev/zero
+
+
+# Terminal 2
+$ su - user2
+$ /usr/bin/sha1sum /dev/zero
+
+# Terminal 3
+$ top 
+
+  PID USER      PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND                                                                                                                                         
+ 1737 root      20   0  116120     64      0 R 49.7  0.0  46:14.37 sha1sum                          
+ 7849 user1     20   0  116120   1032    764 R 43.4  0.1   0:09.45 sha1sum                             
+ 7737 user2     20   0  116120   1028    764 R  5.3  0.1   0:27.56 sha1sum           
+   
+$ systemd-cgtop
+ 
+Path                                    Tasks   %CPU   Memory  Input/s Output/s
+
+/                                          108  100.0   113.8M        -        -
+/user.slice                                  -   50.1    20.6M        -        -
+/system.slice                               23   49.7    46.2M        -        -
+/system.slice/service1.service               1   49.4        -        -        -
+/user.slice/user-1001.slice                  4   43.8     1.8M        -        -
+/user.slice/user-1002.slice                  4    5.5     1.8M        -        -
+```
+
+
+
+*Step 3 - Give Memory Load*
+
+```
+## With user1
+$ stress -m 1 --vm-bytes 1G
+
+## With user2
+$ stress -m 1 --vm-bytes 1G
+$ top
+ PID USER      PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND                                                                                                                                         
+ 8023 user1     20   0 2104412 508796    128 R  5.3 28.0   0:07.81 stress                                                                                                                                          
+ 8059 user2     20   0 1055836 506596    128 R 40.9 27.9   0:02.19 stress        
+
+$ systemd-cgtop
+Path                               Tasks   %CPU   Memory  Input/s Output/s
+                            
+/                                    111  100.0     1.0G        -        -
+/user.slice                            -    4.1  1017.5M        -        -
+/user.slice/user-1002.slice            5    2.2   499.9M        -        -
+/user.slice/user-1001.slice            5    1.2   499.8M        -        -
+```
+
+
+Move to link:./scenario_4{outfilesuffix}[Scenario 4 : Set up slices like Kubernetes do]
+
+
