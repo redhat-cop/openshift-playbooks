@@ -53,17 +53,17 @@ Docker is an essential component of an OpenShift environment. The overall health
 
 .2+|Etcd Storage .2+|Check that the etcd volume is not too full .2+|Masters | \<= 3.9 | `echo "$(lvs &#124; awk '/etcd/ {print $5}') > 70" &#124; bc` | >= 3.10 | `echo "$(lvs &#124; awk '/etcd/ {print $5}') > 70" &#124; bc`
 
-.2+|Master API Service (single master) .2+|Check that the Master API Service is active .2+|Masters | \<= 3.9 | `systemctl is-active atomic-openshift-master`| >= 3.10 | TODO
+.2+|Master API Service (single master) .2+|Check that the Master API Service or pods are active .2+|Masters | \<= 3.9 | `systemctl is-active atomic-openshift-master`| >= 3.10 | Same as multi-master check.
 
-.2+|Master API Service (multi-master) .2+|Check that the Master API Service is active .2+|Masters |  \<= 3.9 |`systemctl is-active atomic-openshift-master-api`| >= 3.10 | `oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,STATUS:.status.phase &#124; grep -i "master-api" &#124; grep -i "running" &#124;  if [ $( wc -l) -eq 3 ]; then exit 0; else exit 1; fi`
+.2+|Master API Service (multi-master) .2+|Check that the Master API Service or pods are active .2+|Masters |  \<= 3.9 |`systemctl is-active atomic-openshift-master-api`| >= 3.10 | `oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,STATUS:.status.phase &#124; grep -i "master-api" &#124; grep -i "running" &#124;  if [ $( wc -l) -eq 3 ]; then exit 0; else exit 1; fi`
 
-.2+|Master Controllers Service (multi-master) .2+| Check that the Master Controllers Service is active .2+|Masters | \<= 3.9 | `systemctl is-active atomic-openshift-master-controllers`| >= 3.10 | `oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,STATUS:.status.phase &#124; grep -i "master-controller" &#124; grep -i "running" &#124; if [ $( wc -l) -eq 3 ]; then exit 0; else exit 1; fi`
+.2+|Master Controllers Service (multi-master) .2+| Check that the Master Controllers Service or pods are active .2+|Masters | \<= 3.9 | `systemctl is-active atomic-openshift-master-controllers`| >= 3.10 | `oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,STATUS:.status.phase &#124; grep -i "master-controller" &#124; grep -i "running" &#124; if [ $( wc -l) -eq 3 ]; then exit 0; else exit 1; fi`
 
 .2+|Node Service .2+|Check that the node service is active .2+| All Nodes |  \<= 3.9 |`systemctl is-active atomic-openshift-node`| >= 3.10 | `systemctl is-active atomic-openshift-node`
 
 .2+|Node Storage .2+|Check that the node's local data storage volume is not too full .2+| All Nodes | \<= 3.9 | `echo "$(lvs &#124; awk '/origin/ {print $5}') > 70" &#124; bc`| >= 3.10 | `echo "$(lvs &#124; awk '/origin/ {print $5}') > 70" &#124; bc`
 
-.2+|OpenVSwitch Service .2+|Check that the openvswitch service is active .2+| All Nodes | \<= 3.9 | `systemctl is-active openvswitch`| >= 3.10 | `oc get pods -n openshift-sdn --no-headers -o=custom-columns=POD:.metadata.name,STATUS:.status.phase &#124; grep -i "ovs-" &#124; grep -i "running" &#124; if [ $( wc -l) -eq $(oc get nodes --no-headers &#124; wc -l) ]; then exit 0; else exit 1; fi`
+.2+|OpenVSwitch Service .2+|Check that the openvswitch service or pods are active .2+| All Nodes | \<= 3.9 | `systemctl is-active openvswitch`| >= 3.10 | `oc get pods -n openshift-sdn --no-headers -o=custom-columns=POD:.metadata.name,STATUS:.status.phase &#124; grep -i "ovs-" &#124; grep -i "running" &#124; if [ $( wc -l) -eq $(oc get nodes --no-headers &#124; wc -l) ]; then exit 0; else exit 1; fi`
 
 .2+|SDN Service .2+|Check that all the SDN pods are active .2+| All Nodes | \<= 3.9 | NA | >= 3.10 | `oc get pods -n openshift-sdn --no-headers -o=custom-columns=POD:.metadata.name,STATUS:.status.phase &#124; grep -i "sdn-" &#124; grep -i "running" &#124; if [ $( wc -l) -eq $(oc get nodes --no-headers &#124; wc -l) ]; then exit 0; else exit 1; fi`
 
