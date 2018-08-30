@@ -37,35 +37,38 @@ Docker is an essential component of an OpenShift environment. The overall health
 
 |Docker Daemon |Check that docker is running on a system | `systemctl is-active docker`
 
-|Docker Storage|Check that docker's storage has adequate space | `echo $(echo \"$(docker info 2>/dev/null \| awk '/Data Space Available/ {print $4}') / $(docker info 2>/dev/null \| awk '/Data Space Total/ {print $4}')\" \| bc -l) '>' 0.3 \| bc -l`
+|Docker Storage|Check that docker's storage has adequate space | `echo $(echo \"$(docker info 2>/dev/null  &#124; awk '/Data Space Available/ {print $4}') / $(docker info 2>/dev/null  &#124; awk '/Data Space Total/ {print $4}')\"  &#124; bc -l) '>' 0.3  &#124; bc -l`
 
-|Docker Metadata Storage |Check that docker's metadata storage volume is not full | `echo $(echo \"$(docker info 2>/dev/null \| awk '/Metadata Space Available/ {print $4}') / $(docker info 2>/dev/null \| awk '/Metadata Space Total/ {print $4}')\" \| bc -l) '>' 0.3 \| bc -l`
+|Docker Metadata Storage |Check that docker's metadata storage volume is not full | `echo $(echo \"$(docker info 2>/dev/null  &#124; awk '/Metadata Space Available/ {print $4}') / $(docker info 2>/dev/null  &#124; awk '/Metadata Space Total/ {print $4}')\"  &#124; bc -l) '>' 0.3  &#124; bc -l`
 
 |=========================================================
 
 === Nodes & Masters
 
 .Node,Master checks
-[width="100%",cols="3,6,2,10",options="header"]
-|=========================================================
-|Check Name |Description | Relevant Hosts| Sample Alerting Logic
+[width="100%",cols="15%,30%,10%,5%,40%",options="header"]
+|===
+| Check Name | Description | Relevant Hosts | OCP Version | Sample Alerting Logic
+.2+|Etcd Service .2+|Check that etcd is active .2+|Masters | \<= 3.9 | `systemctl is-active etcd`| >= 3.10 | `oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,STATUS:.status.phase &#124; grep -i "master-etcd" &#124; grep -i "running" &#124;  if [ $( wc -l) -eq 3 ]; then exit 0; else exit 1; fi`
 
-|Etcd Service |Check that etcd is active |Masters | `systemctl is-active etcd`
+.2+|Etcd Storage .2+|Check that the etcd volume is not too full .2+|Masters | \<= 3.9 | `echo "$(lvs &#124; awk '/etcd/ {print $5}') > 70" &#124; bc` | >= 3.10 | `echo "$(lvs &#124; awk '/etcd/ {print $5}') > 70" &#124; bc`
 
-|Etcd Storage |Check that the etcd volume is not too full |Masters | `echo "$(lvs \| awk '/etcd/ {print $5}') > 70" \| bc`
+.2+|Master API Service (single master) .2+|Check that the Master API Service is active .2+|Masters | \<= 3.9 | `systemctl is-active atomic-openshift-master`| >= 3.10 | TODO
 
-|Master API Service (single master) |Check that the Master API Service is active|Masters | `systemctl is-active atomic-openshift-master`
+.2+|Master API Service (multi-master) .2+|Check that the Master API Service is active .2+|Masters |  \<= 3.9 |`systemctl is-active atomic-openshift-master-api`| >= 3.10 | `oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,STATUS:.status.phase &#124; grep -i "master-api" &#124; grep -i "running" &#124;  if [ $( wc -l) -eq 3 ]; then exit 0; else exit 1; fi`
 
-|Master API Service (multi-master) |Check that the Master API Service is active|Masters | `systemctl is-active atomic-openshift-master-api`
+.2+|Master Controllers Service (multi-master) .2+| Check that the Master Controllers Service is active .2+|Masters | \<= 3.9 | `systemctl is-active atomic-openshift-master-controllers`| >= 3.10 | `oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,STATUS:.status.phase &#124; grep -i "master-controller" &#124; grep -i "running" &#124; if [ $( wc -l) -eq 3 ]; then exit 0; else exit 1; fi`
 
-|Master Controllers Service (multi-master) | Check that the Master Controllers Service is active|Masters | `systemctl is-active atomic-openshift-master-controllers`
+.2+|Node Service .2+|Check that the node service is active .2+| All Nodes |  \<= 3.9 |`systemctl is-active atomic-openshift-node`| >= 3.10 | `systemctl is-active atomic-openshift-node`
 
-|Node Service |Check that the node service is active | All Nodes| `systemctl is-active atomic-openshift-node`
+.2+|Node Storage .2+|Check that the node's local data storage volume is not too full .2+| All Nodes | \<= 3.9 | `echo "$(lvs &#124; awk '/origin/ {print $5}') > 70" &#124; bc`| >= 3.10 | `echo "$(lvs &#124; awk '/origin/ {print $5}') > 70" &#124; bc`
 
-|Node Storage |Check that the node's local data storage volume is not too full | All Nodes | `echo "$(lvs \| awk '/origin/ {print $5}') > 70" \| bc`
+.2+|OpenVSwitch Service .2+|Check that the openvswitch service is active .2+| All Nodes | \<= 3.9 | `systemctl is-active openvswitch`| >= 3.10 | `oc get pods -n openshift-sdn --no-headers -o=custom-columns=POD:.metadata.name,STATUS:.status.phase &#124; grep -i "ovs-" &#124; grep -i "running" &#124; if [ $( wc -l) -eq $(oc get nodes --no-headers &#124; wc -l) ]; then exit 0; else exit 1; fi`
 
-|OpenVSwitch Service |Check that the openvswitch service is active | All Nodes| `systemctl is-active openvswitch`
-|=========================================================
+.2+|SDN Service .2+|Check that all the SDN pods are active .2+| All Nodes | \<= 3.9 | NA | >= 3.10 | `oc get pods -n openshift-sdn --no-headers -o=custom-columns=POD:.metadata.name,STATUS:.status.phase &#124; grep -i "sdn-" &#124; grep -i "running" &#124; if [ $( wc -l) -eq $(oc get nodes --no-headers &#124; wc -l) ]; then exit 0; else exit 1; fi`
+
+|===
+
 
 === API Endpoints
 
@@ -76,11 +79,11 @@ Many OpenShift components expose HTTP based endpoints for interrogating the heal
 |=========================================================
 |Check Name |Description |Sample Alerting Logic
 
-|OpenShift Master API Server |Check the health of a master API Endpoint| `curl -H "Authorization: Bearer $(oc whoami -t)" https://console.c1-ocp.myorg.com:8443/healthz \| grep ok`
+|OpenShift Master API Server |Check the health of a master API Endpoint| `curl -H "Authorization: Bearer $(oc whoami -t)" https://console.c1-ocp.myorg.com:8443/healthz  &#124; grep ok`
 
-|Router |Check the health of the Router| `curl http://router.default.svc.cluster.local:1936/healthz \| grep 200`
+|Router |Check the health of the Router| `curl http://router.default.svc.cluster.local:1936/healthz  &#124; grep 200`
 
-|Registry |Check the health of the Registry| `curl -I https://docker-registry.default.svc.cluster.local:5000/healthz \| grep 200`
+|Registry |Check the health of the Registry| `curl -I https://docker-registry.default.svc.cluster.local:5000/healthz  &#124; grep 200`
 
 |Logging | Check the health of the EFK Logging Stack | Because of the various components and complexities involved, we recommend the link:https://github.com/redhat-cop/openshift-toolkit/blob/master/health_check/elasticsearch-health-check-ocp34.sh[OpenShift Logging health check script].
 
