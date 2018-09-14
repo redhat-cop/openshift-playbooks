@@ -24,7 +24,7 @@ Regardless of the source, the underlying docker engine is used to retrieve image
 
 Communication between the docker engine and the remote registry is facilitated through secure transport. A trust must be established between both parties prior to transmitting content securely. SSL certificates associated with the remote registry must be configured on on each OpenShift node that will be used to transport images. These certificates can be configured in the Red Hat Enterprise Linux (RHEL) platform truststore or for use by Docker exclusively.
 
-To configure docker to trust the certificate of a remote repository that is not included in the platform trust store, create a folder within the `/etc/docker/certs.d` folder with the name and optional port value. If the remote registry had the address of `external-registry.example.com:5000` the folder path would be `/etc/docker/certs.d/external-registry.example.com`.
+To configure docker to trust the certificate of a remote repository that is not included in the platform trust store, create a folder within the `/etc/docker/certs.d` folder with the name and optional port value. If the remote registry had the address of `external-registry.example.com:5000` the folder path would be `/etc/docker/certs.d/external-registry.example.com:5000`.
 
 Copy the certificate into this folder and rename the file *ca.crt*
 
