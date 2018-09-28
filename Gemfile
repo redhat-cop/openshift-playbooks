@@ -4,7 +4,7 @@ ruby '2.4.3'
 gem 'jekyll', '<3.0.0'
 gem 'asciidoctor', '1.5.2'
 gem 'html-proofer'
-gem 'ffi', '1.9.23'
+gem 'ffi', '1.9.24'
 
 group :jekyll_plugins do
   gem "jekyll-asciidoc", '1.0.0'
