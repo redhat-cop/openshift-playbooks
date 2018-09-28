@@ -9,6 +9,8 @@ This pipeline has a few dependencies outsite of this repo:
 
 The following are instructions to get the application deployed.
 
+**Note** *If using macOS High Sierra you may need to `export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES` as an environment variable if using Ansible > 2.3+, as described in this [Ansible issue](https://github.com/ansible/ansible/issues/32499).*
+
 ## 1 Development/Testing Setup
 
 First, log in to the Dev cluster and run the dev inventory to set up the dev environment.
