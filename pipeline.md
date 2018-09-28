@@ -15,7 +15,7 @@ First, log in to the Dev cluster and run the dev inventory to set up the dev env
 ```
 oc login <dev cluster>
 cd ./openshift-playbooks
-ansible-playbook -i inventory-dev/ ../casl-ansible/playbooks/openshift-cluster-seed.yml --connection=local
+ansible-playbook -i inventory-dev/ path/to/openshift-applier/playbooks/openshift-cluster-seed.yml --connection=local
 ```
 
 ## 2 Production Setup
@@ -23,7 +23,7 @@ ansible-playbook -i inventory-dev/ ../casl-ansible/playbooks/openshift-cluster-s
 Log into the Production cluster and run the production setup inventory.
 ```
 oc login <prod cluster>
-ansible-playbook -i inventory-prod/ ../casl-ansible/playbooks/openshift-cluster-seed.yml --connection=local
+ansible-playbook -i inventory-prod/ path/to/openshift-applier/playbooks/openshift-cluster-seed.yml --connection=local
 ```
 
 ## 3 Create the Promoter Secret
