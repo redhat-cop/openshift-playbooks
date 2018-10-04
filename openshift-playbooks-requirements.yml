@@ -1,0 +1,7 @@
+# This is the Ansible Galaxy requirements file to pull in the correct roles to
+# support the operation of openshift-playbooks provisioning/deployment website.
+# This also supports any role dependency while using the repository in Ansible Tower
+
+# From 'openshift-applier'
+- src: https://github.com/redhat-cop/openshift-applier
+  version: v2.0.3
