@@ -9,7 +9,7 @@ toc::[]
 
 == What is a Delivery Playbook?
 
-A _delivery playbook_ is a guide for implementing DevOps technical practices and container automation approaches using Red Hat commercial open source products, including OpenShift Enterprise 3. Playbooks are intended to reflect real-world experience delivering solutions through these processes and technologies.
+A _delivery playbook_ is a guide for implementing DevOps technical practices and container automation approaches using Red Hat commercial open source products, including OpenShift Container Platform 3. Playbooks are intended to reflect real-world experience delivering solutions through these processes and technologies.
 
 == Delivery Playbook Components
 

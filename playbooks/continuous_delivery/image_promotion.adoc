@@ -1,6 +1,6 @@
 ---
 ---
-= OpenShift Enterprise 3 Image Promotion Strategies
+= OpenShift Container Platform 3 Image Promotion Strategies
 Andrew Block <ablock@redhat.com>
 v1.0, 2015-10-05
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
@@ -134,4 +134,3 @@ skopeo copy \
 ----
 
 Skopeo also has the advantage of being able to work with many image and repository types, including OCI containers and connecting directly to a docker daemon.
-
