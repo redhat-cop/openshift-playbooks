@@ -16,7 +16,7 @@ To that end, we have compiled a reading list to get you familiar with this philo
 
 We recommend starting here. The following references help to answer the question, "What is DevOps?" and provide a base of knowledge on which to build.
 
-* link:http://devopsdictionary.com/wiki/CAMS[The CAMS Model of DevOps] (Definition)
+* link:https://medium.com/@brunodelb/the-cams-model-to-better-understand-the-devops-movement-ffe6713c3fd7[The CAMS Model of DevOps] (Definition)
 * link:http://itrevolution.com/book/the-phoenix-project/[The Phoenix Project] (Book)
 * link:http://itrevolution.com/devops-handbook[The DevOps Handbook] (Book)
 * link:http://itrevolution.com/the-convergence-of-devops/[The Convergence of DevOps] (Article)
@@ -26,6 +26,8 @@ We recommend starting here. The following references help to answer the question
 
 OK, so now you have some base understand about what DevOps is. This section is intended to expand upon that knowledge and really start to answer the question, "How can I start adopting DevOps in my Organization?"
 
+* link:https://itrevolution.com/book/accelerate/[Accelerate: The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations] (Book)
+* link:https://itrevolution.com/book/project-to-product/[Project to Product: How to Survive and Thrive in the Age of Digital Disruption with the Flow Framework] (Book)
 * link:http://blog.crisp.se/2016/01/25/henrikkniberg/making-sense-of-mvp[Making Sense of MVP] (Article)
 * link:http://itrevolution.com/learn-more-about-concepts-in-phoenix-project/[Phoenix Project Reference Guide part 1] and link:http://itrevolution.com/resource-guide-for-the-phoenix-project-kanbans-part-2/[Part 2] (Articles)
 * link:http://theleanstartup.com/book[The Lean Startup] (Book)
