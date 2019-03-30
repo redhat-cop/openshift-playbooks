@@ -411,35 +411,55 @@ For our HA OpenShift Cluster (`c1-ocp.myorg.com`), we will provision the followi
 
 * 1 Ansible control host (`control-host.myorg.com`)
   ** RHEL 7.4 minimal installation
-  ** 8 GB Memory
+  ** 16 GB Memory
   ** 2 Cores
-  ** 40 GB root drive
+  ** 40 GB - `/` (root)
 * 3 _Masters_ (openshift-master-[1-3].c1-ocp.myorg.com)
   ** RHEL 7.4 minimal installation
-  ** 20 GB Memory
+  ** 24 GB Memory
   ** 4 Cores
-  ** 60 GB for the root (`/`) partition
-  ** An additional 50 GB block volume for local Docker storage. (in this guide, available as `/dev/vdb`)
-  ** An additional 10 GB disk or logical volume mounted at `/var/lib/etcd` (in this guide, available as `/dev/vdc`)
+  ** 10 GB - `/` (root)
+  ** 10 GB - `/home` (user home folders) 
+  ** 10 GB - `/usr` (system binaries)
+  ** 10 GB - `/var` (system drivers and other bits)
+  ** 10 GB - `/var/lib/etcd` (etcd write path. Should be back by a fast disk, SSD or logical volume. In this guide, available as `/dev/vdb`.)
+  ** 50 GB+ - `/var/lib/docker` (If using Docker as the container runtime, the container image cache formatted, configured, and managed by `docker-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `STORAGE_DRIVER=overlay2` be set in `/etc/sysconfig/docker-storage-setup`.)
+  ** 50 GB+ - `/var/lib/containers` (If using CRI-O as the container runtime, the container image cache formatted, configured, and managed by `container-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `storage_driver=overlay` be set in `/etc/crio/crio.conf`.)
+  ** 50 GB+ - `/var/lib/origin` (Ephemeral/temp storage for running containers. Should be backed by a logical volume.)
+  ** 20 GB+ - `/var/log` (system logging write path)
+  ** `[SWAP]` (should be disabled and not partitioned for)
 * 3 _Infrastructure Nodes_ (openshift-infra[1-3].c1-ocp.myorg.com)
   ** RHEL 7.4 minimal installation
   ** 24 GB Memory
   ** 6 Cores
-  ** 40 GB for the root (`/`) partition
-  ** An additional 100 GB block volume for local Docker storage. (in this guide, available as `/dev/vdb`)
-  ** An additional 20 GB disk or logical volume mounted at `/var/lib/origin` (in this guide, available as `/dev/vdc`)
+  ** 10 GB - `/` (root)
+  ** 10 GB - `/home` (user home folders) 
+  ** 10 GB - `/usr` (system binaries)
+  ** 10 GB - `/var` (system drivers and other bits)
+  ** 100 GB+ - `/var/lib/docker` (If using Docker as the container runtime, the container image cache formatted, configured, and managed by `docker-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `STORAGE_DRIVER=overlay2` be set in `/etc/sysconfig/docker-storage-setup`.)
+  ** 50 GB+ - `/var/lib/containers` (If using CRI-O as the container runtime, the container image cache formatted, configured, and managed by `container-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `storage_driver=overlay` be set in `/etc/crio/crio.conf`.)
+  ** 50 GB+ - `/var/lib/origin` (Ephemeral/temp storage for running containers.  Should be backed by a logical volume.)
+  ** 20 GB+ - `/var/log` (system logging write path)
+  ** `[SWAP]` (should be disabled and not partitioned for)
 * 3 _Application Nodes_ (openshift-node-[1-3].c1-ocp.myorg.com)
+  ** RHEL 7.6 minimal installation
   ** 48 GB Memory
   ** 4 Cores
-  ** 30 GB for the root (`/`) partition
-  ** An additional 100 GB block volume for local Docker storage. (in this guide, available as `/dev/vdb`)
-  ** An additional 20 GB logical volume mounted at `/var/lib/origin` (in this guide, available as `/dev/vdc`)
+  ** 10 GB - `/` (root)
+  ** 10 GB - `/home` (user home folders) 
+  ** 10 GB - `/usr` (system binaries)
+  ** 10 GB - `/var` (system drivers and other bits)
+  ** 50 GB+ - `/var/lib/docker` (If using Docker as the container runtime, the container image cache formatted, configured, and managed by `docker-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `STORAGE_DRIVER=overlay2` be set in `/etc/sysconfig/docker-storage-setup`.)
+  ** 50 GB+ - `/var/lib/containers` (If using CRI-O as the container runtime, the container image cache formatted, configured, and managed by `container-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `storage_driver=overlay` be set in `/etc/crio/crio.conf`.)
+  ** 50 GB+ - `/var/lib/origin` (Ephemeral/temp storage for running containers. Should be backed by a logical volume.)
+  ** 20 GB+ - `/var/log` (system logging write path)
+  ** `[SWAP]` (should be disabled and not partitioned for)
 * (Optional) A Load Balancer host, if you plan to use Option 2 for Load Balancing, per the above section (lb.c1-ocp.myorg.com)
   ** 2 cores
   ** 4 GB Memory
   ** 10 GB root drive
 
-Each of these servers should be provisioned with an SSH public key which can be used to access all hosts from the Ansible Control Host. Further setup of keys and the
+Each of these servers should be provisioned with an SSH public key which can be used to access all hosts from the Ansible Control Host. Further setup of keys and their propagation is covered below.
 
 === Ansible Control Host
 
