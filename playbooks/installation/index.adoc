@@ -2,7 +2,7 @@
 ---
 = Installing a Highly-Available OpenShift Cluster
 Red Hat Containers & PaaS CoP
-v2.0, 2016-08-18
+v2.1, 2019-03-29
 :scripts_repo: https://github.com/rhtconsulting/rhc-ose
 :toc: macro
 :toc-title:
@@ -423,8 +423,8 @@ For our HA OpenShift Cluster (`c1-ocp.myorg.com`), we will provision the followi
   ** 10 GB - `/usr` (system binaries)
   ** 10 GB - `/var` (system drivers and other bits)
   ** 10 GB - `/var/lib/etcd` (etcd write path. Should be back by a fast disk, SSD or logical volume. In this guide, available as `/dev/vdb`.)
-  ** 50 GB+ - `/var/lib/docker` (If using Docker as the container runtime, the container image cache formatted, configured, and managed by `docker-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `STORAGE_DRIVER=overlay2` be set in `/etc/sysconfig/docker-storage-setup`.)
-  ** 50 GB+ - `/var/lib/containers` (If using CRI-O as the container runtime, the container image cache formatted, configured, and managed by `container-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `storage_driver=overlay` be set in `/etc/crio/crio.conf`.)
+  ** 50 GB+ - `/var/lib/docker` (If using Docker as the container runtime, this is the container image cache formatted, configured, and managed by `docker-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `STORAGE_DRIVER=overlay2` be set in `/etc/sysconfig/docker-storage-setup`.)
+  ** 50 GB+ - `/var/lib/containers` (If using CRI-O as the container runtime, this is the container image cache formatted, configured, and managed by `container-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `storage_driver=overlay` be set in `/etc/crio/crio.conf`.)
   ** 50 GB+ - `/var/lib/origin` (Ephemeral/temp storage for running containers. Should be backed by a logical volume.)
   ** 20 GB+ - `/var/log` (system logging write path)
   ** `[SWAP]` (should be disabled and not partitioned for)
@@ -436,8 +436,8 @@ For our HA OpenShift Cluster (`c1-ocp.myorg.com`), we will provision the followi
   ** 10 GB - `/home` (user home folders) 
   ** 10 GB - `/usr` (system binaries)
   ** 10 GB - `/var` (system drivers and other bits)
-  ** 100 GB+ - `/var/lib/docker` (If using Docker as the container runtime, the container image cache formatted, configured, and managed by `docker-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `STORAGE_DRIVER=overlay2` be set in `/etc/sysconfig/docker-storage-setup`.)
-  ** 50 GB+ - `/var/lib/containers` (If using CRI-O as the container runtime, the container image cache formatted, configured, and managed by `container-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `storage_driver=overlay` be set in `/etc/crio/crio.conf`.)
+  ** 100 GB+ - `/var/lib/docker` (If using Docker as the container runtime, this is the container image cache formatted, configured, and managed by `docker-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `STORAGE_DRIVER=overlay2` be set in `/etc/sysconfig/docker-storage-setup`.)
+  ** 50 GB+ - `/var/lib/containers` (If using CRI-O as the container runtime, this is the container image cache formatted, configured, and managed by `container-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `storage_driver=overlay` be set in `/etc/crio/crio.conf`.)
   ** 50 GB+ - `/var/lib/origin` (Ephemeral/temp storage for running containers.  Should be backed by a logical volume.)
   ** 20 GB+ - `/var/log` (system logging write path)
   ** `[SWAP]` (should be disabled and not partitioned for)
@@ -449,8 +449,8 @@ For our HA OpenShift Cluster (`c1-ocp.myorg.com`), we will provision the followi
   ** 10 GB - `/home` (user home folders) 
   ** 10 GB - `/usr` (system binaries)
   ** 10 GB - `/var` (system drivers and other bits)
-  ** 50 GB+ - `/var/lib/docker` (If using Docker as the container runtime, the container image cache formatted, configured, and managed by `docker-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `STORAGE_DRIVER=overlay2` be set in `/etc/sysconfig/docker-storage-setup`.)
-  ** 50 GB+ - `/var/lib/containers` (If using CRI-O as the container runtime, the container image cache formatted, configured, and managed by `container-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `storage_driver=overlay` be set in `/etc/crio/crio.conf`.)
+  ** 50 GB+ - `/var/lib/docker` (If using Docker as the container runtime, this is the container image cache formatted, configured, and managed by `docker-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `STORAGE_DRIVER=overlay2` be set in `/etc/sysconfig/docker-storage-setup`.)
+  ** 50 GB+ - `/var/lib/containers` (If using CRI-O as the container runtime, this is the container image cache formatted, configured, and managed by `container-storage-setup`.  In this guide, available as `/dev/vdc`. It is recommended that `storage_driver=overlay` be set in `/etc/crio/crio.conf`.)
   ** 50 GB+ - `/var/lib/origin` (Ephemeral/temp storage for running containers. Should be backed by a logical volume.)
   ** 20 GB+ - `/var/log` (system logging write path)
   ** `[SWAP]` (should be disabled and not partitioned for)
