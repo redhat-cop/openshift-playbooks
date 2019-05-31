@@ -85,6 +85,8 @@ podTemplate(label: 'promotion-slave', cloud: 'openshift', serviceAccount: "jenki
 
     stage("Promote To ${env.STAGE2}") {
 
+      if (scm.userRemoteConfigs[0].branch == 'master' || scm.userRemoteConfigs[0].url == 'https://github.com/redhat-cop/openshift-playbooks.git') {
+
         sh """
 
         imageRegistry=\$(oc get is ${env.APP_NAME} --template='{{ .status.dockerImageRepository }}' -n ${env.STAGE1} | cut -d/ -f1)
@@ -94,6 +96,9 @@ podTemplate(label: 'promotion-slave', cloud: 'openshift', serviceAccount: "jenki
         echo "Promoting \${imageRegistry}/${env.STAGE1}/${env.APP_NAME} -> \${PROD_REGISTRY}/${env.STAGE2}/${env.APP_NAME}"
         skopeo --tls-verify=false copy --remove-signatures --src-creds openshift:${env.TOKEN} --dest-creds openshift:${env.PROD_TOKEN} docker://\${imageRegistry}/${env.STAGE1}/${env.APP_NAME} docker://${PROD_REGISTRY}/${env.STAGE2}/${env.APP_NAME}
         """
+      } else {
+        echo ""
+      }
     }
   }
 }
