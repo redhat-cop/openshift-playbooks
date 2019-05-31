@@ -85,7 +85,10 @@ podTemplate(label: 'promotion-slave', cloud: 'openshift', serviceAccount: "jenki
 
     stage("Promote To ${env.STAGE2}") {
 
-      if (scm.userRemoteConfigs[0].branch == 'master' || scm.userRemoteConfigs[0].url == 'https://github.com/redhat-cop/openshift-playbooks.git') {
+      checkout scm
+      def url = sh(returnStdout: true, script: 'git config remote.origin.url').trim()
+      def ref = sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
+      if (ref == 'master' || url == 'https://github.com/redhat-cop/openshift-playbooks.git') {
 
         sh """
 
