@@ -78,7 +78,7 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", 
 }
 
 podTemplate(label: 'promotion-slave', cloud: 'openshift', serviceAccount: "jenkins", containers: [
-  containerTemplate(name: 'jnlp', image: "${env.SKOPEO_SLAVE_IMAGE}", args: '${computer.jnlpmac} ${computer.name}')
+  containerTemplate(name: 'jnlp', image: "${env.SKOPEO_SLAVE_IMAGE}:v3.11", args: '${computer.jnlpmac} ${computer.name}')
 ]) {
 
   node('promotion-slave') {
