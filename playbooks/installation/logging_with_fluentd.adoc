@@ -10,7 +10,7 @@ In this guide, we will provide some updated installation instructions for Fluent
 
 OpenShift Docs provide installation instructions link:https://docs.openshift.com/enterprise/3.0/admin_guide/aggregate_logging.html#installing-fluentd-td-agent-on-nodes[here], however, the RPM version has been updated as has the location of the RPMs since this doc was published.
 
-Additionally, there are some installation methods offered from the fluentd website, http://docs.fluentd.org/articles/install-by-rpm
+Additionally, there are some installation methods offered from the fluentd website, https://docs.fluentd.org/installation/install-by-rpm
 
 As this RPM is not currently offered in Red Hat subscription channels, you'll need to pull down the RPM from http://packages.treasuredata.com.s3.amazonaws.com/2/redhat/7/x86_64/td-agent-2.2.1-0.el7.x86_64.rpm
 
@@ -49,7 +49,7 @@ Once the proper gems are downloaded, place them all in the `/root/` (or current 
 /opt/td-agent/embedded/bin/gem install -l fluent-plugin-kubernetes
 ----
 
-FluentD needs to run as the root user to access the container logs. 
+FluentD needs to run as the root user to access the container logs.
 
 Edit the '/etc/rc.d/init.d/td-agent' file with the following information:
 Replace:
@@ -176,7 +176,7 @@ Create a Corosync config file:
     time_format %Y-%m-%dT%H:%M:%S
     tag corosync.*
     format /(?<time>[^ ]* [^ ]* [^ ]*) \[.*\] (?<host>[^ ]*) +(?<path>[^ ]*\:) +(?<method>[^ ]*\:) (?<message>[^ ].*$)/
-    time_format %b %d %H:%M:%S 
+    time_format %b %d %H:%M:%S
     read_from_head true
   </source>
 

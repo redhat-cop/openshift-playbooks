@@ -16,7 +16,7 @@ To that end, we have compiled a reading list to get you familiar with this philo
 
 We recommend starting here. The following references help to answer the question, "What is DevOps?" and provide a base of knowledge on which to build.
 
-* link:http://devopsdictionary.com/wiki/CAMS[The CAMS Model of DevOps] (Definition)
+* link:https://www.red-gate.com/blog/calms-relates-database-devops[The CALMS Model of DevOps] (Definition)
 * link:http://itrevolution.com/book/the-phoenix-project/[The Phoenix Project] (Book)
 * link:http://itrevolution.com/devops-handbook[The DevOps Handbook] (Book)
 * link:http://itrevolution.com/the-convergence-of-devops/[The Convergence of DevOps] (Article)
