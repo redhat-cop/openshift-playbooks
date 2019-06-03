@@ -8,7 +8,7 @@ v1.0, 2017-02-05
 :toc-title:
 include::../../_includes/variables.adoc[]
 
-Send logs captured by the OpenShift Container Platform link:{docs_url}install_config/aggregate_logging.html[aggregated logging] solution to Splunk using the link:http://docs.fluentd.org/v0.12/articles/out_secure_forward[Fluentd secure forward output plugin]
+Send logs captured by the OpenShift Container Platform link:{docs_url}install_config/aggregate_logging.html[aggregated logging] solution to Splunk using the link:https://github.com/fluent/data-collection/blob/master/output_plugins/out_secure_forward.md[Fluentd secure forward output plugin]
 
 toc::[]
 

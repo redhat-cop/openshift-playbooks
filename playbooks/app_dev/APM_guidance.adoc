@@ -129,7 +129,6 @@ https://blog.openshift.com/openshift-ecosystem-using-sysdig-monitor-openshift/[h
 ==== Installing Instana on OpenShift
 
 https://blog.openshift.com/deploying-instana-apm-natively-openshift-environment/[https://blog.openshift.com/deploying-instana-apm-natively-openshift-environment/] +
-https://instana.atlassian.net/wiki/spaces/DOCS/pages/15630376/Docker+scheduled#Docker(scheduled)-OpenShift[https://instana.atlassian.net/wiki/spaces/DOCS/pages/15630376/Docker+scheduled#Docker(scheduled)-OpenShift]
 
 == Distributed Tracing
 
