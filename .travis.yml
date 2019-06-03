@@ -14,7 +14,6 @@ before_script:
 
 script:
  - ./script/cibuild.sh
- - ./script/cideploy.sh
 
 env:
   global:
