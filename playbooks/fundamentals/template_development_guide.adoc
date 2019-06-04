@@ -22,7 +22,7 @@ We're going to start by doing an interactive exploration into OpenShift template
 
 === Kickin' it off with some oc new-app
 
-In order to get kicked off in template exploration, let's start by spinning up a sample Java application. We'll do this using OpenShift's link:https://docs.openshift.com/container-platform/latest/cli_reference/index.html[Command Line Tool^]. Specifically, the `oc new-app` command provides a simple interface for creating new applications using some combination of source code, templates, and container images.
+In order to get kicked off in template exploration, let's start by spinning up a sample Java application. We'll do this using OpenShift's link:https://docs.openshift.com/container-platform/4.1/cli_reference/getting-started-cli.html[Command Line Tool^]. Specifically, the `oc new-app` command provides a simple interface for creating new applications using some combination of source code, templates, and container images.
 
 [source,bash]
 ----
