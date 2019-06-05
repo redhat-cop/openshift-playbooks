@@ -5,7 +5,7 @@ openshift_cluster_content:
   content:
   - name: "Projects"
     file: "{{ inventory_dir }}/../projects/projects-dev.yml"
-    file_action: create
+    action: create
 - object: policy
   content:
   - name: "Apply policy directory"
@@ -24,8 +24,11 @@ openshift_cluster_content:
   content:
   - name: "image build"
     namespace: "field-guides-dev"
-    template: "https://raw.githubusercontent.com/redhat-cop/containers-quickstarts/master/jenkins-slaves/templates/jenkins-slave-image-mgmt-template.yml"
+    template: "https://raw.githubusercontent.com/redhat-cop/containers-quickstarts/v1.10/jenkins-slaves/.openshift/templates/jenkins-slave-image-mgmt-template.yml"
     params: "{{ inventory_dir }}/../deploy/dev/slave-params"
   - name: "site build"
     template: "{{ inventory_dir }}/../build/template.yml"
     params: "{{ inventory_dir }}/../build/dev/params"
+    params_from_vars:
+      SOURCE_REPOSITORY_URL: "{{ git_url | default(omit) }}"
+      SOURCE_REPOSITORY_REF: "{{ git_ref | default(omit) }}"

@@ -78,12 +78,17 @@ podTemplate(label: 'slave-ruby', cloud: 'openshift', serviceAccount: "jenkins", 
 }
 
 podTemplate(label: 'promotion-slave', cloud: 'openshift', serviceAccount: "jenkins", containers: [
-  containerTemplate(name: 'jnlp', image: "${env.SKOPEO_SLAVE_IMAGE}", args: '${computer.jnlpmac} ${computer.name}')
+  containerTemplate(name: 'jnlp', image: "${env.SKOPEO_SLAVE_IMAGE}:v3.11", args: '${computer.jnlpmac} ${computer.name}')
 ]) {
 
   node('promotion-slave') {
 
     stage("Promote To ${env.STAGE2}") {
+
+      checkout scm
+      def url = sh(returnStdout: true, script: 'git config remote.origin.url').trim()
+      def ref = sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
+      if (ref == 'master' || url == 'https://github.com/redhat-cop/openshift-playbooks.git') {
 
         sh """
 
@@ -94,6 +99,9 @@ podTemplate(label: 'promotion-slave', cloud: 'openshift', serviceAccount: "jenki
         echo "Promoting \${imageRegistry}/${env.STAGE1}/${env.APP_NAME} -> \${PROD_REGISTRY}/${env.STAGE2}/${env.APP_NAME}"
         skopeo --tls-verify=false copy --remove-signatures --src-creds openshift:${env.TOKEN} --dest-creds openshift:${env.PROD_TOKEN} docker://\${imageRegistry}/${env.STAGE1}/${env.APP_NAME} docker://${PROD_REGISTRY}/${env.STAGE2}/${env.APP_NAME}
         """
+      } else {
+        echo ""
+      }
     }
   }
 }

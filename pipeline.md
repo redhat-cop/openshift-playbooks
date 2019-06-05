@@ -15,7 +15,16 @@ First, log in to the Dev cluster and run the dev inventory to set up the dev env
 ```
 oc login <dev cluster>
 cd ./openshift-playbooks
-ansible-playbook -i inventory-dev/ ../casl-ansible/playbooks/openshift-cluster-seed.yml --connection=local
+ansible-galaxy install -r requirements.yml -p galaxy
+ansible-playbook -i inventory-dev/ galaxy/openshift-applier/playbooks/openshift-cluster-seed.yml
+```
+
+### 1.1 Testing a pull request
+
+In some cases, you might want to run the pipeline against an alternative fork or branch for testing purposes. To do this, modify the last command to something like the following:
+
+```
+ansible-playbook -i inventory-dev/ galaxy/openshift-applier/playbooks/openshift-cluster-seed.yml -e git_url=https://github.com/etsauer/openshift-playbooks.git -e git_ref=fix-pipeline
 ```
 
 ## 2 Production Setup
@@ -23,7 +32,7 @@ ansible-playbook -i inventory-dev/ ../casl-ansible/playbooks/openshift-cluster-s
 Log into the Production cluster and run the production setup inventory.
 ```
 oc login <prod cluster>
-ansible-playbook -i inventory-prod/ ../casl-ansible/playbooks/openshift-cluster-seed.yml --connection=local
+ansible-playbook -i inventory-prod/ galaxy/openshift-applier/playbooks/openshift-cluster-seed.yml
 ```
 
 ## 3 Create the Promoter Secret
