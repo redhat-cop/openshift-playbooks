@@ -67,7 +67,7 @@ To create a new .dockercfg file by supplying the necessary parameters, execute t
 
 [source]
 ----
-oc secrets new-dockercfg external-registry \
+oc create secret docker-registry external-registry \
     --docker-username=mastermind \
     --docker-password=12345 \
     --docker-email=mastermind@example.com \
