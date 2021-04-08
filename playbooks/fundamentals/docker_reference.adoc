@@ -15,7 +15,7 @@ toc::[]
 
 === Intro to Container Concepts
 
- * link:https://access.redhat.com/documentation/en/red-hat-enterprise-linux-atomic-host/version-7/getting-started-with-containers/[Getting Started with Containers^] (Red Hat)
+ * link:https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html-single/building_running_and_managing_containers/index[Building, Running, and Managing Containers^] (Red Hat)
  * link:https://developers.redhat.com/blog/2018/02/22/container-terminology-practical-introduction/[Introduction to Linux container terminology^] (Red Hat Developer Blog)
  * link:https://developers.redhat.com/blog/2014/05/15/practical-introduction-to-docker-containers/[A Practical Introduction to Containers^] (Red Hat Developer Blog)
 
